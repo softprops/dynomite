@@ -1,0 +1,16 @@
+[package]
+name = "dynomite-derive"
+version = "0.1.0"
+authors = ["softprops <d.tangren@gmail.com>"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+rusoto_dynamodb = "^0"
+dynomite = { version = "0.1.0", path = "../dynomite" }
+quote = "0.3"
+syn = "0.11"
+
+[dev-dependencies]
+rusoto_core = "^0"

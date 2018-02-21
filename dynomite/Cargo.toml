@@ -1,0 +1,10 @@
+[package]
+name = "dynomite"
+version = "0.1.0"
+authors = ["softprops <d.tangren@gmail.com>"]
+
+[dependencies]
+rusoto_core = "*"
+rusoto_dynamodb = "*"
+maplit = "*"
+uuid = { version = "0.6", features = ["v4"] }
