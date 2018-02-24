@@ -1,16 +1,17 @@
 //! Dynomite provides a set of convenience types for working with
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
 //!
-#[macro_use]
-extern crate maplit;
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
+#[cfg(feature = "uuid")]
 extern crate uuid;
 
 use std::collections::{HashMap, HashSet};
 
-use rusoto_core::{default_tls_client, DefaultCredentialsProvider, Region};
-use rusoto_dynamodb::*;
+#[cfg(feature = "uuid")]
+use uuid::Uuid;
+
+use rusoto_dynamodb::AttributeValue;
 
 /// A type which can be represented as a set of string keys and
 /// `AttributeValues` and may also be coersed from the same set
@@ -109,6 +110,22 @@ impl<T: Item> Attribute for T {
             .m
             .ok_or("missing".into())
             .and_then(|attrs| T::from_attrs(attrs))
+    }
+}
+
+#[cfg(feature = "uuid")]
+impl Attribute for Uuid {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.hyphenated().to_string()),
+            ..Default::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+        value
+            .s
+            .ok_or("missing".into())
+            .and_then(|s| Uuid::from_bytes(s.as_bytes()).map_err(|_| "invalid uuid".to_string()))
     }
 }
 

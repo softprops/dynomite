@@ -30,8 +30,8 @@ fn expand(ast: &DeriveInput) -> Tokens {
 
 fn make_dynomite_item(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
     let dynamodb_traits = get_dynomite_traits(vis, name, fields);
-    let to_attribute_map = get_from_attributes_trait(name, fields);
-    let from_attribute_map = get_to_attribute_map_trait(name, fields);
+    let from_attribute_map = get_from_attributes_trait(name, fields);
+    let to_attribute_map = get_to_attribute_map_trait(name, fields);
 
     quote! {
         #from_attribute_map
@@ -87,9 +87,6 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 ///   }
 /// }
 fn get_from_attributes_trait(name: &Ident, fields: &[Field]) -> Tokens {
-    let attribute_map = quote!(
-        ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>
-    );
     let from_attrs = quote!(::dynomite::FromAttributeValues);
     let from_attribute_map = get_from_attributes_function(fields);
 
@@ -152,24 +149,24 @@ fn get_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
 /// }
 ///
 fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
-    let dynamodb_insertable = quote!(::dynomite::Item);
+    let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
         ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>
     );
-    let hash_key_name = get_field_name_with_attribute(&fields, "hash");
-    let range_key_name = get_field_name_with_attribute(&fields, "range");
+    let hash_key_name = field_name_with_attribute(&fields, "hash");
+    let range_key_name = field_name_with_attribute(&fields, "range");
 
-    let hash_key_inserter = get_key_inserter(&hash_key_name);
-    let range_key_inserter = get_key_inserter(&range_key_name);
+    let hash_key_insert = get_key_inserter(&hash_key_name);
+    let range_key_insert = get_key_inserter(&range_key_name);
 
     hash_key_name
         .map(|_| {
             quote!{
-                impl #dynamodb_insertable for #name {
+                impl #item for #name {
                     fn key(&self) -> #attribute_map {
                         let mut keys = ::std::collections::HashMap::new();
-                        #hash_key_inserter
-                        #range_key_inserter
+                        #hash_key_insert
+                        #range_key_insert
                         keys
                     }
                 }
@@ -178,15 +175,15 @@ fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
         .unwrap_or(quote!{})
 }
 
-fn get_field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
-    get_field_with_attribute(fields, attribute_name).map(|field| {
+fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
+    field_with_attribute(fields, attribute_name).map(|field| {
         field
             .ident
             .expect(&format!("{} should have an identifier", attribute_name))
     })
 }
 
-fn get_field_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Field> {
+fn field_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Field> {
     let mut fields = fields
         .iter()
         .cloned()
@@ -225,8 +222,8 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
 fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
     let name = Ident::from(format!("{}Key", name));
 
-    let hash_key = get_field_with_attribute(&fields, "hash");
-    let range_key = get_field_with_attribute(&fields, "range")
+    let hash_key = field_with_attribute(&fields, "hash");
+    let range_key = field_with_attribute(&fields, "range")
         .map(|mut range_key| {
             range_key.attrs = vec![];
             quote! {#range_key}
