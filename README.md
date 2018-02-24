@@ -2,4 +2,21 @@
 
 makes rusoto_dynamodb fit your types (and visa versa)
 
+## [Documentation](https://softprops.github.io/dynomite)
+
+## Install
+
+In your Cargo.toml file add the following under the `[dependencies]` heading
+
+```toml
+dynomite = '...'
+```
+
+Optionally, you can install a companion crate which enables you to derive
+dynomite types for your struts
+
+```toml
+dynomite-derive = '...'
+```
+
 Doug Tangren (softprops) 2018
