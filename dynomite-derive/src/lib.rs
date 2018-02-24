@@ -78,7 +78,7 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 
 ///
 /// impl ::dynomite::FromAttributeValues for Name {
-///   fn from_attrs(mut item: ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>) -> Result<Self, String> {
+///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, String> {
 ///     Ok(Self {
 ///        field_name: ::dynomite::Attribute::from_attr(
 ///           item.remove("field_name").ok_or("missing".to_string())?
@@ -98,22 +98,20 @@ fn get_from_attributes_trait(name: &Ident, fields: &[Field]) -> Tokens {
 }
 
 fn get_from_attributes_function(fields: &[Field]) -> Tokens {
-    let attribute_map = quote!(
-        ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>
-    );
+    let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
     let field_conversions = fields.iter().map(|field| {
         let field_name = &field.ident;
         quote! {
             #field_name: #from_attribute_value(
-                item.remove(stringify!(#field_name))
+                attrs.remove(stringify!(#field_name))
                     .ok_or("missing".to_string())?
             )?
         }
     });
 
     quote! {
-        fn from_attrs(mut item: #attribute_map) -> Result<Self, String> {
+        fn from_attrs(mut attrs: #attributes) -> Result<Self, String> {
             Ok(Self {
                 #(#field_conversions),*
             })

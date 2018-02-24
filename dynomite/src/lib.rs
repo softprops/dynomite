@@ -1,6 +1,37 @@
 //! Dynomite provides a set of convenience types for working with
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
 //!
+//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
+//! as a managed service. It's API
+//! model is a table with a collection of items which are a composed of a collection of
+//! named attributes which can be one of a finite set of types.
+//!
+//! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
+//! interfaces for interactinvg with with the dynamodb API. It's abstraction
+//! for Items is essentially a `HashMap` of `String`
+//! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
+//! types which does fit dynamodb's nosql contract well.
+//! AttributeValues are able to represent multiple types of values in a
+//! single wrapping type.
+//!
+//! However, when programming in rust we often have strictor move concise typing tools
+//! when working with data. Dynomite is intended to make those types
+//! interface more transparently with rusoto item items.
+//!
+//! Dynomite provides a set of building blocks for making interactions with
+//! dynamodb feel more natural for rust's native types
+//!
+//! At a low level [Attribute](dynomite/trait.Attribute.html) type implementations
+//! provide conversion interfaces to and from native rust types which represent
+//! dynamodb's notion of "attributes"
+//!
+//! At a higher level [Item](dynomite/trait.Item.html) type implementations
+//! provide converstion interfaces for complex types which represent
+//! dynamodb's notion of "items".
+//!
+//! You can optionally opt into having Item types derived for you by using
+//! the `dynomite-derive` crate which utilizes a technique you may be familiar
+//! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
 #[cfg(feature = "uuid")]
@@ -13,6 +44,9 @@ use uuid::Uuid;
 
 use rusoto_dynamodb::AttributeValue;
 
+/// type alias for map of named attribute values
+pub type Attributes = HashMap<String, AttributeValue>;
+
 /// A type which can be represented as a set of string keys and
 /// `AttributeValues` and may also be coersed from the same set
 ///
@@ -22,15 +56,17 @@ use rusoto_dynamodb::AttributeValue;
 /// extern crate rusoto_dynamodb;
 /// extern crate dynomite;
 ///
-/// use dynomite::{Item, Attribute, FromAttributeValues};
+/// use std::collections::HashMap;
+/// use dynomite::{Item, Attribute, FromAttributeValues, Attributes};
 /// use rusoto_dynamodb::AttributeValue;
 ///
-/// struct User {
+/// #[derive(PartialEq,Debug, Clone)]
+/// struct Person {
 ///   id: String
 /// }
 ///
 /// impl Item for Person {
-///   fn key(&self) -> HashMap<String, AttributeValue> {
+///   fn key(&self) -> Attributes {
 ///     let mut attrs = HashMap::new();
 ///     attrs.insert("id".into(), "123".to_string().into_attr());
 ///     attrs
@@ -39,22 +75,27 @@ use rusoto_dynamodb::AttributeValue;
 ///
 /// impl FromAttributeValues for Person {
 ///    fn from_attrs(
-///      attrs: HashMap<String, AttributeValue>
+///      attrs: Attributes
 ///    ) -> Result<Self, String> {
-///      Self {
+///      Ok(Self {
 ///        id: attrs.get("id")
-///          .and_then(|val| val.s)
+///          .and_then(|val| val.s.clone())
 ///          .ok_or("missing id".to_string())?
-///      }
+///      })
 ///    }
 /// }
 ///
-/// impl Into<HashMap<String, AttributeValue>> for Person {
-///   fn into(self: Self) -> HashMap<String, AttributeValue> {
+/// impl Into<Attributes> for Person {
+///   fn into(self: Self) -> Attributes {
 ///     let mut attrs = HashMap::new();
 ///     attrs.insert("id".into(), "123".to_string().into_attr());
 ///     attrs
 ///   }
+/// }
+/// fn main() {
+///   let person = Person { id: "123".into() };
+///   let attrs: Attributes = person.clone().into();
+///   assert_eq!(Ok(person), FromAttributeValues::from_attrs(attrs))
 /// }
 /// ```
 pub trait Item: Into<HashMap<String, AttributeValue>> + FromAttributeValues {
@@ -77,13 +118,15 @@ pub trait Item: Into<HashMap<String, AttributeValue>> + FromAttributeValues {
 /// use dynomite::Attribute;
 /// use rusoto_dynamodb::AttributeValue;
 ///
+/// fn main() {
 /// assert_eq!(
-///   "test".to_string().into_attr(),
+///   "test".to_string().into_attr().s,
 ///    AttributeValue {
 ///      s: Some("test".to_string()),
 ///      ..Default::default()
-///    }
+///    }.s
 ///  );
+/// }
 /// ```
 pub trait Attribute: Sized {
     /// Returns a conversion into an `AttributeValue`
@@ -95,7 +138,7 @@ pub trait Attribute: Sized {
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributeValues: Sized {
-    fn from_attrs(values: HashMap<String, AttributeValue>) -> Result<Self, String>;
+    fn from_attrs(attrs: Attributes) -> Result<Self, String>;
 }
 
 impl<T: Item> Attribute for T {

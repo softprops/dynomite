@@ -2,6 +2,8 @@
 name = "dynomite-derive"
 version = "0.1.0"
 authors = ["softprops <d.tangren@gmail.com>"]
+description = "derives dynamodb dynamoite types from native rust struct types"
+license = "MIT"
 
 [lib]
 proc-macro = true

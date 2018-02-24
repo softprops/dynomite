@@ -3,10 +3,8 @@ extern crate dynomite;
 extern crate dynomite_derive;
 extern crate rusoto_dynamodb;
 
-use std::collections::HashSet;
-
 #[derive(Item, Default)]
-pub struct User {
+pub struct Author {
   #[hash]
   name: String,
 }
@@ -15,19 +13,20 @@ pub struct User {
 pub struct Book {
   #[hash]
   title: String,
-  authors: Option<Vec<User>>,
+  authors: Option<Vec<Author>>,
 }
 
 #[cfg(test)]
 mod tests {
-  use super::{Book, User};
-  use dynomite::Attribute;
-  use rusoto_dynamodb::AttributeValue;
+
   use std::collections::HashMap;
+  use super::{Author, Book};
+  use super::rusoto_dynamodb::AttributeValue;
+  use super::dynomite::Attributes;
 
   #[test]
   fn it_works() {
-    let attr: HashMap<String, AttributeValue> = Book {
+    let attr: Attributes = Book {
       title: "rust".into(),
       ..Default::default()
     }.into();
