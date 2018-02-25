@@ -77,7 +77,7 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 }
 
 ///
-/// impl ::dynomite::FromAttributeValues for Name {
+/// impl ::dynomite::FromAttributes for Name {
 ///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, String> {
 ///     Ok(Self {
 ///        field_name: ::dynomite::Attribute::from_attr(
@@ -87,7 +87,7 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 ///   }
 /// }
 fn get_from_attributes_trait(name: &Ident, fields: &[Field]) -> Tokens {
-    let from_attrs = quote!(::dynomite::FromAttributeValues);
+    let from_attrs = quote!(::dynomite::FromAttributes);
     let from_attribute_map = get_from_attributes_function(fields);
 
     quote! {

@@ -57,7 +57,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// extern crate dynomite;
 ///
 /// use std::collections::HashMap;
-/// use dynomite::{Item, Attribute, FromAttributeValues, Attributes};
+/// use dynomite::{Item, Attribute, FromAttributes, Attributes};
 /// use rusoto_dynamodb::AttributeValue;
 ///
 /// #[derive(PartialEq,Debug, Clone)]
@@ -73,7 +73,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///   }
 /// }
 ///
-/// impl FromAttributeValues for Person {
+/// impl FromAttributes for Person {
 ///    fn from_attrs(
 ///      attrs: Attributes
 ///    ) -> Result<Self, String> {
@@ -95,10 +95,10 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// fn main() {
 ///   let person = Person { id: "123".into() };
 ///   let attrs: Attributes = person.clone().into();
-///   assert_eq!(Ok(person), FromAttributeValues::from_attrs(attrs))
+///   assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
 /// }
 /// ```
-pub trait Item: Into<HashMap<String, AttributeValue>> + FromAttributeValues {
+pub trait Item: Into<Attributes> + FromAttributes {
     /// Returns the set of attributes which make up this items key
     fn key(&self) -> HashMap<String, AttributeValue>;
 }
@@ -137,7 +137,7 @@ pub trait Attribute: Sized {
 
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
-pub trait FromAttributeValues: Sized {
+pub trait FromAttributes: Sized {
     fn from_attrs(attrs: Attributes) -> Result<Self, String>;
 }
 
