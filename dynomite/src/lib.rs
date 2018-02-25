@@ -348,39 +348,64 @@ mod test {
     #[test]
     fn uuid_attr() {
         let value = Uuid::new_v4();
-        assert_eq!(value, Uuid::from_attr(value.into_attr()).unwrap());
+        assert_eq!(Ok(value), Uuid::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    fn uuid_invalid_attr() {
+        assert_eq!(
+            Err("missing".to_string()),
+            Uuid::from_attr(AttributeValue {
+                bool: Some(true),
+                ..Default::default()
+            })
+        );
     }
 
     #[test]
     fn option_some_attr() {
         let value = Some(1);
-        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+        assert_eq!(Ok(value), Attribute::from_attr(value.into_attr()));
     }
 
     #[test]
     fn option_none_attr() {
         let value: Option<u32> = Default::default();
-        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+        assert_eq!(Ok(value), Attribute::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    fn option_invalid_attr() {
+        assert_eq!(
+            Ok(None),
+            Option::<u32>::from_attr(AttributeValue {
+                bool: Some(true),
+                ..Default::default()
+            })
+        );
     }
 
     #[test]
     fn bool_attr() {
         let value = true;
-        assert_eq!(value, bool::from_attr(value.into_attr()).unwrap());
+        assert_eq!(Ok(value), bool::from_attr(value.into_attr()));
     }
 
     #[test]
     fn string_attr() {
         let value = "test".to_string();
-        assert_eq!(value, String::from_attr(value.clone().into_attr()).unwrap());
+        assert_eq!(
+            Ok(value.clone()),
+            String::from_attr(value.clone().into_attr())
+        );
     }
 
     #[test]
     fn byte_vec_attr() {
         let value = "test".as_bytes().to_vec();
         assert_eq!(
-            value,
-            Vec::<u8>::from_attr(value.clone().into_attr()).unwrap()
+            Ok(value.clone()),
+            Vec::<u8>::from_attr(value.clone().into_attr())
         );
     }
 }
