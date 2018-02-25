@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "derives dynamodb dynamoite types from native rust struct types"
 license = "MIT"
+keywords = ["dynamodb", "rusoto"]
 
 [lib]
 proc-macro = true
