@@ -3,13 +3,13 @@ extern crate dynomite;
 extern crate dynomite_derive;
 extern crate rusoto_dynamodb;
 
-#[derive(Item, Default)]
+#[derive(Item, Default, PartialEq, Debug, Clone)]
 pub struct Author {
   #[hash]
   name: String,
 }
 
-#[derive(Item, Default)]
+#[derive(Item, Default, PartialEq, Debug, Clone)]
 pub struct Book {
   #[hash]
   title: String,
@@ -19,25 +19,16 @@ pub struct Book {
 #[cfg(test)]
 mod tests {
 
-  use std::collections::HashMap;
-  use super::{Author, Book};
-  use super::rusoto_dynamodb::AttributeValue;
-  use super::dynomite::Attributes;
+  use super::Book;
+  use super::dynomite::{Attributes, FromAttributes};
 
   #[test]
-  fn it_works() {
-    let attr: Attributes = Book {
+  fn to_and_from_book() {
+    let value = Book {
       title: "rust".into(),
       ..Default::default()
-    }.into();
-    let mut expected = HashMap::new();
-    expected.insert(
-      "name",
-      AttributeValue {
-        s: Some("rust".to_string()),
-        ..Default::default()
-      },
-    );
-    println!("{:#?}", attr);
+    };
+    let attrs: Attributes = value.clone().into();
+    assert_eq!(value, Book::from_attrs(attrs).unwrap())
   }
 }

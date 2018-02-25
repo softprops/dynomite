@@ -171,7 +171,7 @@ impl Attribute for Uuid {
         value
             .s
             .ok_or("missing".into())
-            .and_then(|s| Uuid::from_bytes(s.as_bytes()).map_err(|_| "invalid uuid".to_string()))
+            .and_then(|s| Uuid::parse_str(s.as_str()).map_err(|_| "invalid uuid".to_string()))
     }
 }
 
@@ -268,7 +268,13 @@ impl<T: Attribute> Attribute for Option<T> {
     fn from_attr(value: AttributeValue) -> Result<Self, String> {
         match Attribute::from_attr(value) {
             Ok(value) => Ok(Some(value)),
-            Err(err) => Err(err),
+            Err(err) => {
+                if "missing" == err {
+                    Ok(None)
+                } else {
+                    Err(err)
+                }
+            }
         }
     }
 }
@@ -334,3 +340,13 @@ numeric_collection_attr!(i64 => HashSet<i64>);
 numeric_collection_attr!(i64 => Vec<i64>);
 numeric_collection_attr!(f32 => Vec<f32>);
 numeric_collection_attr!(f64 => Vec<f64>);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn uuid_attr() {
+        let value = Uuid::new_v4();
+        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+    }
+}
