@@ -9,14 +9,14 @@
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = '...'
+dynomite = "0.0.0"
 ```
 
 Optionally, you can install a companion crate which allows you to derive
-dynomite types for your struts at compile time
+dynomite types for your structs at compile time
 
 ```toml
-dynomite-derive = '...'
+dynomite-derive = "0.0.0"
 ```
 
 Doug Tangren (softprops) 2018
