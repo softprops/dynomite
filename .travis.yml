@@ -53,7 +53,7 @@ after_success:
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ] &&
     (ls target/debug &&
-    RUSTFLAGS="-C link-dead-code" cargo test --no-run &&
+    cargo test --no-run &&
     for file in target/debug/dynomite-*; do
        if [[ "${file: -2}" != ".d" ]]; then
          mkdir -p "target/cov/$(basename $file)";
