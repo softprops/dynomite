@@ -1,5 +1,31 @@
-//! dynomite Item type derivation for structs
+//! Dynomite Item type derivation for structs
 //!
+//! # examples
+//!
+//! ```
+//! extern crate rusoto_dynamodb;
+//! #[macro_use]
+//! extern crate dynomite_derive;
+//! extern crate dynomite;
+//!
+//! use dynomite::{Item, FromAttributes, Attributes};
+//! use rusoto_dynamodb::AttributeValue;
+//!
+//! // derive Item
+//! #[derive(Item, PartialEq, Debug, Clone)]
+//! struct Person {
+//!   id: String
+//! }
+//!
+//! fn main() {
+//!   let person = Person { id: "123".into() };
+//!   // convert person to string keys and attribute values
+//!   let attributes: Attributes = person.clone().into();
+//!   // convert attributes into person type
+//!   assert_eq!(person, Person::from_attrs(attributes).unwrap());
+//! }
+//! ```
+
 extern crate proc_macro;
 #[macro_use]
 extern crate quote;
@@ -12,7 +38,7 @@ use syn::Body::Struct;
 use syn::VariantData::Struct as StructData;
 
 #[proc_macro_derive(Item, attributes(hash, range))]
-pub fn dynomite_item(input: TokenStream) -> TokenStream {
+pub fn derive_item(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_macro_input(&s).unwrap();
     let gen = expand(&ast);

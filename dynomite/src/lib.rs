@@ -32,7 +32,7 @@
 //! dynamodb's notion of "items".
 //!
 //! You can optionally opt into having Item types derived for you by using
-//! the `dynomite-derive` crate which utilizes a technique you may be familiar
+//! the [dynomite-derive](dynomite_derive/index.html) crate which utilizes a technique you may be familiar
 //! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
 
 extern crate rusoto_core;
