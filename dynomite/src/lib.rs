@@ -349,4 +349,16 @@ mod test {
         let value = Uuid::new_v4();
         assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
     }
+
+    #[test]
+    fn option_some_attr() {
+        let value = Some(1);
+        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+    }
+
+    #[test]
+    fn option_none_attr() {
+        let value: Option<u32> = Default::default();
+        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+    }
 }
