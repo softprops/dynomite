@@ -1,6 +1,6 @@
 [package]
 name = "dynomite"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "provides type conversions between dynamodb types and native rust types"
 license = "MIT"
