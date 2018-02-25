@@ -1,5 +1,6 @@
-sudo: false
-dist: trusty
+# https://github.com/travis-ci/travis-ci/issues/9061
+sudo: required
+
 language: rust
 
 matrix:
