@@ -10,7 +10,6 @@ matrix:
   - rust: stable
   allow_failures:
   - rust: nightly
-  - rust: beta
 
 script:
 # https://github.com/rust-lang/rust/issues/47309#issuecomment-359166547
