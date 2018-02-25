@@ -1,37 +1,40 @@
-//! Dynomite provides a set of convenience types for working with
+//! Dynomite provides a set of interfaces on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
+//! which makes working with aws Dynamodb more comfortable in rust.
 //!
 //! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
-//! as a managed service. It's API
-//! model is a table with a collection of items which are a composed of a collection of
-//! named attributes which can be one of a finite set of types.
+//! as a managed service. It's API model is a table with a collection of items
+//! which are a composed of a collection of named attributes which can be one
+//! of a finite set of types. You can learn more about its core components
+//! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
 //! interfaces for interactinvg with with the dynamodb API. It's abstraction
 //! for Items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
-//! types which does fit dynamodb's nosql contract well.
+//! types which fits dynamodb's nosql contract well.
 //! AttributeValues are able to represent multiple types of values in a
-//! single wrapping type.
+//! single container type.
 //!
-//! However, when programming in rust we often have strictor move concise typing tools
-//! when working with data. Dynomite is intended to make those types
-//! interface more transparently with rusoto item items.
+//! However, when programming in rust we often have stricter, move concise typing
+//! tools when working with data. Dynomite is intended to make those types
+//! interface more transparently with rusoto item types.
 //!
 //! Dynomite provides a set of building blocks for making interactions with
-//! dynamodb feel more natural for rust's native types
+//! dynamodb feel more natural for rust's native types.
 //!
-//! At a low level [Attribute](dynomite/trait.Attribute.html) type implementations
+//! At a low level, [Attribute](dynomite/trait.Attribute.html) type implementations
 //! provide conversion interfaces to and from native rust types which represent
 //! dynamodb's notion of "attributes"
 //!
-//! At a higher level [Item](dynomite/trait.Item.html) type implementations
+//! At a higher level, [Item](dynomite/trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
 //! dynamodb's notion of "items".
 //!
 //! You can optionally opt into having Item types derived for you by using
 //! the `dynomite-derive` crate which utilizes a technique you may be familiar
 //! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
+
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
 #[cfg(feature = "uuid")]
@@ -48,7 +51,7 @@ use rusoto_dynamodb::AttributeValue;
 pub type Attributes = HashMap<String, AttributeValue>;
 
 /// A type which can be represented as a set of string keys and
-/// `AttributeValues` and may also be coersed from the same set
+/// `AttributeValues` and may also be coersed from the same set of values
 ///
 /// # Examples
 ///
@@ -106,7 +109,7 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// A type capable of being converted into an attrbute value or converted from
 /// an `AttributeValue`
 ///
-/// Implementations of this is provided for each type of `AttributeValue` field
+/// Implementations of this are provided for each type of `AttributeValue` field
 /// which maps to a native rustlang type
 ///
 /// # Examples
