@@ -344,10 +344,11 @@ numeric_collection_attr!(f64 => Vec<f64>);
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
     fn uuid_attr() {
         let value = Uuid::new_v4();
-        assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+        assert_eq!(value, Uuid::from_attr(value.into_attr()).unwrap());
     }
 
     #[test]
@@ -360,5 +361,26 @@ mod test {
     fn option_none_attr() {
         let value: Option<u32> = Default::default();
         assert_eq!(value, Attribute::from_attr(value.into_attr()).unwrap());
+    }
+
+    #[test]
+    fn bool_attr() {
+        let value = true;
+        assert_eq!(value, bool::from_attr(value.into_attr()).unwrap());
+    }
+
+    #[test]
+    fn string_attr() {
+        let value = "test".to_string();
+        assert_eq!(value, String::from_attr(value.clone().into_attr()).unwrap());
+    }
+
+    #[test]
+    fn byte_vec_attr() {
+        let value = "test".as_bytes().to_vec();
+        assert_eq!(
+            value,
+            Vec::<u8>::from_attr(value.clone().into_attr()).unwrap()
+        );
     }
 }
