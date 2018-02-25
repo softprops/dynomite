@@ -122,13 +122,13 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// use rusoto_dynamodb::AttributeValue;
 ///
 /// fn main() {
-/// assert_eq!(
-///   "test".to_string().into_attr().s,
-///    AttributeValue {
-///      s: Some("test".to_string()),
-///      ..Default::default()
-///    }.s
-///  );
+///   assert_eq!(
+///     "test".to_string().into_attr().s,
+///      AttributeValue {
+///        s: Some("test".to_string()),
+///        ..Default::default()
+///      }.s
+///    );
 /// }
 /// ```
 pub trait Attribute: Sized {
