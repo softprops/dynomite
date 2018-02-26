@@ -9,7 +9,7 @@
 
 Goals
 
-* make more interacting with dynamodb in rust productive
+* make interacting with dynamodb in rust a productive experience
 * make use of rust's type safty features
 * commitment to support stable rust
 * commitment to documentation
