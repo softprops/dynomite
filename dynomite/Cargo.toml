@@ -7,6 +7,7 @@ license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 
 [dependencies]
+failure = "0.1"
 rusoto_core = "^0"
 rusoto_dynamodb = "^0"
 uuid = { version = "0.6", features = ["v4"], optional = true }

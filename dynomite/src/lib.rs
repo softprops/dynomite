@@ -35,6 +35,8 @@
 //! the [dynomite-derive](../dynomite_derive/index.html) crate which utilizes a technique you may be familiar
 //! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
 
+#[macro_use]
+extern crate failure;
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
 #[cfg(feature = "uuid")]
@@ -44,8 +46,11 @@ use std::collections::{HashMap, HashSet};
 
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
-
 use rusoto_dynamodb::AttributeValue;
+
+pub mod error;
+
+pub use error::AttributeError;
 
 /// type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
@@ -60,7 +65,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// extern crate dynomite;
 ///
 /// use std::collections::HashMap;
-/// use dynomite::{Item, Attribute, FromAttributes, Attributes};
+/// use dynomite::{AttributeError, Item, Attribute, FromAttributes, Attributes};
 /// use rusoto_dynamodb::AttributeValue;
 ///
 /// #[derive(PartialEq,Debug, Clone)]
@@ -79,11 +84,11 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// impl FromAttributes for Person {
 ///    fn from_attrs(
 ///      attrs: Attributes
-///    ) -> Result<Self, String> {
+///    ) -> Result<Self, AttributeError> {
 ///      Ok(Self {
 ///        id: attrs.get("id")
 ///          .and_then(|val| val.s.clone())
-///          .ok_or("missing id".to_string())?
+///          .ok_or(AttributeError::MissingField { name: "id".into() })?
 ///      })
 ///    }
 /// }
@@ -102,8 +107,8 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 /// ```
 pub trait Item: Into<Attributes> + FromAttributes {
-    /// Returns the set of attributes which make up this items key
-    fn key(&self) -> HashMap<String, AttributeValue>;
+    /// Returns the set of attributes which make up this item's primary key
+    fn key(&self) -> Attributes;
 }
 
 /// A type capable of being converted into an attrbute value or converted from
@@ -135,13 +140,13 @@ pub trait Attribute: Sized {
     /// Returns a conversion into an `AttributeValue`
     fn into_attr(self: Self) -> AttributeValue;
     /// Returns a fallible conversion from an `AttributeValue`
-    fn from_attr(value: AttributeValue) -> Result<Self, String>;
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError>;
 }
 
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
-    fn from_attrs(attrs: Attributes) -> Result<Self, String>;
+    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
 }
 
 impl<T: Item> Attribute for T {
@@ -151,10 +156,10 @@ impl<T: Item> Attribute for T {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value
             .m
-            .ok_or("missing".into())
+            .ok_or(AttributeError::InvalidType)
             .and_then(|attrs| T::from_attrs(attrs))
     }
 }
@@ -167,11 +172,11 @@ impl Attribute for Uuid {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value
             .s
-            .ok_or("missing".into())
-            .and_then(|s| Uuid::parse_str(s.as_str()).map_err(|_| "invalid uuid".to_string()))
+            .ok_or(AttributeError::InvalidType)
+            .and_then(|s| Uuid::parse_str(s.as_str()).map_err(|_| AttributeError::InvalidFormat))
     }
 }
 
@@ -182,8 +187,8 @@ impl Attribute for String {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
-        value.s.ok_or("missing".into())
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value.s.ok_or(AttributeError::InvalidType)
     }
 }
 
@@ -194,10 +199,10 @@ impl Attribute for HashSet<String> {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value
             .ss
-            .ok_or("missing".into())
+            .ok_or(AttributeError::InvalidType)
             .map(|mut value| value.drain(..).collect())
     }
 }
@@ -209,10 +214,10 @@ impl Attribute for HashSet<Vec<u8>> {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value
             .bs
-            .ok_or("missing".into())
+            .ok_or(AttributeError::InvalidType)
             .map(|mut value| value.drain(..).collect())
     }
 }
@@ -224,8 +229,8 @@ impl Attribute for bool {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
-        value.bool.ok_or("missing".into())
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value.bool.ok_or(AttributeError::InvalidType)
     }
 }
 
@@ -236,8 +241,8 @@ impl Attribute for Vec<u8> {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
-        value.b.ok_or("missing".into())
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value.b.ok_or(AttributeError::InvalidType)
     }
 }
 
@@ -248,10 +253,10 @@ impl<T: Item> Attribute for Vec<T> {
             ..Default::default()
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value
             .l
-            .ok_or("missing".to_string())?
+            .ok_or(AttributeError::InvalidType)?
             .into_iter()
             .map(Attribute::from_attr)
             .collect()
@@ -265,16 +270,11 @@ impl<T: Attribute> Attribute for Option<T> {
             _ => Default::default(),
         }
     }
-    fn from_attr(value: AttributeValue) -> Result<Self, String> {
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         match Attribute::from_attr(value) {
             Ok(value) => Ok(Some(value)),
-            Err(err) => {
-                if "missing" == err {
-                    Ok(None)
-                } else {
-                    Err(err)
-                }
-            }
+            Err(AttributeError::InvalidType) => Ok(None),
+            Err(err) => Err(err),
         }
     }
 }
@@ -288,12 +288,12 @@ macro_rules! numeric_attr {
                     ..Default::default()
                 }
             }
-            fn from_attr(value: AttributeValue) -> Result<Self, String> {
+            fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
                 value.n
-                    .ok_or("missing".into())
+                    .ok_or(AttributeError::InvalidType)
                     .and_then(|num| {
                         num.parse()
-                            .map_err(|_| "invalid value".into())
+                            .map_err(|_| AttributeError::InvalidFormat)
                     })
             }
         }
@@ -309,11 +309,11 @@ macro_rules! numeric_collection_attr {
                     ..Default::default()
                 }
             }
-            fn from_attr(value: AttributeValue) -> Result<Self, String> {
+            fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
                 let mut nums = value.ns
-                    .ok_or("missing".to_string())?;
-                let mut results: Vec<Result<$type, String>> =
-                    nums.drain(..).map(|ns| ns.parse().map_err(|_| "invalid type".to_string())).collect();
+                    .ok_or(AttributeError::InvalidType)?;
+                let mut results: Vec<Result<$type, AttributeError>> =
+                    nums.drain(..).map(|ns| ns.parse().map_err(|_| AttributeError::InvalidFormat)).collect();
                 let collected = results.drain(..).collect();
                 collected
             }
@@ -354,7 +354,7 @@ mod test {
     #[test]
     fn uuid_invalid_attr() {
         assert_eq!(
-            Err("missing".to_string()),
+            Err(AttributeError::InvalidType),
             Uuid::from_attr(AttributeValue {
                 bool: Some(true),
                 ..Default::default()

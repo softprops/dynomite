@@ -104,10 +104,10 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 
 ///
 /// impl ::dynomite::FromAttributes for Name {
-///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, String> {
+///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
 ///     Ok(Self {
 ///        field_name: ::dynomite::Attribute::from_attr(
-///           item.remove("field_name").ok_or("missing".to_string())?
+///           item.remove("field_name").ok_or(Error::MissingField { name: "field_name".into() })?
 ///        )
 ///      })
 ///   }
@@ -126,18 +126,19 @@ fn get_from_attributes_trait(name: &Ident, fields: &[Field]) -> Tokens {
 fn get_from_attributes_function(fields: &[Field]) -> Tokens {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
+    let err = quote!(::dynomite::AttributeError);
     let field_conversions = fields.iter().map(|field| {
         let field_name = &field.ident;
         quote! {
             #field_name: #from_attribute_value(
                 attrs.remove(stringify!(#field_name))
-                    .ok_or("missing".to_string())?
+                    .ok_or(::dynomite::AttributeError::MissingField { name: stringify!(#field_name).to_string() })?
             )?
         }
     });
 
     quote! {
-        fn from_attrs(mut attrs: #attributes) -> Result<Self, String> {
+        fn from_attrs(mut attrs: #attributes) -> Result<Self, #err> {
             Ok(Self {
                 #(#field_conversions),*
             })
