@@ -33,7 +33,7 @@ dynomite-derive = "0.0.0"
 
 You can find some example application code under [dynomite-derive/examples](dynomite-derive/examples)
 
-### Altnatives
+### Alternatives
 
 The [korat](https://crates.io/crates/korat) crate was the the original inspiration for this crate. It's focus is very similar but fell short on a few
 accounts. It does not work on stable rust and it's api is not documented. Dynomite intends to build on similar features as well as build out others.
