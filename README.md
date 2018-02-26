@@ -9,8 +9,8 @@
 
 Goals
 
-* make interacting with dynamodb in rust a productive experience
-* make use of rust's type safty features
+* make interacting with [dynamodb](https://aws.amazon.com/dynamodb/) in [rust](https://www.rust-lang.org/) a productive experience
+* exploit rust's type safety features
 * commitment to support stable rust
 * commitment to documentation
 
