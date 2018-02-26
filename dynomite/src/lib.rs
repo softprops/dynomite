@@ -3,7 +3,7 @@
 //! which makes working with aws Dynamodb more productive in rust.
 //!
 //! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
-//! as a managed service. It's API model is a table with a collection of items
+//! as a managed service. It's API is a table with a collection of items
 //! which are a composed of a collection of named attributes which can be one
 //! of a finite set of types. You can learn more about its core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
@@ -34,6 +34,19 @@
 //! You can optionally opt into having Item types derived for you by using
 //! the [dynomite-derive](../dynomite_derive/index.html) crate which utilizes a technique you may be familiar
 //! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
+//!
+//! # Errors
+//!
+//! Operations that may fail typically result in an
+//! [AttributeError](error/enum.AttributeError.html).
+//!
+//! # Cargo Features
+//!
+//! This crate has one Cargo feature, `uuid`,
+//! which adds support for implementing `Attribute` for
+//! the [uuid](https://crates.io/crates/uuid) crate, useful for producing
+//! unique identifiers for items. This feature is enabled by default.
+//!
 
 #[macro_use]
 extern crate failure;
