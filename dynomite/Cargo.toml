@@ -6,6 +6,10 @@ description = "provides type conversions between dynamodb types and native rust 
 license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 
+[badges]
+travis-ci = { repository = "softprops/dynomite" }
+coveralls = { repository = "softprops/dynomite" }
+
 [dependencies]
 failure = "0.1"
 rusoto_core = "^0"

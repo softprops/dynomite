@@ -6,6 +6,9 @@ description = "derives dynamodb dynamoite types from native rust struct types"
 license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 
+[badges]
+travis-ci = { repository = "softprops/dynomite" }
+
 [lib]
 proc-macro = true
 

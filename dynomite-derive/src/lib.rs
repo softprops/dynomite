@@ -1,4 +1,5 @@
-//! Dynomite Item type derivation for structs
+//! Dynomite-derive provides procedural macros for deriving dynamo types
+//! for your structs
 //!
 //! # examples
 //!
