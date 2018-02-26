@@ -6,9 +6,10 @@
 
 Goals
 
-* make interacting with [dynamodb](https://aws.amazon.com/dynamodb/) in [rust](https://www.rust-lang.org/) a productive experience
+* make writing [dynamodb](https://aws.amazon.com/dynamodb/) applications in [rust](https://www.rust-lang.org/) a productive experience
 * exploit rust's type safety features
-* commitment to supporting applications build using stable rust
+* leverage existing work of the [rusoto](https://github.com/rusoto/rusoto) rust project
+* commitment to supporting applications built using stable rust
 * commitment to documentation
 
 Please see [API documentation](https://softprops.github.io/dynomite) for how
@@ -35,7 +36,7 @@ You can find some example application code under [dynomite-derive/examples](dyno
 
 ## Planned work
 
-* retryable extentions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+* retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
 
 ### Alternatives
 

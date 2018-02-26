@@ -1,52 +1,54 @@
-//! Dynomite provides a set of interfaces on top of
+//! Dynomite provides a set of interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which makes working with aws Dynamodb more productive in rust.
+//! which make working with aws Dynamodb more productive in rust.
 //!
 //! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
-//! as a managed service. It's API is a table with a collection of items
-//! which are a composed of a collection of named attributes which can be one
-//! of a finite set of types. You can learn more about its core components
+//! as a managed service. It's abstractions include a table comprised of a collection
+//!  of items which are a composed of a collection of named attributes which
+//! can be one of a finite set of types. You can learn more about its core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! interfaces for interactinvg with with the dynamodb API. It's abstraction
-//! for Items is essentially a `HashMap` of `String`
+//! interfaces for interacting with the dynamodb API. It's representation
+//! of Items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
 //! types which fits dynamodb's nosql contract well.
 //! AttributeValues are able to represent multiple types of values in a
 //! single container type.
 //!
-//! However, when programming in rust we often have stricter, move concise typing
-//! tools when working with data. Dynomite is intended to make those types
-//! interface more transparently with rusoto item types.
+//! However, when programming in rust we're afforded stricter, more concise typing
+//! tools than HashMaps when working with data. Dynomite is intended to make those types
+//! interface more transparently with rusoto item type apis.
 //!
 //! Dynomite provides a set of building blocks for making interactions with
 //! dynamodb feel more natural for rust's native types.
 //!
 //! At a low level, [Attribute](dynomite/trait.Attribute.html) type implementations
 //! provide conversion interfaces to and from native rust types which represent
-//! dynamodb's notion of "attributes"
+//! dynamodb's notion of "attributes".
 //!
 //! At a higher level, [Item](dynomite/trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
 //! dynamodb's notion of "items".
 //!
-//! You can optionally opt into having Item types derived for you by using
-//! the [dynomite-derive](../dynomite_derive/index.html) crate which utilizes a technique you may be familiar
+//! You can optionally opt into having `Item` types derived for you by using
+//! the [dynomite-derive](../dynomite_derive/index.html) crate,
+//! which utilizes a technique you may be familiar
 //! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
 //!
 //! # Errors
 //!
 //! Operations that may fail typically result in an
 //! [AttributeError](error/enum.AttributeError.html). These errors were
-//! designed to work well within the [failure crate](https://crates.io/crates/failure)
-//! ecosystem.
+//! designed to work well with the [failure](https://crates.io/crates/failure)
+//! crate ecosystem.
 //!
 //! # Cargo Features
 //!
-//! This crate has one Cargo feature, `uuid`,
+//! This crate has one Cargo feature, "uuid",
 //! which adds support for implementing `Attribute` for
-//! the [uuid](https://crates.io/crates/uuid) crate, useful for producing
+//! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
+//! type for producing and representing
 //! unique identifiers for items. This feature is enabled by default.
 //!
 
