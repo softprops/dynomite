@@ -2,8 +2,6 @@
 
 > dynomite makes rusoto_dynamodb fit your types (and visa versa)
 
-## [API Documentation](https://softprops.github.io/dynomite)
-
 ## Overview
 
 Goals
