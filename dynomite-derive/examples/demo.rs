@@ -9,6 +9,9 @@ use uuid::Uuid;
 use rusoto_core::{default_tls_client, DefaultCredentialsProvider, Region};
 use rusoto_dynamodb::*;
 
+// for Item trait interface resolution
+use dynomite::Item;
+
 #[derive(Item, Debug, Clone)]
 pub struct Book {
   #[hash]
@@ -55,6 +58,10 @@ fn main() {
     id: Uuid::new_v4(),
     title: "rust".into(),
   };
+
+  // print the key for this book
+  // requires bringing `dynomite::Item` into scope
+  println!("key {:#?}", book.key());
 
   // add a book to the shelf
   println!(
