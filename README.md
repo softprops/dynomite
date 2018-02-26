@@ -5,6 +5,18 @@
 
 ## [API Documentation](https://softprops.github.io/dynomite)
 
+## Overview
+
+Goals
+
+* make more interacting with dynamodb in rust productive
+* make use of rust's type safty features
+* commitment to support stable rust
+* commitment to documentation
+
+Please see [API documentation](https://softprops.github.io/dynomite) for how
+to get started
+
 ## Install
 
 In your Cargo.toml file, add the following under the `[dependencies]` heading

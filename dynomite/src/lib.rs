@@ -1,6 +1,6 @@
 //! Dynomite provides a set of interfaces on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which makes working with aws Dynamodb more comfortable in rust.
+//! which makes working with aws Dynamodb more productive in rust.
 //!
 //! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
 //! as a managed service. It's API model is a table with a collection of items
