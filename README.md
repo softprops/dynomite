@@ -20,14 +20,14 @@ to get started
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.0.0"
+dynomite = "0.1"
 ```
 
 Optionally, you can install a companion crate which allows you to derive
 dynomite types for your structs at compile time
 
 ```toml
-dynomite-derive = "0.0.0"
+dynomite-derive = "0.1"
 ```
 
 ## Examples
