@@ -38,7 +38,9 @@
 //! # Errors
 //!
 //! Operations that may fail typically result in an
-//! [AttributeError](error/enum.AttributeError.html).
+//! [AttributeError](error/enum.AttributeError.html). These errors were
+//! designed to work well within the [failure crate](https://crates.io/crates/failure)
+//! ecosystem.
 //!
 //! # Cargo Features
 //!
