@@ -6,11 +6,11 @@
 
 Goals
 
-* make writing [dynamodb](https://aws.amazon.com/dynamodb/) applications in [rust](https://www.rust-lang.org/) a productive experience
-* exploit rust's type safety features
-* leverage existing work of the [rusoto](https://github.com/rusoto/rusoto) rust project
-* commitment to supporting applications built using stable rust
-* commitment to documentation
+* ⚡ make writing [dynamodb](https://aws.amazon.com/dynamodb/) applications in [rust](https://www.rust-lang.org/) a productive experience
+* 🦀 exploit rust's type safety features
+* 👩‍💻 leverage existing work of the [rusoto](https://github.com/rusoto/rusoto) rust project
+* ☔ commitment to supporting applications built using stable rust
+* 📚 commitment to documentation
 
 Please see [API documentation](https://softprops.github.io/dynomite) for how
 to get started
