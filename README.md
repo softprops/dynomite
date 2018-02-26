@@ -33,6 +33,10 @@ dynomite-derive = "0.0.0"
 
 You can find some example application code under [dynomite-derive/examples](dynomite-derive/examples)
 
+## Planned work
+
+* retryable extentions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+
 ### Alternatives
 
 The [korat](https://crates.io/crates/korat) crate was the the original inspiration for this crate. It's focus is very similar but fell short on a few
