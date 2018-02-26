@@ -28,10 +28,11 @@ fn main() {
     Region::UsEast1,
   );
 
-  // create a book table. if this table does not already exists
+  // create a book table with a single string (S) primary key.
+  // if this table does not already exists
   // this may take a second or two to provision.
   // it will fail if this table already exists but that's okay,
-  // this is just an example
+  // this is just an example :)
   let table_name = "books".to_string();
   let _ = client.create_table(&CreateTableInput {
     table_name: table_name.clone(),
@@ -68,7 +69,17 @@ fn main() {
     "{:#?}",
     client.put_item(&PutItemInput {
       table_name: table_name.clone(),
-      item: book.into(), // convert book into it's attribute representation
+      item: book.clone().into(), // convert book into it's attribute representation
+      ..Default::default()
+    })
+  );
+
+  // get the book by it's application generated key
+  println!(
+    "{:#?}",
+    client.get_item(&GetItemInput {
+      table_name: table_name.clone(),
+      key: book.clone().key(), // get a book by key
       ..Default::default()
     })
   );
