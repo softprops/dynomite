@@ -29,4 +29,8 @@ dynomite types for your structs at compile time
 dynomite-derive = "0.0.0"
 ```
 
+## Examples
+
+You can find some example application code under [dynomite-derive/examples](dynomite-derive/examples)
+
 Doug Tangren (softprops) 2018
