@@ -43,19 +43,92 @@ extern crate syn;
 
 use proc_macro::TokenStream;
 use quote::Tokens;
-use syn::{DeriveInput, Field, Ident, Visibility};
-use syn::Body::Struct;
+use syn::{DeriveInput, Field, Ident, Variant, Visibility};
+use syn::Body::{Enum, Struct};
 use syn::VariantData::Struct as StructData;
 
 #[proc_macro_derive(Item, attributes(hash, range))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_macro_input(&s).unwrap();
-    let gen = expand(&ast);
+    let gen = expand_item(&ast);
     gen.parse().unwrap()
 }
 
-fn expand(ast: &DeriveInput) -> Tokens {
+#[proc_macro_derive(Attribute)]
+pub fn derive_attr(input: TokenStream) -> TokenStream {
+    let s = input.to_string();
+    let ast = syn::parse_macro_input(&s).unwrap();
+    let gen = expand_attr(&ast);
+    gen.parse().unwrap()
+}
+
+fn expand_attr(ast: &DeriveInput) -> Tokens {
+    let name = &ast.ident;
+    match ast.body {
+        Enum(ref variants) => make_dynomite_attr(name, variants),
+        _ => panic!("Dynomite Attributes can only be generated for enum types"),
+    }
+}
+
+/// impl ::dynomite::Attribute for Name {
+///   fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
+///     let arm = self match {
+///        Name::Variant => "Variant".to_string()
+///     };
+///     ::rusoto_dynamodb::AttributeValue {
+///        s: Some(arm),
+///        ..Default::default()
+///     }
+///   }
+///   fn from_attr(value: ::rusoto_dynamodb::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+///     value.s.ok_or(::dynomite::AttributeError::InvalidType)
+///       .and_then(|value| match &value[..] {
+///          "Variant" => Ok(Name::Variant),
+///          _ => Err(::dynomite::AttributeError::InvalidFormat)
+///       })
+///   }
+/// }
+fn make_dynomite_attr(name: &Ident, variants: &[Variant]) -> Tokens {
+    let attr = quote!(::dynomite::Attribute);
+    let err = quote!(::dynomite::AttributeError);
+    let into_match_arms = variants.iter().map(|var| {
+        let vname = &var.ident;
+        quote! {
+            #name::#vname => stringify!(#vname).to_string(),
+        }
+    });
+    let from_match_arms = variants.iter().map(|var| {
+        let vname = &var.ident;
+        quote! {
+            stringify!(#vname) => Ok(#name::#vname),
+        }
+    });
+    quote!{
+        impl #attr for #name {
+            fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
+                let arm = match self {
+                    #(#into_match_arms)*
+                };
+                ::rusoto_dynamodb::AttributeValue {
+                    s: Some(arm),
+                    ..Default::default()
+                }
+            }
+            fn from_attr(value: ::rusoto_dynamodb::AttributeValue) -> Result<Self, #err> {
+                value.s.ok_or(::dynomite::AttributeError::InvalidType)
+                    .and_then(|value| {
+                        match &value[..] {
+                             #(#from_match_arms)*
+                             _ => Err(::dynomite::AttributeError::InvalidFormat)
+                        }
+                    })
+            }
+        }
+    }
+}
+
+fn expand_item(ast: &DeriveInput) -> Tokens {
     let name = &ast.ident;
     let vis = &ast.vis;
     match ast.body {
@@ -65,7 +138,7 @@ fn expand(ast: &DeriveInput) -> Tokens {
 }
 
 fn make_dynomite_item(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
-    let dynamodb_traits = get_dynomite_traits(vis, name, fields);
+    let dynamodb_traits = get_dynomite_item_traits(vis, name, fields);
     let from_attribute_map = get_from_attributes_trait(name, fields);
     let to_attribute_map = get_to_attribute_map_trait(name, fields);
 
@@ -77,14 +150,12 @@ fn make_dynomite_item(vis: &Visibility, name: &Ident, fields: &[Field]) -> Token
 }
 
 fn get_to_attribute_map_trait(name: &Ident, fields: &[Field]) -> Tokens {
-    let attribute_map = quote!(
-        ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>
-    );
+    let attributes = quote!(::dynomite::Attributes);
     let from = quote!(::std::convert::From);
     let to_attribute_map = get_to_attribute_map_function(name, fields);
 
     quote! {
-        impl #from<#name> for #attribute_map {
+        impl #from<#name> for #attributes {
             #to_attribute_map
         }
     }
@@ -156,15 +227,15 @@ fn get_from_attributes_function(fields: &[Field]) -> Tokens {
     }
 }
 
-fn get_dynomite_traits(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
-    let impls = get_impls(vis, name, fields);
+fn get_dynomite_item_traits(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+    let impls = get_item_impls(vis, name, fields);
 
     quote! {
         #impls
     }
 }
 
-fn get_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+fn get_item_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
     let item_trait = get_item_trait(name, fields);
     let key_struct = get_key_struct(vis, name, fields);
 
