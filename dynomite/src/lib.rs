@@ -48,6 +48,7 @@
 //! unique identifiers for items. This feature is enabled by default.
 //!
 
+#[deny(missing_docs)]
 #[macro_use]
 extern crate failure;
 extern crate rusoto_core;
