@@ -15,7 +15,7 @@
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
 //! struct Person {
-//!   id: String
+//!   #[hash] id: String
 //! }
 //!
 //! fn main() {
@@ -24,6 +24,15 @@
 //!   let attributes: Attributes = person.clone().into();
 //!   // convert attributes into person type
 //!   assert_eq!(person, Person::from_attrs(attributes).unwrap());
+//!
+//!   // dynamodb types require only primary key attributes and may contain
+//!   // other fields. when looking up items only those key attributes are required
+//!   // dynomite derives a new {Name}Key struct for your which contains
+//!   // only those and also implements Item
+//!   let key = PersonKey { id: "123".into() };
+//!   let key_attributes: Attributes = key.clone().into();
+//!   // convert attributes into person type
+//!   assert_eq!(key, PersonKey::from_attrs(key_attributes).unwrap());
 //! }
 //! ```
 
@@ -203,9 +212,10 @@ fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
 
 fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
     field_with_attribute(fields, attribute_name).map(|field| {
-        field
-            .ident
-            .expect(&format!("{} should have an identifier", attribute_name))
+        field.ident.expect(&format!(
+            "should have an identifier with an {} attribute",
+            attribute_name
+        ))
     })
 }
 
@@ -241,7 +251,7 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
 }
 
 /// #[derive](Item, Debug, Clone, PartialEq)
-/// pub struct Name {
+/// pub struct NameKey {
 ///    hash_key,
 ///    range_key
 /// }
