@@ -2,7 +2,7 @@
 name = "dynomite-derive"
 version = "0.1.1"
 authors = ["softprops <d.tangren@gmail.com>"]
-description = "derives dynamodb dynamoite types from native rust struct types"
+description = "derives dynamodb dynomite types from native rust struct types"
 license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 readme = "README.md"
