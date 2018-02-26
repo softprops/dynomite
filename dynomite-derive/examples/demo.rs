@@ -68,7 +68,7 @@ fn main() {
     "{:#?}",
     client.put_item(&PutItemInput {
       table_name: table_name.clone(),
-      item: book.into(),
+      item: book.into(), // convert book into it's attribute representation
       ..Default::default()
     })
   );
