@@ -17,3 +17,4 @@ syn = "0.11"
 
 [dev-dependencies]
 rusoto_core = "^0"
+uuid = { version = "0.6", features = ["v4"] }
