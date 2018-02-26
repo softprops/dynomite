@@ -73,7 +73,7 @@ fn expand_attr(ast: &DeriveInput) -> Tokens {
 
 /// impl ::dynomite::Attribute for Name {
 ///   fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
-///     let arm = self match {
+///     let arm = match self {
 ///        Name::Variant => "Variant".to_string()
 ///     };
 ///     ::rusoto_dynamodb::AttributeValue {
@@ -104,6 +104,7 @@ fn make_dynomite_attr(name: &Ident, variants: &[Variant]) -> Tokens {
             stringify!(#vname) => Ok(#name::#vname),
         }
     });
+
     quote!{
         impl #attr for #name {
             fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
@@ -117,11 +118,9 @@ fn make_dynomite_attr(name: &Ident, variants: &[Variant]) -> Tokens {
             }
             fn from_attr(value: ::rusoto_dynamodb::AttributeValue) -> Result<Self, #err> {
                 value.s.ok_or(::dynomite::AttributeError::InvalidType)
-                    .and_then(|value| {
-                        match &value[..] {
-                             #(#from_match_arms)*
-                             _ => Err(::dynomite::AttributeError::InvalidFormat)
-                        }
+                    .and_then(|value| match &value[..] {
+                        #(#from_match_arms)*
+                        _ => Err(::dynomite::AttributeError::InvalidFormat)
                     })
             }
         }
