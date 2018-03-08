@@ -6,7 +6,7 @@ extern crate rusoto_dynamodb;
 extern crate uuid;
 
 use uuid::Uuid;
-use rusoto_core::{default_tls_client, DefaultCredentialsProvider, Region};
+use rusoto_core::Region;
 use rusoto_dynamodb::*;
 
 // for Item trait interface resolution
@@ -22,9 +22,7 @@ pub struct Book {
 // this will create a rust book shelf in your aws account!
 fn main() {
   // create rusoto client
-  let client = DynamoDbClient::new(
-    default_tls_client().unwrap(),
-    DefaultCredentialsProvider::new().unwrap(),
+  let client = DynamoDbClient::simple(
     Region::UsEast1,
   );
 
@@ -53,7 +51,7 @@ fn main() {
       write_capacity_units: 1,
     },
     ..Default::default()
-  });
+  }).sync();
 
   let book = Book {
     id: Uuid::new_v4(),
@@ -71,7 +69,7 @@ fn main() {
       table_name: table_name.clone(),
       item: book.clone().into(), // convert book into it's attribute representation
       ..Default::default()
-    })
+    }).sync()
   );
 
   // get the book by it's application generated key
@@ -81,6 +79,6 @@ fn main() {
       table_name: table_name.clone(),
       key: book.clone().key(), // get a book by key
       ..Default::default()
-    })
+    }).sync()
   );
 }
