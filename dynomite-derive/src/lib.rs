@@ -43,9 +43,9 @@ extern crate syn;
 
 use proc_macro::TokenStream;
 use quote::Tokens;
-use syn::{DeriveInput, Field, Ident, Variant, Visibility};
 use syn::Body::{Enum, Struct};
 use syn::VariantData::Struct as StructData;
+use syn::{DeriveInput, Field, Ident, Variant, Visibility};
 
 #[proc_macro_derive(Item, attributes(hash, range))]
 pub fn derive_item(input: TokenStream) -> TokenStream {

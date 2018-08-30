@@ -62,9 +62,9 @@ extern crate uuid;
 
 use std::collections::{HashMap, HashSet};
 
+use rusoto_dynamodb::AttributeValue;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
-use rusoto_dynamodb::AttributeValue;
 
 pub mod error;
 
@@ -307,12 +307,10 @@ macro_rules! numeric_attr {
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-                value.n
+                value
+                    .n
                     .ok_or(AttributeError::InvalidType)
-                    .and_then(|num| {
-                        num.parse()
-                            .map_err(|_| AttributeError::InvalidFormat)
-                    })
+                    .and_then(|num| num.parse().map_err(|_| AttributeError::InvalidFormat))
             }
         }
     };
@@ -328,10 +326,11 @@ macro_rules! numeric_collection_attr {
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-                let mut nums = value.ns
-                    .ok_or(AttributeError::InvalidType)?;
-                let mut results: Vec<Result<$type, AttributeError>> =
-                    nums.drain(..).map(|ns| ns.parse().map_err(|_| AttributeError::InvalidFormat)).collect();
+                let mut nums = value.ns.ok_or(AttributeError::InvalidType)?;
+                let mut results: Vec<Result<$type, AttributeError>> = nums
+                    .drain(..)
+                    .map(|ns| ns.parse().map_err(|_| AttributeError::InvalidFormat))
+                    .collect();
                 let collected = results.drain(..).collect();
                 collected
             }
