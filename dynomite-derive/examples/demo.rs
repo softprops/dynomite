@@ -5,9 +5,8 @@ extern crate rusoto_core;
 extern crate rusoto_dynamodb;
 extern crate uuid;
 
-use uuid::Uuid;
-use rusoto_core::Region;
 use rusoto_dynamodb::*;
+use uuid::Uuid;
 
 // for Item trait interface resolution
 use dynomite::Item;
@@ -22,9 +21,7 @@ pub struct Book {
 // this will create a rust book shelf in your aws account!
 fn main() {
   // create rusoto client
-  let client = DynamoDbClient::simple(
-    Region::UsEast1,
-  );
+  let client = DynamoDbClient::new(Default::default());
 
   // create a book table with a single string (S) primary key.
   // if this table does not already exists
@@ -32,26 +29,24 @@ fn main() {
   // it will fail if this table already exists but that's okay,
   // this is just an example :)
   let table_name = "books".to_string();
-  let _ = client.create_table(&CreateTableInput {
-    table_name: table_name.clone(),
-    key_schema: vec![
-      KeySchemaElement {
+  let _ = client
+    .create_table(CreateTableInput {
+      table_name: table_name.clone(),
+      key_schema: vec![KeySchemaElement {
         attribute_name: "id".into(),
         key_type: "HASH".into(),
-      },
-    ],
-    attribute_definitions: vec![
-      AttributeDefinition {
+      }],
+      attribute_definitions: vec![AttributeDefinition {
         attribute_name: "id".into(),
         attribute_type: "S".into(),
+      }],
+      provisioned_throughput: ProvisionedThroughput {
+        read_capacity_units: 1,
+        write_capacity_units: 1,
       },
-    ],
-    provisioned_throughput: ProvisionedThroughput {
-      read_capacity_units: 1,
-      write_capacity_units: 1,
-    },
-    ..Default::default()
-  }).sync();
+      ..Default::default()
+    })
+    .sync();
 
   let book = Book {
     id: Uuid::new_v4(),
@@ -65,20 +60,24 @@ fn main() {
   // add a book to the shelf
   println!(
     "{:#?}",
-    client.put_item(&PutItemInput {
-      table_name: table_name.clone(),
-      item: book.clone().into(), // convert book into it's attribute representation
-      ..Default::default()
-    }).sync()
+    client
+      .put_item(PutItemInput {
+        table_name: table_name.clone(),
+        item: book.clone().into(), // convert book into it's attribute representation
+        ..Default::default()
+      })
+      .sync()
   );
 
   // get the book by it's application generated key
   println!(
     "{:#?}",
-    client.get_item(&GetItemInput {
-      table_name: table_name.clone(),
-      key: book.clone().key(), // get a book by key
-      ..Default::default()
-    }).sync()
+    client
+      .get_item(GetItemInput {
+        table_name: table_name.clone(),
+        key: book.clone().key(), // get a book by key
+        ..Default::default()
+      })
+      .sync()
   );
 }
