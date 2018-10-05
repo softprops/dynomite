@@ -3,10 +3,9 @@
 use std::collections::HashMap;
 
 use futures::{stream, Future, Stream};
-use rusoto_dynamodb::{AttributeValue, DynamoDb};
 use rusoto_dynamodb::{
-  BackupSummary, ListBackupsError, ListBackupsInput, ListTablesError, ListTablesInput, QueryError,
-  QueryInput, ScanError, ScanInput,
+  AttributeValue, BackupSummary, DynamoDb, ListBackupsError, ListBackupsInput, ListTablesError,
+  ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
 
 /// Exention methods for DynamoDb implementations
