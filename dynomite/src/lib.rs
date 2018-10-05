@@ -55,6 +55,7 @@
 #[deny(missing_docs)]
 #[macro_use]
 extern crate failure;
+extern crate futures;
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
 #[cfg(feature = "uuid")]
@@ -67,6 +68,9 @@ use rusoto_dynamodb::AttributeValue;
 use uuid::Uuid;
 
 pub mod error;
+mod ext;
+
+pub use ext::DynamoDbExt;
 
 pub use error::AttributeError;
 
