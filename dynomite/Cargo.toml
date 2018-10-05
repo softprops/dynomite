@@ -16,8 +16,9 @@ coveralls = { repository = "softprops/dynomite" }
 
 [dependencies]
 failure = "0.1"
-rusoto_core = "^0"
-rusoto_dynamodb = "^0"
+futures = "*"
+rusoto_core = "0.34"
+rusoto_dynamodb = "0.34"
 uuid = { version = "0.6", features = ["v4"], optional = true }
 
 [features]
