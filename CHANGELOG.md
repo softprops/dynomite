@@ -1,3 +1,7 @@
+# 0.1.4
+
+* add Stream oriented extension interfaces for paginated apis
+
 # 0.1.3
 
 * fix examples for rusoto breaking changes in 0.32, async release

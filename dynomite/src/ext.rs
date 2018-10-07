@@ -1,6 +1,7 @@
 //!Eextention interfaces for rusoto `DynamoDb`
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use futures::{stream, Future, Stream};
 use rusoto_dynamodb::{
@@ -8,43 +9,42 @@ use rusoto_dynamodb::{
   ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
 
+type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
+
 /// Exention methods for DynamoDb implementations
 pub trait DynamoDbExt {
   // see https://github.com/boto/botocore/blob/5250e2e7a3209eb995283ac018aea37d3bc1da45/botocore/data/dynamodb/2012-08-10/paginators-1.json
 
   /// A `Stream` oriented version of `list_backups`
   fn stream_list_backups(
-    &'static self,
+    self,
     input: ListBackupsInput,
-  ) -> Box<Stream<Item = BackupSummary, Error = ListBackupsError>>;
+  ) -> DynomiteStream<BackupSummary, ListBackupsError>;
 
   /// A `Stream` oriented version of `list_tables`
-  fn stream_list_tables(
-    &'static self,
-    input: ListTablesInput,
-  ) -> Box<Stream<Item = String, Error = ListTablesError>>;
+  fn stream_list_tables(self, input: ListTablesInput) -> DynomiteStream<String, ListTablesError>;
 
   /// A `Stream` oriented version of `query`
   fn stream_query(
-    &'static self,
+    self,
     input: QueryInput,
-  ) -> Box<Stream<Item = HashMap<String, AttributeValue>, Error = QueryError>>;
+  ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError>;
 
   /// A `Stream` oriented version of `scan`
   fn stream_scan(
-    &'static self,
+    self,
     input: ScanInput,
-  ) -> Box<Stream<Item = HashMap<String, AttributeValue>, Error = ScanError>>;
+  ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError>;
 }
 
-impl<D> DynamoDbExt for D
+impl<D> DynamoDbExt for Arc<D>
 where
   D: DynamoDb + Send + Sync + 'static,
 {
   fn stream_list_backups(
-    &'static self,
+    self,
     input: ListBackupsInput,
-  ) -> Box<Stream<Item = BackupSummary, Error = ListBackupsError>> {
+  ) -> DynomiteStream<BackupSummary, ListBackupsError> {
     enum PageState {
       Start(Option<String>),
       Next(String),
@@ -59,6 +59,7 @@ where
         };
         Some(
           self
+            .clone()
             .list_backups(ListBackupsInput {
               exclusive_start_backup_arn,
               ..input.clone()
@@ -81,10 +82,7 @@ where
     )
   }
 
-  fn stream_list_tables(
-    &'static self,
-    input: ListTablesInput,
-  ) -> Box<Stream<Item = String, Error = ListTablesError>> {
+  fn stream_list_tables(self, input: ListTablesInput) -> DynomiteStream<String, ListTablesError> {
     enum PageState {
       Start(Option<String>),
       Next(String),
@@ -122,9 +120,9 @@ where
   }
 
   fn stream_query(
-    &'static self,
+    self,
     input: QueryInput,
-  ) -> Box<Stream<Item = HashMap<String, AttributeValue>, Error = QueryError>> {
+  ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError> {
     enum PageState {
       Start(Option<HashMap<String, AttributeValue>>),
       Next(HashMap<String, AttributeValue>),
@@ -159,9 +157,9 @@ where
   }
 
   fn stream_scan(
-    &'static self,
+    self,
     input: ScanInput,
-  ) -> Box<Stream<Item = HashMap<String, AttributeValue>, Error = ScanError>> {
+  ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError> {
     enum PageState {
       Start(Option<HashMap<String, AttributeValue>>),
       Next(HashMap<String, AttributeValue>),
@@ -176,6 +174,7 @@ where
         };
         Some(
           self
+            .clone()
             .scan(ScanInput {
               exclusive_start_key,
               ..input.clone()

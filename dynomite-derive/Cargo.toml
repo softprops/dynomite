@@ -23,5 +23,8 @@ quote = "0.3"
 syn = "0.11"
 
 [dev-dependencies]
+maplit = "1.0"
+tokio = "0.1"
+futures = "0.1"
 rusoto_core = "0.34"
 uuid = { version = "0.6", features = ["v4"] }

@@ -1,15 +1,25 @@
 extern crate dynomite;
 #[macro_use]
 extern crate dynomite_derive;
+extern crate futures;
 extern crate rusoto_core;
 extern crate rusoto_dynamodb;
+extern crate tokio;
 extern crate uuid;
+#[macro_use]
+extern crate maplit;
 
-use rusoto_dynamodb::*;
+use futures::stream::Stream;
+use rusoto_dynamodb::{
+    AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
+    KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
+};
+use std::sync::Arc;
+use tokio::runtime::Runtime;
 use uuid::Uuid;
 
-// for Item trait interface resolution
-use dynomite::Item;
+// for Item trait interface resolution and extensions
+use dynomite::{Attribute, DynamoDbExt, Item};
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
@@ -20,8 +30,9 @@ pub struct Book {
 
 // this will create a rust book shelf in your aws account!
 fn main() {
+    let mut rt = Runtime::new().expect("failed to initialize futures runtime");
     // create rusoto client
-    let client = DynamoDbClient::new(Default::default());
+    let client = Arc::new(DynamoDbClient::new(Default::default()));
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists
@@ -29,24 +40,22 @@ fn main() {
     // it will fail if this table already exists but that's okay,
     // this is just an example :)
     let table_name = "books".to_string();
-    let _ = client
-        .create_table(CreateTableInput {
-            table_name: table_name.clone(),
-            key_schema: vec![KeySchemaElement {
-                attribute_name: "id".into(),
-                key_type: "HASH".into(),
-            }],
-            attribute_definitions: vec![AttributeDefinition {
-                attribute_name: "id".into(),
-                attribute_type: "S".into(),
-            }],
-            provisioned_throughput: ProvisionedThroughput {
-                read_capacity_units: 1,
-                write_capacity_units: 1,
-            },
-            ..Default::default()
-        })
-        .sync();
+    let _ = rt.block_on(client.create_table(CreateTableInput {
+        table_name: table_name.clone(),
+        key_schema: vec![KeySchemaElement {
+            attribute_name: "id".into(),
+            key_type: "HASH".into(),
+        }],
+        attribute_definitions: vec![AttributeDefinition {
+            attribute_name: "id".into(),
+            attribute_type: "S".into(),
+        }],
+        provisioned_throughput: ProvisionedThroughput {
+            read_capacity_units: 1,
+            write_capacity_units: 1,
+        },
+        ..Default::default()
+    }));
 
     let book = Book {
         id: Uuid::new_v4(),
@@ -55,29 +64,51 @@ fn main() {
 
     // print the key for this book
     // requires bringing `dynomite::Item` into scope
-    println!("key {:#?}", book.key());
+    println!("book.key() {:#?}", book.key());
 
     // add a book to the shelf
     println!(
-        "{:#?}",
-        client
-            .put_item(PutItemInput {
-                table_name: table_name.clone(),
-                item: book.clone().into(), // convert book into it's attribute representation
-                ..Default::default()
-            })
-            .sync()
+        "put_item() result {:#?}",
+        rt.block_on(client.put_item(PutItemInput {
+            table_name: table_name.clone(),
+            item: book.clone().into(), // convert book into it's attribute representation
+            ..PutItemInput::default()
+        }))
     );
 
     // get the book by it's application generated key
     println!(
-        "{:#?}",
-        client
-            .get_item(GetItemInput {
-                table_name: table_name.clone(),
-                key: book.clone().key(), // get a book by key
-                ..Default::default()
-            })
-            .sync()
+        "get_item() result {:#?}",
+        rt.block_on(client.get_item(GetItemInput {
+            table_name: table_name.clone(),
+            key: book.clone().key(), // get a book by key
+            ..GetItemInput::default()
+        }))
+    );
+
+    println!(
+        "scan result {:#?}",
+        rt.block_on(
+            client
+                .clone()
+                .stream_scan(ScanInput {
+                    limit: Some(1),
+                    table_name: table_name.clone(),
+                    filter_expression: Some("title = :title".into()),
+                    expression_attribute_values: Some(hashmap!(
+                        ":title".into() => "rust".to_string().into_attr()
+                    )),
+                    ..ScanInput::default()
+                }).for_each(|item| Ok(println!("stream_scan() item {:#?}", item))),
+        ),
+    );
+
+    println!(
+        "get_item() result {:#?}",
+        rt.block_on(client.get_item(GetItemInput {
+            table_name: table_name.clone(),
+            key: book.clone().key(), // get a book by key
+            ..GetItemInput::default()
+        }))
     );
 }
