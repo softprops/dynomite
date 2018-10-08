@@ -1,13 +1,15 @@
 //! Extention interfaces for rusoto `DynamoDb`
 
+// Std lib
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use futures::{stream, Future, Stream};
-use rusoto_dynamodb::{
+// Third party
+use dynamodb::{
   AttributeValue, BackupSummary, DynamoDb, ListBackupsError, ListBackupsInput, ListTablesError,
   ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
+use futures::{stream, Future, Stream};
 
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 

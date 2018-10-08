@@ -58,13 +58,13 @@ extern crate failure;
 extern crate futures;
 extern crate rusoto_core;
 // reexported
-pub extern crate rusoto_dynamodb;
+pub extern crate rusoto_dynamodb as dynamodb;
 #[cfg(feature = "uuid")]
 extern crate uuid;
 
 use std::collections::{HashMap, HashSet};
 
-use rusoto_dynamodb::AttributeValue;
+use dynamodb::AttributeValue;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 

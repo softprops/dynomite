@@ -9,12 +9,19 @@ extern crate uuid;
 
 use std::sync::Arc;
 
-use dynomite::{rusoto_dynamodb, DynamoDbExt, FromAttributes, Item};
-use futures::{Future, Stream};
-use rusoto_dynamodb::{
+use dynamodb::{
     AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
     KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
 };
+// dynomite re-exports `rusoto_dynamodb` for convenience
+use dynomite::dynamodb;
+// this enables extension methods on `DynamoDB` clients
+use dynomite::DynamoDbExt;
+// this enables a types to be coersed from attribute maps
+use dynomite::FromAttributes;
+// this enables `Item` methods on types which Item is implemented or derived for
+use dynomite::Item;
+use futures::{Future, Stream};
 use tokio::runtime::Runtime;
 use uuid::Uuid;
 
