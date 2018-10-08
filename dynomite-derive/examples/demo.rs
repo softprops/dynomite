@@ -9,8 +9,8 @@ extern crate uuid;
 
 use std::sync::Arc;
 
-use dynomite::{rusoto_dynamodb, DynamoDbExt, Item};
-use futures::stream::Stream;
+use dynomite::{rusoto_dynamodb, DynamoDbExt, FromAttributes, Item};
+use futures::{Future, Stream};
 use rusoto_dynamodb::{
     AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
     KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
@@ -68,44 +68,55 @@ fn main() {
         "put_item() result {:#?}",
         rt.block_on(client.put_item(PutItemInput {
             table_name: table_name.clone(),
-            item: book.clone().into(), // convert book into it's attribute representation
+            item: book.clone().into(), // <= convert book into it's attribute map representation
             ..PutItemInput::default()
         }))
     );
 
-    // get the book by it's application generated key
     println!(
-        "get_item() result {:#?}",
-        rt.block_on(client.get_item(GetItemInput {
-            table_name: table_name.clone(),
-            key: book.clone().key(), // get a book by key
-            ..GetItemInput::default()
-        }))
+        "put_item() result {:#?}",
+        rt.block_on(
+            client.put_item(PutItemInput {
+                table_name: table_name.clone(),
+                // convert book into it's attribute map representation
+                item: Book {
+                    id: Uuid::new_v4(),
+                    title: "rust and beyond".into(),
+                }.into(),
+                ..PutItemInput::default()
+            })
+        )
     );
 
+    // scan through all pages of results in the books table for books who's title is "rust"
     println!(
         "scan result {:#?}",
         rt.block_on(
             client
                 .clone()
                 .stream_scan(ScanInput {
-                    limit: Some(1),
+                    limit: Some(1), // to demonstrate we're getting through more than one page
                     table_name: table_name.clone(),
                     filter_expression: Some("title = :title".into()),
                     expression_attribute_values: Some(attr_map!(
                         ":title" => "rust".to_string()
                     )),
                     ..ScanInput::default()
-                }).for_each(|item| Ok(println!("stream_scan() item {:#?}", item))),
+                })
+                .for_each(|item| Ok(println!("stream_scan() item {:#?}", Book::from_attrs(item)))) // attempt to convert a attribute map to a book type
         ),
     );
 
+    // get the "rust' book by the Book type's generated key
     println!(
         "get_item() result {:#?}",
-        rt.block_on(client.get_item(GetItemInput {
-            table_name: table_name.clone(),
-            key: book.clone().key(), // get a book by key
-            ..GetItemInput::default()
-        }))
+        rt.block_on(
+            client
+                .get_item(GetItemInput {
+                    table_name: table_name.clone(),
+                    key: book.clone().key(), // get a book by key
+                    ..GetItemInput::default()
+                }).map(|result| result.item.map(|item| Book::from_attrs(item))) // attempt to convert a attribute map to a book type
+        )
     );
 }
