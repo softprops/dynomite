@@ -1,4 +1,4 @@
-//!Eextention interfaces for rusoto `DynamoDb`
+//! Extention interfaces for rusoto `DynamoDb`
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -12,6 +12,10 @@ use rusoto_dynamodb::{
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 
 /// Exention methods for DynamoDb implementations
+///
+/// A default impl is provided for `Arc` instances of `DynamoDb` as the `Stream` interfaces require
+/// taking ownership. In practice clone your `Arc`'d client when calling the stream methods
+///
 pub trait DynamoDbExt {
   // see https://github.com/boto/botocore/blob/5250e2e7a3209eb995283ac018aea37d3bc1da45/botocore/data/dynamodb/2012-08-10/paginators-1.json
 

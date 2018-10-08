@@ -1,14 +1,13 @@
+#[macro_use]
 extern crate dynomite;
 #[macro_use]
 extern crate dynomite_derive;
 extern crate futures;
 extern crate rusoto_core;
-extern crate rusoto_dynamodb;
 extern crate tokio;
 extern crate uuid;
-#[macro_use]
-extern crate maplit;
 
+use dynomite::rusoto_dynamodb;
 use futures::stream::Stream;
 use rusoto_dynamodb::{
     AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
@@ -95,8 +94,8 @@ fn main() {
                     limit: Some(1),
                     table_name: table_name.clone(),
                     filter_expression: Some("title = :title".into()),
-                    expression_attribute_values: Some(hashmap!(
-                        ":title".into() => "rust".to_string().into_attr()
+                    expression_attribute_values: Some(attr_map!(
+                        ":title" => "rust".to_string()
                     )),
                     ..ScanInput::default()
                 }).for_each(|item| Ok(println!("stream_scan() item {:#?}", item))),

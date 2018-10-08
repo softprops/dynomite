@@ -57,7 +57,8 @@
 extern crate failure;
 extern crate futures;
 extern crate rusoto_core;
-extern crate rusoto_dynamodb;
+// reexported
+pub extern crate rusoto_dynamodb;
 #[cfg(feature = "uuid")]
 extern crate uuid;
 
@@ -361,6 +362,57 @@ numeric_collection_attr!(i64 => HashSet<i64>);
 numeric_collection_attr!(i64 => Vec<i64>);
 numeric_collection_attr!(f32 => Vec<f32>);
 numeric_collection_attr!(f64 => Vec<f64>);
+
+#[macro_export]
+/// Create a `HashMap<String, AttributeValue>` from a list of key-value pairs
+///
+/// This provides some convenience for some interfaces,
+///  like [query](../rusoto_dynamodb/struct.QueryInput.html#structfield.expression_attribute_values)
+/// where a map of this type is required.
+///
+/// This syntax for this macro is the same as [maplit](https://crates.io/crates/maplit).
+///
+/// A avoid using `&str` slices for values when creating a mapping for a `String` `AttributeValue`.
+/// Instead use a `String`
+///
+/// ## Example
+///
+/// ```
+/// #[macro_use] extern crate dynomite;
+/// use dynomite::rusoto_dynamodb::QueryInput;
+///
+/// # fn main() {
+/// let query = QueryInput {
+///   table_name: "some_table".into(),
+///   key_condition_expression: Some(
+///     "partitionKeyName = :partitionkeyval"
+///   ),
+///   expression_attribute_values: Some(
+///     attr_map! {
+///        ":partitionkeyval" => "rust".to_string()
+///      }
+///    )
+/// };
+/// # }
+macro_rules! attr_map {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(attr_map!(@single $rest)),*]));
+    ($($key:expr => $value:expr,)+) => { attr_map!($($key => $value),+) };
+    ($($key:expr => $value:expr),*) => {
+        {
+            let _cap = attr_map!(@count $($key),*);
+            let mut _map: ::std::collections::HashMap<String, ::dynomite::rusoto_dynamodb::AttributeValue> =
+              ::std::collections::HashMap::with_capacity(_cap);
+              {
+                  use ::dynomite::Attribute;
+            $(
+                let _ = _map.insert($key.into(), $value.into_attr());
+            )*
+              }
+            _map
+        }
+    };
+}
 
 #[cfg(test)]
 mod test {
