@@ -385,13 +385,14 @@ numeric_collection_attr!(f64 => Vec<f64>);
 /// let query = QueryInput {
 ///   table_name: "some_table".into(),
 ///   key_condition_expression: Some(
-///     "partitionKeyName = :partitionkeyval"
+///     "partitionKeyName = :partitionkeyval".into()
 ///   ),
 ///   expression_attribute_values: Some(
 ///     attr_map! {
 ///        ":partitionkeyval" => "rust".to_string()
 ///      }
-///    )
+///    ),
+///    ..QueryInput::default()
 /// };
 /// # }
 macro_rules! attr_map {

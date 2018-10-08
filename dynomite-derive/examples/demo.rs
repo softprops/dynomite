@@ -18,7 +18,7 @@ use tokio::runtime::Runtime;
 use uuid::Uuid;
 
 // for Item trait interface resolution and extensions
-use dynomite::{Attribute, DynamoDbExt, Item};
+use dynomite::{DynamoDbExt, Item};
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
