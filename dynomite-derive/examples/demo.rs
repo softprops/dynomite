@@ -51,7 +51,7 @@ fn main() {
             read_capacity_units: 1,
             write_capacity_units: 1,
         },
-        ..Default::default()
+        ..CreateTableInput::default()
     }));
 
     let book = Book {
