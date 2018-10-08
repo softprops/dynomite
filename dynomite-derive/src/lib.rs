@@ -276,8 +276,7 @@ fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
                     }
                 }
             }
-        })
-        .unwrap_or(quote!{})
+        }).unwrap_or(quote!{})
 }
 
 fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
@@ -316,8 +315,7 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
                     #to_attribute_value(self.#field_name.clone())
                 );
             }
-        })
-        .unwrap_or(quote!())
+        }).unwrap_or(quote!())
 }
 
 /// #[derive](Item, Debug, Clone, PartialEq)
@@ -333,8 +331,7 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
         .map(|mut range_key| {
             range_key.attrs = vec![];
             quote! {#range_key}
-        })
-        .unwrap_or(quote!());
+        }).unwrap_or(quote!());
 
     hash_key
         .map(|mut hash_key| {
@@ -346,6 +343,5 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
                     #range_key
                 }
             }
-        })
-        .unwrap_or(quote!())
+        }).unwrap_or(quote!())
 }

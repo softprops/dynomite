@@ -7,18 +7,16 @@ extern crate rusoto_core;
 extern crate tokio;
 extern crate uuid;
 
-use dynomite::rusoto_dynamodb;
+use std::sync::Arc;
+
+use dynomite::{rusoto_dynamodb, DynamoDbExt, Item};
 use futures::stream::Stream;
 use rusoto_dynamodb::{
     AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
     KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
 };
-use std::sync::Arc;
 use tokio::runtime::Runtime;
 use uuid::Uuid;
-
-// for Item trait interface resolution and extensions
-use dynomite::{DynamoDbExt, Item};
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
