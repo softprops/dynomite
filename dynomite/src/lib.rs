@@ -85,12 +85,11 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// # Examples
 ///
 /// ```
-/// extern crate rusoto_dynamodb;
 /// extern crate dynomite;
 ///
 /// use std::collections::HashMap;
 /// use dynomite::{AttributeError, Item, Attribute, FromAttributes, Attributes};
-/// use rusoto_dynamodb::AttributeValue;
+/// use dynomite::dynamodb::AttributeValue;
 ///
 /// #[derive(PartialEq,Debug, Clone)]
 /// struct Person {
@@ -144,11 +143,10 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// # Examples
 ///
 /// ```
-/// extern crate rusoto_dynamodb;
 /// extern crate dynomite;
 ///
 /// use dynomite::Attribute;
-/// use rusoto_dynamodb::AttributeValue;
+/// use dynomite::dynamodb::AttributeValue;
 ///
 /// fn main() {
 ///   assert_eq!(
@@ -380,7 +378,7 @@ numeric_collection_attr!(f64 => Vec<f64>);
 ///
 /// ```
 /// #[macro_use] extern crate dynomite;
-/// use dynomite::rusoto_dynamodb::QueryInput;
+/// use dynomite::dynamodb::QueryInput;
 ///
 /// # fn main() {
 /// let query = QueryInput {
