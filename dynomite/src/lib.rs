@@ -58,6 +58,7 @@ extern crate failure;
 extern crate futures;
 extern crate rusoto_core;
 // reexported
+// note: this is used inside the attr_map! macro
 pub extern crate rusoto_dynamodb as dynamodb;
 #[cfg(feature = "uuid")]
 extern crate uuid;
@@ -402,7 +403,7 @@ macro_rules! attr_map {
     ($($key:expr => $value:expr),*) => {
         {
             let _cap = attr_map!(@count $($key),*);
-            let mut _map: ::std::collections::HashMap<String, ::dynomite::rusoto_dynamodb::AttributeValue> =
+            let mut _map: ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue> =
               ::std::collections::HashMap::with_capacity(_cap);
               {
                   use ::dynomite::Attribute;
