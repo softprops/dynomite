@@ -71,16 +71,16 @@ fn expand_attr(ast: &DeriveInput) -> Tokens {
 }
 
 /// impl ::dynomite::Attribute for Name {
-///   fn into_attr(self) -> ::dynoite::dynamodb::AttributeValue {
+///   fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
 ///     let arm = match self {
 ///        Name::Variant => "Variant".to_string()
 ///     };
-///     ::dynoite::dynamodb::AttributeValue {
+///     ::dynomite::dynamodb::AttributeValue {
 ///        s: Some(arm),
 ///        ..Default::default()
 ///     }
 ///   }
-///   fn from_attr(value: ::dynoite::dynamodb::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+///   fn from_attr(value: ::dynomite::dynamodb::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
 ///     value.s.ok_or(::dynomite::AttributeError::InvalidType)
 ///       .and_then(|value| match &value[..] {
 ///          "Variant" => Ok(Name::Variant),
