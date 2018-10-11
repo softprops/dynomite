@@ -24,7 +24,7 @@ dynomite = "0.1"
 ```
 
 Optionally, you can install a companion crate which allows you to derive
-dynomite types for your structs at compile time
+dynomite types for your structs at compile time (recommended)
 
 ```toml
 dynomite-derive = "0.1"
@@ -36,7 +36,6 @@ You can find some example application code under [dynomite-derive/examples](dyno
 
 ## Planned work
 
-* iterator abstraction over `page_token` oriented results
 * retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
 * derive Attribute for enum types allowing for dynamodb items to have enumerable values
 

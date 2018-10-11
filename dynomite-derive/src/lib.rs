@@ -4,13 +4,12 @@
 //! # examples
 //!
 //! ```
-//! extern crate rusoto_dynamodb;
 //! #[macro_use]
 //! extern crate dynomite_derive;
 //! extern crate dynomite;
 //!
 //! use dynomite::{Item, FromAttributes, Attributes};
-//! use rusoto_dynamodb::AttributeValue;
+//! use dynomite::dynamodb::AttributeValue;
 //!
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
@@ -72,16 +71,16 @@ fn expand_attr(ast: &DeriveInput) -> Tokens {
 }
 
 /// impl ::dynomite::Attribute for Name {
-///   fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
+///   fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
 ///     let arm = match self {
 ///        Name::Variant => "Variant".to_string()
 ///     };
-///     ::rusoto_dynamodb::AttributeValue {
+///     ::dynomite::dynamodb::AttributeValue {
 ///        s: Some(arm),
 ///        ..Default::default()
 ///     }
 ///   }
-///   fn from_attr(value: ::rusoto_dynamodb::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+///   fn from_attr(value: ::dynomite::dynamodb::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
 ///     value.s.ok_or(::dynomite::AttributeError::InvalidType)
 ///       .and_then(|value| match &value[..] {
 ///          "Variant" => Ok(Name::Variant),
@@ -107,16 +106,16 @@ fn make_dynomite_attr(name: &Ident, variants: &[Variant]) -> Tokens {
 
     quote!{
         impl #attr for #name {
-            fn into_attr(self) -> ::rusoto_dynamodb::AttributeValue {
+            fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
                 let arm = match self {
                     #(#into_match_arms)*
                 };
-                ::rusoto_dynamodb::AttributeValue {
+                ::dynomite::dynamodb::AttributeValue {
                     s: Some(arm),
                     ..Default::default()
                 }
             }
-            fn from_attr(value: ::rusoto_dynamodb::AttributeValue) -> Result<Self, #err> {
+            fn from_attr(value: ::dynomite::dynamodb::AttributeValue) -> Result<Self, #err> {
                 value.s.ok_or(::dynomite::AttributeError::InvalidType)
                     .and_then(|value| match &value[..] {
                         #(#from_match_arms)*
@@ -246,7 +245,7 @@ fn get_item_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
 
 ///
 /// impl ::dynomite::Item for Name {
-///   fn key(&self) -> ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue> {
+///   fn key(&self) -> ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue> {
 ///     let mut keys = ::std::collections::HashMap::new();
 ///     keys.insert("field_name", to_attribute_value(field));
 ///     keys
@@ -256,7 +255,7 @@ fn get_item_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
 fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
     let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
-        ::std::collections::HashMap<String, ::rusoto_dynamodb::AttributeValue>
+        ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue>
     );
     let hash_key_name = field_name_with_attribute(&fields, "hash");
     let range_key_name = field_name_with_attribute(&fields, "range");
@@ -276,8 +275,7 @@ fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
                     }
                 }
             }
-        })
-        .unwrap_or(quote!{})
+        }).unwrap_or(quote!{})
 }
 
 fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
@@ -316,8 +314,7 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
                     #to_attribute_value(self.#field_name.clone())
                 );
             }
-        })
-        .unwrap_or(quote!())
+        }).unwrap_or(quote!())
 }
 
 /// #[derive](Item, Debug, Clone, PartialEq)
@@ -333,8 +330,7 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
         .map(|mut range_key| {
             range_key.attrs = vec![];
             quote! {#range_key}
-        })
-        .unwrap_or(quote!());
+        }).unwrap_or(quote!());
 
     hash_key
         .map(|mut hash_key| {
@@ -346,6 +342,5 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
                     #range_key
                 }
             }
-        })
-        .unwrap_or(quote!())
+        }).unwrap_or(quote!())
 }

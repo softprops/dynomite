@@ -55,18 +55,24 @@
 #[deny(missing_docs)]
 #[macro_use]
 extern crate failure;
+extern crate futures;
 extern crate rusoto_core;
-extern crate rusoto_dynamodb;
+// reexported
+// note: this is used inside the attr_map! macro
+pub extern crate rusoto_dynamodb as dynamodb;
 #[cfg(feature = "uuid")]
 extern crate uuid;
 
 use std::collections::{HashMap, HashSet};
 
-use rusoto_dynamodb::AttributeValue;
+use dynamodb::AttributeValue;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
 pub mod error;
+mod ext;
+
+pub use ext::DynamoDbExt;
 
 pub use error::AttributeError;
 
@@ -79,12 +85,11 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// # Examples
 ///
 /// ```
-/// extern crate rusoto_dynamodb;
 /// extern crate dynomite;
 ///
 /// use std::collections::HashMap;
 /// use dynomite::{AttributeError, Item, Attribute, FromAttributes, Attributes};
-/// use rusoto_dynamodb::AttributeValue;
+/// use dynomite::dynamodb::AttributeValue;
 ///
 /// #[derive(PartialEq,Debug, Clone)]
 /// struct Person {
@@ -138,11 +143,10 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// # Examples
 ///
 /// ```
-/// extern crate rusoto_dynamodb;
 /// extern crate dynomite;
 ///
 /// use dynomite::Attribute;
-/// use rusoto_dynamodb::AttributeValue;
+/// use dynomite::dynamodb::AttributeValue;
 ///
 /// fn main() {
 ///   assert_eq!(
@@ -357,6 +361,58 @@ numeric_collection_attr!(i64 => HashSet<i64>);
 numeric_collection_attr!(i64 => Vec<i64>);
 numeric_collection_attr!(f32 => Vec<f32>);
 numeric_collection_attr!(f64 => Vec<f64>);
+
+#[macro_export]
+/// Create a `HashMap<String, AttributeValue>` from a list of key-value pairs
+///
+/// This provides some convenience for some interfaces,
+///  like [query](../rusoto_dynamodb/struct.QueryInput.html#structfield.expression_attribute_values)
+/// where a map of this type is required.
+///
+/// This syntax for this macro is the same as [maplit](https://crates.io/crates/maplit).
+///
+/// A avoid using `&str` slices for values when creating a mapping for a `String` `AttributeValue`.
+/// Instead use a `String`
+///
+/// ## Example
+///
+/// ```
+/// #[macro_use] extern crate dynomite;
+/// use dynomite::dynamodb::QueryInput;
+///
+/// # fn main() {
+/// let query = QueryInput {
+///   table_name: "some_table".into(),
+///   key_condition_expression: Some(
+///     "partitionKeyName = :partitionkeyval".into()
+///   ),
+///   expression_attribute_values: Some(
+///     attr_map! {
+///        ":partitionkeyval" => "rust".to_string()
+///      }
+///    ),
+///    ..QueryInput::default()
+/// };
+/// # }
+macro_rules! attr_map {
+    (@single $($x:tt)*) => (());
+    (@count $($rest:expr),*) => (<[()]>::len(&[$(attr_map!(@single $rest)),*]));
+    ($($key:expr => $value:expr,)+) => { attr_map!($($key => $value),+) };
+    ($($key:expr => $value:expr),*) => {
+        {
+            let _cap = attr_map!(@count $($key),*);
+            let mut _map: ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue> =
+              ::std::collections::HashMap::with_capacity(_cap);
+              {
+                  use ::dynomite::Attribute;
+            $(
+                let _ = _map.insert($key.into(), $value.into_attr());
+            )*
+              }
+            _map
+        }
+    };
+}
 
 #[cfg(test)]
 mod test {
