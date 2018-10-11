@@ -1,6 +1,6 @@
 [package]
 name = "dynomite"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "provides type conversions between dynamodb types and native rust types"
 license = "MIT"
@@ -16,7 +16,7 @@ coveralls = { repository = "softprops/dynomite" }
 
 [dependencies]
 failure = "0.1"
-futures = "*"
+futures = "0.1"
 rusoto_core = "0.34"
 rusoto_dynamodb = "0.34"
 uuid = { version = "0.6", features = ["v4"], optional = true }
