@@ -16,6 +16,8 @@ Describe your issue in detail.
 
 #### 🌍 Your environment
 <!-- Include the relevant details of your environment. -->
+
 dynomite version:
+
 rustc version:
 
