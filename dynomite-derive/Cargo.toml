@@ -12,6 +12,7 @@ repository = "https://github.com/softprops/dynomite"
 
 [badges]
 travis-ci = { repository = "softprops/dynomite" }
+coveralls = { repository = "softprops/dynomite" }
 
 [lib]
 proc-macro = true
