@@ -89,7 +89,8 @@ fn main() {
                 item: Book {
                     id: Uuid::new_v4(),
                     title: "rust and beyond".into(),
-                }.into(),
+                }
+                .into(),
                 ..PutItemInput::default()
             })
         )
@@ -123,7 +124,8 @@ fn main() {
                     table_name: table_name.clone(),
                     key: book.clone().key(), // get a book by key
                     ..GetItemInput::default()
-                }).map(|result| result.item.map(|item| Book::from_attrs(item))) // attempt to convert a attribute map to a book type
+                })
+                .map(|result| result.item.map(|item| Book::from_attrs(item))) // attempt to convert a attribute map to a book type
         )
     );
 }
