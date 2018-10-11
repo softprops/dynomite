@@ -88,7 +88,10 @@ fn expand_attr(ast: &DeriveInput) -> Tokens {
 ///       })
 ///   }
 /// }
-fn make_dynomite_attr(name: &Ident, variants: &[Variant]) -> Tokens {
+fn make_dynomite_attr(
+    name: &Ident,
+    variants: &[Variant],
+) -> Tokens {
     let attr = quote!(::dynomite::Attribute);
     let err = quote!(::dynomite::AttributeError);
     let into_match_arms = variants.iter().map(|var| {
@@ -135,7 +138,11 @@ fn expand_item(ast: &DeriveInput) -> Tokens {
     }
 }
 
-fn make_dynomite_item(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+fn make_dynomite_item(
+    vis: &Visibility,
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let dynamodb_traits = get_dynomite_item_traits(vis, name, fields);
     let from_attribute_map = get_from_attributes_trait(name, fields);
     let to_attribute_map = get_to_attribute_map_trait(name, fields);
@@ -147,7 +154,10 @@ fn make_dynomite_item(vis: &Visibility, name: &Ident, fields: &[Field]) -> Token
     }
 }
 
-fn get_to_attribute_map_trait(name: &Ident, fields: &[Field]) -> Tokens {
+fn get_to_attribute_map_trait(
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let attributes = quote!(::dynomite::Attributes);
     let from = quote!(::std::convert::From);
     let to_attribute_map = get_to_attribute_map_function(name, fields);
@@ -159,7 +169,10 @@ fn get_to_attribute_map_trait(name: &Ident, fields: &[Field]) -> Tokens {
     }
 }
 
-fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
+fn get_to_attribute_map_function(
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
     let field_conversions = fields.iter().map(|field| {
@@ -191,7 +204,10 @@ fn get_to_attribute_map_function(name: &Ident, fields: &[Field]) -> Tokens {
 ///      })
 ///   }
 /// }
-fn get_from_attributes_trait(name: &Ident, fields: &[Field]) -> Tokens {
+fn get_from_attributes_trait(
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let from_attrs = quote!(::dynomite::FromAttributes);
     let from_attribute_map = get_from_attributes_function(fields);
 
@@ -225,7 +241,11 @@ fn get_from_attributes_function(fields: &[Field]) -> Tokens {
     }
 }
 
-fn get_dynomite_item_traits(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+fn get_dynomite_item_traits(
+    vis: &Visibility,
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let impls = get_item_impls(vis, name, fields);
 
     quote! {
@@ -233,7 +253,11 @@ fn get_dynomite_item_traits(vis: &Visibility, name: &Ident, fields: &[Field]) ->
     }
 }
 
-fn get_item_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+fn get_item_impls(
+    vis: &Visibility,
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let item_trait = get_item_trait(name, fields);
     let key_struct = get_key_struct(vis, name, fields);
 
@@ -252,7 +276,10 @@ fn get_item_impls(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
 ///   }
 /// }
 ///
-fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
+fn get_item_trait(
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
         ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue>
@@ -275,10 +302,14 @@ fn get_item_trait(name: &Ident, fields: &[Field]) -> Tokens {
                     }
                 }
             }
-        }).unwrap_or(quote!{})
+        })
+        .unwrap_or(quote!{})
 }
 
-fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Ident> {
+fn field_name_with_attribute(
+    fields: &[Field],
+    attribute_name: &str,
+) -> Option<Ident> {
     field_with_attribute(fields, attribute_name).map(|field| {
         field.ident.expect(&format!(
             "should have an identifier with an {} attribute",
@@ -287,7 +318,10 @@ fn field_name_with_attribute(fields: &[Field], attribute_name: &str) -> Option<I
     })
 }
 
-fn field_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Field> {
+fn field_with_attribute(
+    fields: &[Field],
+    attribute_name: &str,
+) -> Option<Field> {
     let mut fields = fields
         .iter()
         .cloned()
@@ -314,7 +348,8 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
                     #to_attribute_value(self.#field_name.clone())
                 );
             }
-        }).unwrap_or(quote!())
+        })
+        .unwrap_or(quote!())
 }
 
 /// #[derive](Item, Debug, Clone, PartialEq)
@@ -322,7 +357,11 @@ fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
 ///    hash_key,
 ///    range_key
 /// }
-fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
+fn get_key_struct(
+    vis: &Visibility,
+    name: &Ident,
+    fields: &[Field],
+) -> Tokens {
     let name = Ident::from(format!("{}Key", name));
 
     let hash_key = field_with_attribute(&fields, "hash");
@@ -330,7 +369,8 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
         .map(|mut range_key| {
             range_key.attrs = vec![];
             quote! {#range_key}
-        }).unwrap_or(quote!());
+        })
+        .unwrap_or(quote!());
 
     hash_key
         .map(|mut hash_key| {
@@ -342,5 +382,6 @@ fn get_key_struct(vis: &Visibility, name: &Ident, fields: &[Field]) -> Tokens {
                     #range_key
                 }
             }
-        }).unwrap_or(quote!())
+        })
+        .unwrap_or(quote!())
 }
