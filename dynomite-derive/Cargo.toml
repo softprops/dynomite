@@ -11,8 +11,9 @@ homepage = "https://github.com/softprops/dynomite"
 repository = "https://github.com/softprops/dynomite"
 
 [badges]
-travis-ci = { repository = "softprops/dynomite" }
 coveralls = { repository = "softprops/dynomite" }
+maintenance = { status = "actively-developed" }
+travis-ci = { repository = "softprops/dynomite" }
 
 [lib]
 proc-macro = true
