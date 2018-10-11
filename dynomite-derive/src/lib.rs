@@ -294,7 +294,7 @@ fn field_with_attribute(fields: &[Field], attribute_name: &str) -> Option<Field>
         .filter(|field| field.attrs.iter().any(|attr| attr.name() == attribute_name));
 
     let field = fields.next();
-    if let Some(_) = fields.next() {
+    if fields.next().is_some() {
         panic!("Can't set more than one {} key", attribute_name);
     }
     field

@@ -52,7 +52,7 @@
 //! unique identifiers for items. This feature is enabled by default.
 //!
 
-#[deny(missing_docs)]
+#![deny(missing_docs)]
 #[macro_use]
 extern crate failure;
 extern crate futures;
@@ -168,6 +168,9 @@ pub trait Attribute: Sized {
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
+    /// Returns an instance of of a type resolved at runtime from a collection
+    /// of a `String` keys and `AttributeValues`. If
+    /// a instance can not be resolved and `AttributeError` will be returned.
     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
 }
 
@@ -182,7 +185,7 @@ impl<T: Item> Attribute for T {
         value
             .m
             .ok_or(AttributeError::InvalidType)
-            .and_then(|attrs| T::from_attrs(attrs))
+            .and_then(T::from_attrs)
     }
 }
 
@@ -475,7 +478,7 @@ mod test {
 
     #[test]
     fn byte_vec_attr() {
-        let value = "test".as_bytes().to_vec();
+        let value = b"test".to_vec();
         assert_eq!(
             Ok(value.clone()),
             Vec::<u8>::from_attr(value.clone().into_attr())
