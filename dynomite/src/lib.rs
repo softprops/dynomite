@@ -56,6 +56,7 @@
 #[macro_use]
 extern crate failure;
 extern crate futures;
+extern crate futures_retry;
 extern crate rusoto_core;
 // reexported
 // note: this is used inside the attr_map! macro
@@ -71,8 +72,10 @@ use uuid::Uuid;
 
 pub mod error;
 mod ext;
+mod retry;
 
 pub use ext::DynamoDbExt;
+pub use retry::RetryingDynamoDb;
 
 pub use error::AttributeError;
 
