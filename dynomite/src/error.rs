@@ -1,6 +1,6 @@
 //! Dynomite error types
 
-/// Errors that may result of attribute value conventions
+/// Errors that may result of attribute value conversions
 #[derive(Debug, Fail, PartialEq)]
 pub enum AttributeError {
     /// Will be returned if an AttributeValue is present, and is of the expected
@@ -13,14 +13,17 @@ pub enum AttributeError {
     /// Will be returned if provided attributes does not included an
     /// expected named value
     #[fail(display = "Missing field {}", name)]
-    MissingField { name: String },
+    MissingField {
+        /// Name of the field that is missing
+        name: String,
+    },
 }
 
 #[cfg(test)]
 mod tests {
     use super::AttributeError;
     #[test]
-    fn invalid_format_derives() {
+    fn invalid_format_displays() {
         assert_eq!(
             "Invalid format",
             format!("{}", AttributeError::InvalidFormat)
@@ -28,12 +31,12 @@ mod tests {
     }
 
     #[test]
-    fn invalid_type_derives() {
+    fn invalid_type_displays() {
         assert_eq!("Invalid type", format!("{}", AttributeError::InvalidType))
     }
 
     #[test]
-    fn missing_field_derives() {
+    fn missing_field_displays() {
         assert_eq!(
             "Missing field foo",
             format!("{}", AttributeError::MissingField { name: "foo".into() })
