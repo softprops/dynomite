@@ -19,7 +19,7 @@ travis-ci = { repository = "softprops/dynomite" }
 proc-macro = true
 
 [dependencies]
-rusoto_dynamodb = "0.34"
+rusoto_dynamodb = "0.35"
 dynomite = { version = "0.1.4", path = "../dynomite" }
 quote = "0.3"
 syn = "0.11"
