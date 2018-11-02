@@ -27,5 +27,5 @@ syn = "0.11"
 [dev-dependencies]
 tokio = "0.1"
 futures = "0.1"
-rusoto_core = "0.34"
+rusoto_core = "0.35"
 uuid = { version = "0.6", features = ["v4"] }
