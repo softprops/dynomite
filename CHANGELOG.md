@@ -1,3 +1,9 @@
+# 0.1.5
+
+* updated dependencies
+
+  * `Rusoto-*` 0.34 -> 0.35
+
 # 0.1.4
 
 * add Stream oriented extension interfaces for paginated apis
