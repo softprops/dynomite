@@ -21,7 +21,7 @@ proc-macro = true
 [dependencies]
 rusoto_dynamodb = "0.35"
 dynomite = { version = "0.1.4", path = "../dynomite" }
-quote = "0.3"
+quote = "0.6"
 syn = "0.11"
 
 [dev-dependencies]
