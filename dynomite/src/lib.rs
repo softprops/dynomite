@@ -193,7 +193,7 @@ impl<T: Item> Attribute for T {
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
-            s: Some(self.hyphenated().to_string()),
+            s: Some(self.to_hyphenated().to_string()),
             ..Default::default()
         }
     }

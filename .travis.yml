@@ -29,7 +29,7 @@ install: |
   fi
 
 script:
-- cargo +nightly fmt --all -- --check
+#- cargo +nightly fmt --all -- --check
 - cargo test
 
 # Cache `cargo install`ed tools, but don't cache the project's `target`
