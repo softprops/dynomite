@@ -1,6 +1,6 @@
 [package]
 name = "dynomite-derive"
-version = "0.1.4"
+version = "0.12.4"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "Derives AWS DynamoDB dynomite types from native Rust struct types"
 license = "MIT"
@@ -21,8 +21,9 @@ proc-macro = true
 [dependencies]
 rusoto_dynamodb = "0.35"
 dynomite = { version = "0.1.4", path = "../dynomite" }
-quote = "0.3"
-syn = "0.11"
+quote = "0.6.10"
+syn = "0.15.22"
+proc-macro2 = "0.4"
 
 [dev-dependencies]
 tokio = "0.1"

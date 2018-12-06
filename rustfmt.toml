@@ -1,2 +1,4 @@
 # style function arg lists consistently
 fn_args_density = "Vertical"
+# keep imports in order
+merge_imports = true

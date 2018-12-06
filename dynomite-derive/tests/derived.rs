@@ -31,8 +31,10 @@ pub struct Book {
 #[cfg(test)]
 mod tests {
 
-    use super::dynomite::{Attribute, Attributes, FromAttributes};
-    use super::Book;
+    use super::{
+        dynomite::{Attribute, Attributes, FromAttributes},
+        Book,
+    };
 
     #[test]
     fn to_and_from_book() {

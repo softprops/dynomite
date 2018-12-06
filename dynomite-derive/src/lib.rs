@@ -39,33 +39,37 @@ extern crate proc_macro;
 #[macro_use]
 extern crate quote;
 extern crate syn;
+// fixme: only needed for Ident::new(.., Span::call_site()) :/
+extern crate proc_macro2;
 
 use proc_macro::TokenStream;
-use quote::Tokens;
-use syn::Body::{Enum, Struct};
-use syn::VariantData::Struct as StructData;
-use syn::{DeriveInput, Field, Ident, Variant, Visibility};
+use proc_macro2::Span;
+use quote::ToTokens;
+use syn::{
+    Data::{Enum, Struct},
+    DataStruct, DeriveInput, Field, Fields, Ident, Meta, Variant, Visibility,
+};
 
 #[proc_macro_derive(Item, attributes(hash, range))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
-    let s = input.to_string();
-    let ast = syn::parse_macro_input(&s).unwrap();
-    let gen = expand_item(&ast);
-    gen.parse().unwrap()
+    let ast = syn::parse_macro_input!(input);
+    let gen = expand_item(ast);
+    gen.into_token_stream().into()
 }
 
 #[proc_macro_derive(Attribute)]
 pub fn derive_attr(input: TokenStream) -> TokenStream {
-    let s = input.to_string();
-    let ast = syn::parse_macro_input(&s).unwrap();
-    let gen = expand_attr(&ast);
-    gen.parse().unwrap()
+    let ast = syn::parse_macro_input!(input);
+    let gen = expand_attr(ast);
+    gen.into_token_stream().into()
 }
 
-fn expand_attr(ast: &DeriveInput) -> Tokens {
+fn expand_attr(ast: DeriveInput) -> impl ToTokens {
     let name = &ast.ident;
-    match ast.body {
-        Enum(ref variants) => make_dynomite_attr(name, variants),
+    match ast.data {
+        Enum(variants) => {
+            make_dynomite_attr(name, &variants.variants.into_iter().collect::<Vec<_>>())
+        }
         _ => panic!("Dynomite Attributes can only be generated for enum types"),
     }
 }
@@ -91,7 +95,7 @@ fn expand_attr(ast: &DeriveInput) -> Tokens {
 fn make_dynomite_attr(
     name: &Ident,
     variants: &[Variant],
-) -> Tokens {
+) -> impl ToTokens {
     let attr = quote!(::dynomite::Attribute);
     let err = quote!(::dynomite::AttributeError);
     let into_match_arms = variants.iter().map(|var| {
@@ -129,11 +133,16 @@ fn make_dynomite_attr(
     }
 }
 
-fn expand_item(ast: &DeriveInput) -> Tokens {
+fn expand_item(ast: DeriveInput) -> impl ToTokens {
     let name = &ast.ident;
     let vis = &ast.vis;
-    match ast.body {
-        Struct(StructData(ref fields)) => make_dynomite_item(vis, name, fields),
+    match ast.data {
+        Struct(DataStruct { fields, .. }) => match fields {
+            Fields::Named(named) => {
+                make_dynomite_item(vis, name, &named.named.into_iter().collect::<Vec<_>>())
+            }
+            _ => panic!("Dyomite Items require named fields"),
+        },
         _ => panic!("Dynomite Items can only be generated for structs"),
     }
 }
@@ -142,7 +151,7 @@ fn make_dynomite_item(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let dynamodb_traits = get_dynomite_item_traits(vis, name, fields);
     let from_attribute_map = get_from_attributes_trait(name, fields);
     let to_attribute_map = get_to_attribute_map_trait(name, fields);
@@ -157,7 +166,7 @@ fn make_dynomite_item(
 fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let attributes = quote!(::dynomite::Attributes);
     let from = quote!(::std::convert::From);
     let to_attribute_map = get_to_attribute_map_function(name, fields);
@@ -172,7 +181,7 @@ fn get_to_attribute_map_trait(
 fn get_to_attribute_map_function(
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
     let field_conversions = fields.iter().map(|field| {
@@ -207,7 +216,7 @@ fn get_to_attribute_map_function(
 fn get_from_attributes_trait(
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let from_attrs = quote!(::dynomite::FromAttributes);
     let from_attribute_map = get_from_attributes_function(fields);
 
@@ -218,7 +227,7 @@ fn get_from_attributes_trait(
     }
 }
 
-fn get_from_attributes_function(fields: &[Field]) -> Tokens {
+fn get_from_attributes_function(fields: &[Field]) -> impl ToTokens {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
     let err = quote!(::dynomite::AttributeError);
@@ -245,7 +254,7 @@ fn get_dynomite_item_traits(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let impls = get_item_impls(vis, name, fields);
 
     quote! {
@@ -257,7 +266,7 @@ fn get_item_impls(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let item_trait = get_item_trait(name, fields);
     let key_struct = get_key_struct(vis, name, fields);
 
@@ -279,7 +288,7 @@ fn get_item_impls(
 fn get_item_trait(
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
+) -> impl ToTokens {
     let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
         ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue>
@@ -322,11 +331,12 @@ fn field_with_attribute(
     fields: &[Field],
     attribute_name: &str,
 ) -> Option<Field> {
-    let mut fields = fields
-        .iter()
-        .cloned()
-        .filter(|field| field.attrs.iter().any(|attr| attr.name() == attribute_name));
-
+    let mut fields = fields.iter().cloned().filter(|field| {
+        field.attrs.iter().any(|attr| match attr.parse_meta() {
+            Ok(Meta::Word(name)) => name == attribute_name,
+            _ => false,
+        })
+    });
     let field = fields.next();
     if fields.next().is_some() {
         panic!("Can't set more than one {} key", attribute_name);
@@ -337,7 +347,7 @@ fn field_with_attribute(
 /// keys.insert(
 ///   "field_name", to_attribute_value(field)
 /// )
-fn get_key_inserter(field_name: &Option<Ident>) -> Tokens {
+fn get_key_inserter(field_name: &Option<Ident>) -> impl ToTokens {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
     field_name
         .as_ref()
@@ -361,8 +371,10 @@ fn get_key_struct(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> Tokens {
-    let name = Ident::from(format!("{}Key", name));
+) -> impl ToTokens {
+    // fixme: this `Span` ref is the only dependency we have on the proc_macro2 crate
+    // is this really needed?
+    let name = Ident::new(&format!("{}Key", name), Span::call_site());
 
     let hash_key = field_with_attribute(&fields, "hash");
     let range_key = field_with_attribute(&fields, "range")
