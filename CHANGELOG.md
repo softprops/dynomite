@@ -1,3 +1,9 @@
+# 0.1.5
+
+* updated dependencies
+
+  * `Rusoto-*` 0.34 -> 0.35
+
 # 0.1.4
 
 * add Stream oriented extension interfaces for paginated apis
@@ -8,10 +14,14 @@ This release brings a consistent interface for each with extension methods prefi
 which return a consistent interface for retrieving a `futures::Stream` of their
 respective values.
 
+* add `maplit!` inspired `attr_map!` helper macro useful in query contexts when providing `expression_attribute_values`
+
 * pin rusoto crate versioning to minor release `0.34`
 
 In the past this crate was pinned to a major version of rusoto. It will be pinned to a minor
 version going forward.
+
+See the [demo application](https://github.com/softprops/dynomite/blob/5ed3444a46a02bd560644fed35adb553ffb8a0f0/dynomite-derive/examples/demo.rs) for  examples of updated interfaces.
 
 # 0.1.3
 

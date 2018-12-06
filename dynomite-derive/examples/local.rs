@@ -17,13 +17,12 @@ use dynamodb::{
 use dynomite::dynamodb;
 // this enables extension methods on `DynamoDB` clients
 use dynomite::DynamoDbExt;
-// this is a wrapping client that retries operations
-use dynomite::RetryingDynamoDb;
 // this enables a types to be coersed from attribute maps
 use dynomite::FromAttributes;
 // this enables `Item` methods on types which Item is implemented or derived for
 use dynomite::Item;
 use futures::{Future, Stream};
+use rusoto_core::Region;
 use tokio::runtime::Runtime;
 use uuid::Uuid;
 
@@ -38,9 +37,10 @@ pub struct Book {
 fn main() {
     let mut rt = Runtime::new().expect("failed to initialize futures runtime");
     // create rusoto client
-    let client = Arc::new(RetryingDynamoDb::new(DynamoDbClient::new(
-        Default::default(),
-    )));
+    let client = Arc::new(DynamoDbClient::new(Region::Custom {
+        name: "us-east-1".into(),
+        endpoint: "http://localhost:8000".into(),
+    }));
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists

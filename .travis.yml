@@ -21,15 +21,15 @@ branches:
 
 install: |
   # should only be necessary until rustfmt produces consistent results in stable/nightly
-  # see also https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
   rustup toolchain install nightly
   rustup component add rustfmt-preview --toolchain nightly
-  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo +nightly install --force cargo-tarpaulin`
+  # see https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    `RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install --force cargo-tarpaulin`
   fi
 
 script:
-- cargo +nightly fmt --all -- --check
+#- cargo +nightly fmt --all -- --check
 - cargo test
 
 # Cache `cargo install`ed tools, but don't cache the project's `target`
@@ -55,7 +55,7 @@ after_success:
   # report coverage to coveralls
   # see https://github.com/xd009642/tarpaulin for more information
   - '[ $TRAVIS_EVENT_TYPE != "cron" ] &&
-    [ $TRAVIS_RUST_VERSION = stable ] &&
+    [ $TRAVIS_RUST_VERSION = nightly ] &&
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ] &&
     cargo +nightly tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID || true'

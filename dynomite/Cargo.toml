@@ -1,8 +1,8 @@
 [package]
 name = "dynomite"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["softprops <d.tangren@gmail.com>"]
-description = "provides type conversions between dynamodb types and native rust types"
+description = "Provides type conversions between DynamoDB types and native Rust types"
 license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 readme = "../README.md"
@@ -11,16 +11,17 @@ homepage = "https://github.com/softprops/dynomite"
 repository = "https://github.com/softprops/dynomite"
 
 [badges]
-travis-ci = { repository = "softprops/dynomite" }
 coveralls = { repository = "softprops/dynomite" }
+maintenance = { status = "actively-developed" }
+travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
 failure = "0.1"
-futures = "*"
-futures-retry = "0.2"
-rusoto_core = "0.34"
-rusoto_dynamodb = "0.34"
-uuid = { version = "0.6", features = ["v4"], optional = true }
+futures-retry = "0.3"
+futures = "0.1"
+rusoto_core = "0.35"
+rusoto_dynamodb = "0.35"
+uuid = { version = "0.7", features = ["v4"], optional = true }
 
 [features]
 default = ["uuid"]

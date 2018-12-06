@@ -15,7 +15,7 @@ Goals
 Please see [API documentation](https://softprops.github.io/dynomite) for how
 to get started
 
-## Install
+## 📦 Install
 
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
@@ -30,16 +30,32 @@ dynomite types for your structs at compile time (recommended)
 dynomite-derive = "0.1"
 ```
 
-## Examples
+## 🤸 Examples
 
 You can find some example application code under [dynomite-derive/examples](dynomite-derive/examples)
 
-## Planned work
+### Dynamodb local
+
+AWS provides [a convient way to host a local instance of DynamoDB](https://hub.docker.com/r/amazon/dynamodb-local/) for
+testing.
+
+Here is a short example of how to get up a testing locally quickly with both dynomite as well as rusoto_dynamodb.
+
+In one terminal spin up a Docker container for [DynamoDB local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.UsageNotes.html) listening on port `8000`
+
+```sh
+$ docker run --rm -p 8000:8000 amazon/dynamodb-local
+```
+
+In another, run a rust binary with a client initialized like you see the the [local.rs example](dynomite-derive/examples/local.rs)
+
+
+## 🚧 Planned work
 
 * retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
 * derive Attribute for enum types allowing for dynamodb items to have enumerable values
 
-### Alternatives
+### 🤔 Alternatives
 
 The [korat](https://crates.io/crates/korat) crate was the the original inspiration for this crate. It's focus is very similar but fell short on a few
 accounts. It does not work on stable rust and it's api is not documented. Dynomite intends to build on similar features as well as build out others.
