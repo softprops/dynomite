@@ -111,7 +111,7 @@ fn make_dynomite_attr(
         }
     });
 
-    quote!{
+    quote! {
         impl #attr for #name {
             fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
                 let arm = match self {
@@ -301,7 +301,7 @@ fn get_item_trait(
 
     hash_key_name
         .map(|_| {
-            quote!{
+            quote! {
                 impl #item for #name {
                     fn key(&self) -> #attribute_map {
                         let mut keys = ::std::collections::HashMap::new();
@@ -312,7 +312,7 @@ fn get_item_trait(
                 }
             }
         })
-        .unwrap_or(quote!{})
+        .unwrap_or(quote! {})
 }
 
 fn field_name_with_attribute(
@@ -352,7 +352,7 @@ fn get_key_inserter(field_name: &Option<Ident>) -> impl ToTokens {
     field_name
         .as_ref()
         .map(|field_name| {
-            quote!{
+            quote! {
                 keys.insert(
                     stringify!(#field_name).to_string(),
                     #to_attribute_value(self.#field_name.clone())
@@ -387,7 +387,7 @@ fn get_key_struct(
     hash_key
         .map(|mut hash_key| {
             hash_key.attrs = vec![];
-            quote!{
+            quote! {
                 #[derive(Item, Debug, Clone, PartialEq)]
                 #vis struct #name {
                     #hash_key,
