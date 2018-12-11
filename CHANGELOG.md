@@ -2,7 +2,7 @@
 
 * updated dependencies
 
-  * `Rusoto-*` 0.34 -> 0.35
+  * `Rusoto-*` 0.34 -> 0.36
 
 # 0.1.4
 
