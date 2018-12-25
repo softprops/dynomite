@@ -53,28 +53,21 @@
 //!
 
 #![deny(missing_docs)]
-#[macro_use]
-extern crate failure;
-extern crate futures;
-extern crate rusoto_core;
+
 // reexported
 // note: this is used inside the attr_map! macro
-pub extern crate rusoto_dynamodb as dynamodb;
-#[cfg(feature = "uuid")]
-extern crate uuid;
-
+pub use rusoto_dynamodb as dynamodb;
+use rusoto_dynamodb::AttributeValue;
 use std::collections::{HashMap, HashSet};
-
-use dynamodb::AttributeValue;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
 pub mod error;
 mod ext;
 
-pub use ext::DynamoDbExt;
-
-pub use error::AttributeError;
+/// re-export at crate level for convenience
+pub use crate::error::AttributeError;
+pub use crate::ext::DynamoDbExt;
 
 /// type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
@@ -85,8 +78,6 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// # Examples
 ///
 /// ```
-/// extern crate dynomite;
-///
 /// use std::collections::HashMap;
 /// use dynomite::{AttributeError, Item, Attribute, FromAttributes, Attributes};
 /// use dynomite::dynamodb::AttributeValue;
@@ -143,8 +134,6 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// # Examples
 ///
 /// ```
-/// extern crate dynomite;
-///
 /// use dynomite::Attribute;
 /// use dynomite::dynamodb::AttributeValue;
 ///
@@ -326,7 +315,7 @@ macro_rules! numeric_attr {
 macro_rules! numeric_collection_attr {
     ($type:ty => $collection:ty) => {
         impl Attribute for $collection {
-            fn into_attr(self) -> AttributeValue {
+            fn into_attr(self) -> crate::AttributeValue {
                 AttributeValue {
                     ns: Some(self.iter().map(|item| item.to_string()).collect()),
                     ..Default::default()
@@ -380,8 +369,8 @@ numeric_collection_attr!(f64 => Vec<f64>);
 /// ## Example
 ///
 /// ```
-/// #[macro_use] extern crate dynomite;
 /// use dynomite::dynamodb::QueryInput;
+/// use dynomite::attr_map;
 ///
 /// # fn main() {
 /// let query = QueryInput {

@@ -4,12 +4,9 @@
 //! # examples
 //!
 //! ```
-//! #[macro_use]
-//! extern crate dynomite_derive;
-//! extern crate dynomite;
-//!
 //! use dynomite::{Item, FromAttributes, Attributes};
 //! use dynomite::dynamodb::AttributeValue;
+//! use dynomite_derive::Item;
 //!
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
@@ -36,15 +33,10 @@
 //! ```
 
 extern crate proc_macro;
-#[macro_use]
-extern crate quote;
-extern crate syn;
-// fixme: only needed for Ident::new(.., Span::call_site()) :/
-extern crate proc_macro2;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::{
     Data::{Enum, Struct},
     DataStruct, DeriveInput, Field, Fields, Ident, Meta, Variant, Visibility,
@@ -58,13 +50,13 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Attribute)]
-pub fn derive_attr(input: TokenStream) -> TokenStream {
+pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
-    let gen = expand_attr(ast);
+    let gen = expand_attribute(ast);
     gen.into_token_stream().into()
 }
 
-fn expand_attr(ast: DeriveInput) -> impl ToTokens {
+fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
     let name = &ast.ident;
     match ast.data {
         Enum(variants) => {

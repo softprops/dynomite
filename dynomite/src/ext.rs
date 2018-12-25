@@ -4,7 +4,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 // Third party
-use dynamodb::{
+use crate::dynamodb::{
     AttributeValue, BackupSummary, DynamoDb, ListBackupsError, ListBackupsInput, ListTablesError,
     ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };

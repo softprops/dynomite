@@ -9,6 +9,7 @@ readme = "../README.md"
 documentation = "https://softprops.github.io/dynomite"
 homepage = "https://github.com/softprops/dynomite"
 repository = "https://github.com/softprops/dynomite"
+edition = "2018"
 
 [badges]
 coveralls = { repository = "softprops/dynomite" }
