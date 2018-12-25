@@ -42,6 +42,16 @@ use syn::{
     DataStruct, DeriveInput, Field, Fields, Ident, Meta, Variant, Visibility,
 };
 
+/// Derives `dynomite::Item` type for struts with named fields
+///
+/// # Attributes
+///
+/// * `#[hash]` - required attribute, expected to be applied the target [hash attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[range]` - optional attribute, may be applied to one target [range attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
+///
+/// # Panics
+///
+/// This proc macro will panic when applied to other types
 #[proc_macro_derive(Item, attributes(hash, range))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -49,6 +59,11 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
     gen.into_token_stream().into()
 }
 
+/// Derives `dynomite::Attribute` for enum types
+///
+/// # Panics
+///
+/// This proc macro will panic when applied to other types
 #[proc_macro_derive(Attribute)]
 pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
