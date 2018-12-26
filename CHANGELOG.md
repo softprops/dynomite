@@ -1,3 +1,8 @@
+# 0.2.0 (unreleased)
+
+* upgraded to 2018 edition
+
+
 # 0.1.5
 
 * updated dependencies
