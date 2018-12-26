@@ -58,8 +58,10 @@
 // note: this is used inside the attr_map! macro
 pub use rusoto_dynamodb as dynamodb;
 use rusoto_dynamodb::AttributeValue;
-use std::collections::{BTreeSet, HashMap, HashSet};
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    collections::{BTreeSet, HashMap, HashSet},
+};
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
@@ -209,7 +211,7 @@ impl Attribute for String {
     }
 }
 
-impl <'a> Attribute for Cow<'a, str> {
+impl<'a> Attribute for Cow<'a, str> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             s: Some(match self {
@@ -445,6 +447,7 @@ macro_rules! attr_map {
 #[cfg(test)]
 mod test {
     use super::*;
+    use maplit::{btreeset, hashmap};
 
     #[test]
     fn uuid_attr() {
@@ -529,7 +532,7 @@ mod test {
     #[test]
     fn numeric_set_into_attr() {
         assert_eq!(
-            serde_json::to_string(&maplit::btreeset! { 1,2,3 }.into_attr()).unwrap(),
+            serde_json::to_string(&btreeset! { 1,2,3 }.into_attr()).unwrap(),
             r#"{"NS":["1","2","3"]}"#
         );
     }
@@ -538,6 +541,14 @@ mod test {
     fn numeric_vec_into_attr() {
         assert_eq!(
             serde_json::to_string(&vec! { 1,2,3 }.into_attr()).unwrap(),
+            r#"{"L":["1","2","3"]}"#
+        );
+    }
+
+    #[test]
+    fn hashmap_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&hashmap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
             r#"{"L":["1","2","3"]}"#
         );
     }
