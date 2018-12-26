@@ -4,12 +4,9 @@
 //! # examples
 //!
 //! ```
-//! #[macro_use]
-//! extern crate dynomite_derive;
-//! extern crate dynomite;
-//!
 //! use dynomite::{Item, FromAttributes, Attributes};
 //! use dynomite::dynamodb::AttributeValue;
+//! use dynomite_derive::Item;
 //!
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
@@ -36,20 +33,25 @@
 //! ```
 
 extern crate proc_macro;
-#[macro_use]
-extern crate quote;
-extern crate syn;
-// fixme: only needed for Ident::new(.., Span::call_site()) :/
-extern crate proc_macro2;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::{
     Data::{Enum, Struct},
     DataStruct, DeriveInput, Field, Fields, Ident, Meta, Variant, Visibility,
 };
 
+/// Derives `dynomite::Item` type for struts with named fields
+///
+/// # Attributes
+///
+/// * `#[hash]` - required attribute, expected to be applied the target [hash attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[range]` - optional attribute, may be applied to one target [range attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
+///
+/// # Panics
+///
+/// This proc macro will panic when applied to other types
 #[proc_macro_derive(Item, attributes(hash, range))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -57,14 +59,19 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
     gen.into_token_stream().into()
 }
 
+/// Derives `dynomite::Attribute` for enum types
+///
+/// # Panics
+///
+/// This proc macro will panic when applied to other types
 #[proc_macro_derive(Attribute)]
-pub fn derive_attr(input: TokenStream) -> TokenStream {
+pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
-    let gen = expand_attr(ast);
+    let gen = expand_attribute(ast);
     gen.into_token_stream().into()
 }
 
-fn expand_attr(ast: DeriveInput) -> impl ToTokens {
+fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
     let name = &ast.ident;
     match ast.data {
         Enum(variants) => {

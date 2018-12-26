@@ -1,4 +1,5 @@
 //! Dynomite error types
+use failure::Fail;
 
 /// Errors that may result of attribute value conversions
 #[derive(Debug, Fail, PartialEq)]

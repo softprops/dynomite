@@ -1,7 +1,4 @@
-extern crate dynomite;
-#[macro_use]
-extern crate dynomite_derive;
-extern crate rusoto_dynamodb;
+use dynomite_derive::{Attribute, Item};
 
 #[derive(Item, Default, PartialEq, Debug, Clone)]
 pub struct Author {
@@ -31,10 +28,9 @@ pub struct Book {
 #[cfg(test)]
 mod tests {
 
-    use super::{
-        dynomite::{Attribute, Attributes, FromAttributes},
-        Book,
-    };
+    use super::Book;
+    use dynomite::{Attribute, Attributes, FromAttributes};
+    use dynomite_derive::Attribute;
 
     #[test]
     fn to_and_from_book() {
