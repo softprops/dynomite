@@ -58,7 +58,8 @@
 // note: this is used inside the attr_map! macro
 pub use rusoto_dynamodb as dynamodb;
 use rusoto_dynamodb::AttributeValue;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::borrow::Cow;
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
@@ -178,6 +179,7 @@ impl<T: Item> Attribute for T {
     }
 }
 
+// a String type for uuids, represented by the S AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
@@ -194,6 +196,7 @@ impl Attribute for Uuid {
     }
 }
 
+// a String type, represented by the S AttributeValue type
 impl Attribute for String {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -206,6 +209,22 @@ impl Attribute for String {
     }
 }
 
+impl <'a> Attribute for Cow<'a, str> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(match self {
+                Cow::Owned(o) => o,
+                Cow::Borrowed(b) => b.to_owned(),
+            }),
+            ..Default::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value.s.map(Cow::Owned).ok_or(AttributeError::InvalidType)
+    }
+}
+
+// a String Set type, represented by the SS AttributeValue type
 impl Attribute for HashSet<String> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
@@ -221,6 +240,7 @@ impl Attribute for HashSet<String> {
     }
 }
 
+// a Binary Set type, represented by the BS AttributeValue type
 impl Attribute for HashSet<Vec<u8>> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
@@ -236,6 +256,7 @@ impl Attribute for HashSet<Vec<u8>> {
     }
 }
 
+// a Boolean type, represented by the BOOL AttributeValue type
 impl Attribute for bool {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -248,6 +269,7 @@ impl Attribute for bool {
     }
 }
 
+// a Binary type, represented by the B AttributeValue type
 impl Attribute for Vec<u8> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -260,6 +282,7 @@ impl Attribute for Vec<u8> {
     }
 }
 
+// a List type for vectors, represented by the L AttributeValue type
 impl<T: Item> Attribute for Vec<T> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
@@ -312,7 +335,7 @@ macro_rules! numeric_attr {
     };
 }
 
-macro_rules! numeric_collection_attr {
+macro_rules! numeric_set_attr {
     ($type:ty => $collection:ty) => {
         impl Attribute for $collection {
             fn into_attr(self) -> crate::AttributeValue {
@@ -336,23 +359,36 @@ macro_rules! numeric_collection_attr {
 
 // implement Attribute for numeric types
 numeric_attr!(u16);
+numeric_attr!(i16);
 numeric_attr!(u32);
 numeric_attr!(i32);
+numeric_attr!(u64);
 numeric_attr!(i64);
 numeric_attr!(f32);
 numeric_attr!(f64);
 
 // implement Attribute for numeric collections
-numeric_collection_attr!(u16 => HashSet<u16>);
-numeric_collection_attr!(u16 => Vec<u16>);
-numeric_collection_attr!(u32 => HashSet<u32>);
-numeric_collection_attr!(u32 => Vec<u32>);
-numeric_collection_attr!(i32 => HashSet<i32>);
-numeric_collection_attr!(i32 => Vec<i32>);
-numeric_collection_attr!(i64 => HashSet<i64>);
-numeric_collection_attr!(i64 => Vec<i64>);
-numeric_collection_attr!(f32 => Vec<f32>);
-numeric_collection_attr!(f64 => Vec<f64>);
+numeric_set_attr!(u16 => HashSet<u16>);
+numeric_set_attr!(u16 => BTreeSet<u16>);
+numeric_set_attr!(i16 => HashSet<i16>);
+numeric_set_attr!(i16 => BTreeSet<i16>);
+
+numeric_set_attr!(u32 => HashSet<u32>);
+numeric_set_attr!(u32 => BTreeSet<u32>);
+numeric_set_attr!(i32 => HashSet<i32>);
+numeric_set_attr!(i32 => BTreeSet<i32>);
+
+numeric_set_attr!(i64 => HashSet<i64>);
+numeric_set_attr!(i64 => BTreeSet<i64>);
+numeric_set_attr!(u64 => HashSet<u64>);
+numeric_set_attr!(u64 => BTreeSet<u64>);
+
+// note floats don't implement Ord and thus can't
+// not be used in types of sets
+//numeric_set_attr!(f32 => HashSet<f32>);
+//numeric_set_attr!(f32 => BTreeSet<f32>);
+//numeric_set_attr!(f64 => HashSet<f64>);
+//numeric_set_attr!(f64 => BTreeSet<f64>);
 
 #[macro_export]
 /// Create a `HashMap<String, AttributeValue>` from a list of key-value pairs
@@ -466,11 +502,43 @@ mod test {
     }
 
     #[test]
-    fn byte_vec_attr() {
+    fn byte_vec_attr_from_attr() {
         let value = b"test".to_vec();
         assert_eq!(
             Ok(value.clone()),
             Vec::<u8>::from_attr(value.clone().into_attr())
+        );
+    }
+
+    #[test]
+    fn string_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&"foo".to_string().into_attr()).unwrap(),
+            r#"{"S":"foo"}"#
+        );
+    }
+
+    #[test]
+    fn byte_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&b"foo".to_vec().into_attr()).unwrap(),
+            r#"{"B":"Zm9v"}"# // ruosoto converts to base64 for us
+        );
+    }
+
+    #[test]
+    fn numeric_set_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&maplit::btreeset! { 1,2,3 }.into_attr()).unwrap(),
+            r#"{"NS":["1","2","3"]}"#
+        );
+    }
+
+    #[test]
+    fn numeric_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&vec! { 1,2,3 }.into_attr()).unwrap(),
+            r#"{"L":["1","2","3"]}"#
         );
     }
 }
