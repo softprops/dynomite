@@ -6,7 +6,6 @@
 //! ```
 //! use dynomite::{Item, FromAttributes, Attributes};
 //! use dynomite::dynamodb::AttributeValue;
-//! use dynomite_derive::Item;
 //!
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
