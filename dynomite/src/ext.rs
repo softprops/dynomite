@@ -12,34 +12,34 @@ use futures::{stream, Future, Stream};
 
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 
-/// Exention methods for DynamoDb implementations
+/// Extension methods for DynamoDb implementations
 ///
-/// A default impl is provided for `Arc` instances of `DynamoDb` as the `Stream` interfaces require
+/// A default impl is provided for `Arc` instances of `DynamoDb` which adds automatinting `Stream` interfaces that require
 /// taking ownership. In practice clone your `Arc`'d client when calling the stream methods.
 ///
 pub trait DynamoDbExt {
     // see https://github.com/boto/botocore/blob/5250e2e7a3209eb995283ac018aea37d3bc1da45/botocore/data/dynamodb/2012-08-10/paginators-1.json
 
-    /// A `Stream` oriented version of `list_backups`
-    fn stream_list_backups(
+    /// An auto-paginating `Stream` oriented version of `list_backups`
+    fn list_backups_pages(
         self,
         input: ListBackupsInput,
     ) -> DynomiteStream<BackupSummary, ListBackupsError>;
 
-    /// A `Stream` oriented version of `list_tables`
-    fn stream_list_tables(
+    /// An auto-paginating `Stream` oriented version of `list_tables`
+    fn list_tables_pages(
         self,
         input: ListTablesInput,
     ) -> DynomiteStream<String, ListTablesError>;
 
-    /// A `Stream` oriented version of `query`
-    fn stream_query(
+    /// An auto-paginating `Stream` oriented version of `query`
+    fn query_pages(
         self,
         input: QueryInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError>;
 
-    /// A `Stream` oriented version of `scan`
-    fn stream_scan(
+    /// An auto-paginating `Stream` oriented version of `scan`
+    fn scan_pages(
         self,
         input: ScanInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError>;
@@ -49,7 +49,7 @@ impl<D> DynamoDbExt for Arc<D>
 where
     D: DynamoDb + Send + Sync + 'static,
 {
-    fn stream_list_backups(
+    fn list_backups_pages(
         self,
         input: ListBackupsInput,
     ) -> DynomiteStream<BackupSummary, ListBackupsError> {
@@ -93,7 +93,7 @@ where
         )
     }
 
-    fn stream_list_tables(
+    fn list_tables_pages(
         self,
         input: ListTablesInput,
     ) -> DynomiteStream<String, ListTablesError> {
@@ -136,7 +136,7 @@ where
         )
     }
 
-    fn stream_query(
+    fn query_pages(
         self,
         input: QueryInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError> {
@@ -176,7 +176,7 @@ where
         )
     }
 
-    fn stream_scan(
+    fn scan_pages(
         self,
         input: ScanInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError> {
