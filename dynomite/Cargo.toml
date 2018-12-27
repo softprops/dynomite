@@ -17,6 +17,7 @@ maintenance = { status = "actively-developed" }
 travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
+dynomite-derive = { version = "0.1.5", path = "../dynomite-derive", optional = true }
 failure = "0.1"
 futures = "0.1"
 rusoto_core = "0.36"
@@ -28,4 +29,5 @@ maplit = "1.0"
 serde_json = "1.0"
 
 [features]
-default = ["uuid"]
+default = ["uuid", "derive"]
+derive = ["dynomite-derive"]
