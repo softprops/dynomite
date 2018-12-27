@@ -60,7 +60,7 @@ pub use rusoto_dynamodb as dynamodb;
 use rusoto_dynamodb::AttributeValue;
 use std::{
     borrow::Cow,
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
 };
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
@@ -145,7 +145,7 @@ pub trait Item: Into<Attributes> + FromAttributes {
 ///     "test".to_string().into_attr().s,
 ///      AttributeValue {
 ///        s: Some("test".to_string()),
-///        ..Default::default()
+///        ..AttributeValue::default()
 ///      }.s
 ///    );
 /// }
@@ -166,11 +166,38 @@ pub trait FromAttributes: Sized {
     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
 }
 
+/// Coerces a homogenious Map of attribute values into a homogeneous Map of types
+/// that implement Attribute
+impl<A: Attribute> FromAttributes for HashMap<String, A> {
+    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+        attrs
+            .into_iter()
+            .try_fold(HashMap::new(), |mut result, (k, v)| {
+                result.insert(k, A::from_attr(v)?);
+                Ok(result)
+            })
+    }
+}
+
+/// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
+/// that implement Attribute
+impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
+    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+        attrs
+            .into_iter()
+            .try_fold(BTreeMap::new(), |mut result, (k, v)| {
+                result.insert(k, A::from_attr(v)?);
+                Ok(result)
+            })
+    }
+}
+
+/// A Map type for Items, represented as the M AttributeValue type
 impl<T: Item> Attribute for T {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             m: Some(self.into()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -181,13 +208,45 @@ impl<T: Item> Attribute for T {
     }
 }
 
+/// A Map type for Items for HashMaps, represented as the M AttributeValue type
+impl<A: Attribute> Attribute for HashMap<String, A> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .m
+            .ok_or(AttributeError::InvalidType)
+            .and_then(Self::from_attrs) // because FromAttributes is impl by all HashMap<String, A>
+    }
+}
+
+/// A Map type for Items for BTreeMaps, represented as the M AttributeValue type
+impl<A: Attribute> Attribute for BTreeMap<String, A> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .m
+            .ok_or(AttributeError::InvalidType)
+            .and_then(Self::from_attrs) // because FromAttributes is impl by all BTreeMap<String, A>
+    }
+}
+
 // a String type for uuids, represented by the S AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_hyphenated().to_string()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -198,12 +257,12 @@ impl Attribute for Uuid {
     }
 }
 
-// a String type, represented by the S AttributeValue type
+/// A String type, represented by the S AttributeValue type
 impl Attribute for String {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             s: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -218,7 +277,7 @@ impl<'a> Attribute for Cow<'a, str> {
                 Cow::Owned(o) => o,
                 Cow::Borrowed(b) => b.to_owned(),
             }),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -226,12 +285,13 @@ impl<'a> Attribute for Cow<'a, str> {
     }
 }
 
-// a String Set type, represented by the SS AttributeValue type
+/// A String Set type, represented by the SS AttributeValue type
+#[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<String> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             ss: Some(self.drain().collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -242,12 +302,28 @@ impl Attribute for HashSet<String> {
     }
 }
 
-// a Binary Set type, represented by the BS AttributeValue type
+impl Attribute for BTreeSet<String> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            ss: Some(self.into_iter().collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .ss
+            .ok_or(AttributeError::InvalidType)
+            .map(|mut value| value.drain(..).collect())
+    }
+}
+
+/// A Binary Set type, represented by the BS AttributeValue type
+#[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<Vec<u8>> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             bs: Some(self.drain().collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -263,7 +339,7 @@ impl Attribute for bool {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             bool: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -276,7 +352,7 @@ impl Attribute for Vec<u8> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             b: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -284,12 +360,19 @@ impl Attribute for Vec<u8> {
     }
 }
 
-// a List type for vectors, represented by the L AttributeValue type
-impl<T: Item> Attribute for Vec<T> {
+/// A List type for vectors, represented by the L AttributeValue type
+///
+/// Note: Vectors support homogenious collection values. This means
+/// the default supported scalars do not permit cases where you need
+/// to store a list of heterogenus values. To accomplish this you'll need
+/// to implement a wrapper type that represents your desired variants
+/// and implement `Attribute` for `YourType`. An `Vec<YourType>` implementation
+/// will already be provided
+impl<A: Attribute> Attribute for Vec<A> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             l: Some(self.drain(..).map(|s| s.into_attr()).collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -306,7 +389,7 @@ impl<T: Attribute> Attribute for Option<T> {
     fn into_attr(self: Self) -> AttributeValue {
         match self {
             Some(value) => value.into_attr(),
-            _ => Default::default(),
+            _ => AttributeValue::default(),
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -324,7 +407,7 @@ macro_rules! numeric_attr {
             fn into_attr(self) -> AttributeValue {
                 AttributeValue {
                     n: Some(self.to_string()),
-                    ..Default::default()
+                    ..AttributeValue::default()
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -339,11 +422,12 @@ macro_rules! numeric_attr {
 
 macro_rules! numeric_set_attr {
     ($type:ty => $collection:ty) => {
+        /// A Number set type, represented by the NS AttributeValue type
         impl Attribute for $collection {
             fn into_attr(self) -> crate::AttributeValue {
                 AttributeValue {
                     ns: Some(self.iter().map(|item| item.to_string()).collect()),
-                    ..Default::default()
+                    ..AttributeValue::default()
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -352,8 +436,7 @@ macro_rules! numeric_set_attr {
                     .drain(..)
                     .map(|ns| ns.parse().map_err(|_| AttributeError::InvalidFormat))
                     .collect();
-                let collected = results.drain(..).collect();
-                collected
+                results.drain(..).collect()
             }
         }
     };
@@ -461,7 +544,7 @@ mod test {
             Err(AttributeError::InvalidType),
             Uuid::from_attr(AttributeValue {
                 bool: Some(true),
-                ..Default::default()
+                ..AttributeValue::default()
             })
         );
     }
@@ -484,7 +567,7 @@ mod test {
             Ok(None),
             Option::<u32>::from_attr(AttributeValue {
                 bool: Some(true),
-                ..Default::default()
+                ..AttributeValue::default()
             })
         );
     }
@@ -540,8 +623,30 @@ mod test {
     #[test]
     fn numeric_vec_into_attr() {
         assert_eq!(
-            serde_json::to_string(&vec! { 1,2,3 }.into_attr()).unwrap(),
-            r#"{"L":["1","2","3"]}"#
+            serde_json::to_string(&vec![1, 2, 3, 3].into_attr()).unwrap(),
+            r#"{"L":[{"N":"1"},{"N":"2"},{"N":"3"},{"N":"3"}]}"#
+        );
+    }
+
+    #[test]
+    fn string_set_into_attr() {
+        assert_eq!(
+            serde_json::to_string(
+                &btreeset! { "a".to_string(), "b".to_string(), "c".to_string() }.into_attr()
+            )
+            .unwrap(),
+            r#"{"SS":["a","b","c"]}"#
+        );
+    }
+
+    #[test]
+    fn string_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(
+                &vec! { "a".to_string(), "b".to_string(), "c".to_string() }.into_attr()
+            )
+            .unwrap(),
+            r#"{"L":[{"S":"a"},{"S":"b"},{"S":"c"}]}"#
         );
     }
 
@@ -549,7 +654,7 @@ mod test {
     fn hashmap_into_attr() {
         assert_eq!(
             serde_json::to_string(&hashmap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
-            r#"{"L":["1","2","3"]}"#
+            r#"{"M":{"foo":{"N":"1"}}}"#
         );
     }
 }
