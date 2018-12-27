@@ -1,6 +1,15 @@
 # 0.2.0 (unreleased)
 
 * upgraded to 2018 edition
+* updates to supported Attribute type convertions
+
+  * numberic sets (NS) no longer support vec type conversions, only sets types!
+  * list types (L) now support  any type that implements `Attribute`, previously this only
+     supported lists of types that implemented `Item` (a complex time). This means lists of scalars are now supported by default
+  * `Cow<str>` is now supported for String Attributes
+  * `FromAttributes` is now implemented for `XXXMap` types of `String` to `Attribute` types.
+     This means you now get free, Item-link integration for homogenious maps
+  * much needed unit tests now cover the correctness of implementations!
 
 
 # 0.1.5
