@@ -10,7 +10,7 @@
   default-features = false
   features = ["uuid"]
   ```
-* updates to supported Attribute type convertions
+* updates to supported Attribute type conversions
 
   * numeric sets (NS) no longer support vec type conversions, only sets types!
   * list types (L) now support  any type that implements `Attribute`, previously this only
