@@ -1,31 +1,32 @@
 //! Dynomite provides a set of interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which make working with aws Dynamodb more productive in rust.
+//! which make working with aws Dynamodb more productive in Rust.
 //!
-//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
+//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database AWS offers
 //! as a managed service. It's abstractions include a table comprised of a collection
-//!  of items which are a composed of a collection of named attributes which
+//!  of "items" which are a composed of a collection of named "attributes" which
 //! can be one of a finite set of types. You can learn more about its core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! interfaces for interacting with the dynamodb API. It's representation
-//! of Items is essentially a `HashMap` of `String`
+//! interfaces for interacting with the raw DynamoDB API. Rusoto's representation
+//! of DynomoDB items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
 //! types which fits dynamodb's nosql contract well.
 //! AttributeValues are able to represent multiple types of values in a
 //! single container type.
 //!
-//! However, when programming in rust we're afforded stricter, more concise typing
+//! However, when programming in Rust we're afforded stricter, more concise typing
 //! tools than HashMaps when working with data. Dynomite is intended to make those types
 //! interface more transparently with rusoto item type apis.
 //!
 //! Dynomite provides a set of building blocks for making interactions with
-//! dynamodb feel more natural for rust's native types.
+//! DynamoDB feel more natural with Rust's native types.
 //!
-//! At a low level, [Attribute](dynomite/trait.Attribute.html) type implementations
-//! provide conversion interfaces to and from native rust types which represent
-//! dynamodb's notion of "attributes".
+//! At a lower level, the `[Attribute](dynomite/trait.Attribute.html)` type implementations
+//! provide conversion interfaces to and from native rust scalar types which represent
+//! dynamodb's notion of "attributes". You can implement `Attribute` for your own
+//! types an leverage higher level functionality.
 //!
 //! At a higher level, [Item](dynomite/trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
@@ -40,7 +41,7 @@
 //!
 //! Operations that may fail typically result in an
 //! [AttributeError](error/enum.AttributeError.html). These errors were
-//! designed to work well with the [failure](https://crates.io/crates/failure)
+//! designed to work with the [failure](https://crates.io/crates/failure)
 //! crate ecosystem.
 //!
 //! # Cargo Features
@@ -209,6 +210,7 @@ impl<T: Item> Attribute for T {
 }
 
 /// A Map type for Items for HashMaps, represented as the M AttributeValue type
+#[allow(clippy::implicit_hasher)]
 impl<A: Attribute> Attribute for HashMap<String, A> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -468,15 +470,15 @@ numeric_set_attr!(i64 => BTreeSet<i64>);
 numeric_set_attr!(u64 => HashSet<u64>);
 numeric_set_attr!(u64 => BTreeSet<u64>);
 
-// note floats don't implement Ord and thus can't
-// not be used in types of sets
+// note floats don't implement `Ord` and thus can't
+// be used in various XXXSet types
 //numeric_set_attr!(f32 => HashSet<f32>);
 //numeric_set_attr!(f32 => BTreeSet<f32>);
 //numeric_set_attr!(f64 => HashSet<f64>);
 //numeric_set_attr!(f64 => BTreeSet<f64>);
 
 #[macro_export]
-/// Create a `HashMap<String, AttributeValue>` from a list of key-value pairs
+/// Creates a `HashMap<String, AttributeValue>` from a list of key-value pairs
 ///
 /// This provides some convenience for some interfaces,
 ///  like [query](../rusoto_dynamodb/struct.QueryInput.html#structfield.expression_attribute_values)
@@ -530,7 +532,7 @@ macro_rules! attr_map {
 #[cfg(test)]
 mod test {
     use super::*;
-    use maplit::{btreeset, hashmap};
+    use maplit::{btreemap, btreeset, hashmap};
 
     #[test]
     fn uuid_attr() {
@@ -597,6 +599,14 @@ mod test {
     }
 
     #[test]
+    fn numeric_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&1.into_attr()).unwrap(),
+            r#"{"N":"1"}"#
+        );
+    }
+
+    #[test]
     fn string_into_attr() {
         assert_eq!(
             serde_json::to_string(&"foo".to_string().into_attr()).unwrap(),
@@ -654,6 +664,14 @@ mod test {
     fn hashmap_into_attr() {
         assert_eq!(
             serde_json::to_string(&hashmap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
+            r#"{"M":{"foo":{"N":"1"}}}"#
+        );
+    }
+
+    #[test]
+    fn btreemap_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&btreemap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
             r#"{"M":{"foo":{"N":"1"}}}"#
         );
     }
