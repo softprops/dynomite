@@ -9,7 +9,7 @@ use std::{collections::HashMap, sync::Arc};
 
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 
-/// Extension methods for DynamoDb implementations
+/// Extension methods for DynamoDb client types
 ///
 /// A default impl is provided for `Arc` instances of `DynamoDb` which adds automatinting `Stream` interfaces that require
 /// taking ownership. In practice clone your `Arc`'d client when calling the stream methods.

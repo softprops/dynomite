@@ -1,15 +1,16 @@
-//! Dynomite provides a set of interfaces built on top of
+//! Dynomite provides a set of high level interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which make working with aws Dynamodb more productive in Rust.
+//! which make interacting with AWS Dynamodb more productive in Rust.
 //!
 //! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database AWS offers
-//! as a managed service. It's abstractions include a table comprised of a collection
-//!  of "items" which are a composed of a collection of named "attributes" which
-//! can be one of a finite set of types. You can learn more about its core components
+//! as a managed service. It's core abstractions include a table comprised of a collection
+//!  of "items" which are themselves composed of a collection of named "attributes" which
+//! can be one of a finite set of types. You can learn more about DynanoDB's core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! interfaces for interacting with the raw DynamoDB API. Rusoto's representation
+//! interfaces for interacting with the raw DynamoDB API. If you are familiar with
+//! the [boto project](https://github.com/boto/botocore), Rusoto is Rust's analog to that. Rusoto's representation
 //! of DynomoDB items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
 //! types which fits dynamodb's nosql contract well.
@@ -23,23 +24,22 @@
 //! Dynomite provides a set of building blocks for making interactions with
 //! DynamoDB feel more natural with Rust's native types.
 //!
-//! At a lower level, the `[Attribute](dynomite/trait.Attribute.html)` type implementations
-//! provide conversion interfaces to and from native rust scalar types which represent
-//! dynamodb's notion of "attributes". You can implement `Attribute` for your own
+//! At a lower level, the [Attribute](dynomite/trait.Attribute.html) type implementations
+//! provide conversion interfaces to and from native Rust scalar types which represent
+//! dynamodb's notion of "attributes". The goal of this type is to make representing
+//! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
 //! types an leverage higher level functionality.
 //!
 //! At a higher level, [Item](dynomite/trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
-//! dynamodb's notion of "items".
+//! DynamoDB's notion of "items".
 //!
-//! You can optionally opt into having `Item` types derived for you by using
-//! the [dynomite-derive](../dynomite_derive/index.html) crate,
-//! which utilizes a technique you may be familiar
-//! with if you've ever worked with [serde](https://github.com/serde-rs/serde).
+//! 💡 A cargo feature named [derive][derive] makes it easy to derive Item for your custom types by leverating
+//! the [dynomite-derive](../dynomite_derive/index.html) crate.
 //!
 //! # Errors
 //!
-//! Operations that may fail typically result in an
+//! Some operations which require coercion from AWS to Rust types may fail result in an
 //! [AttributeError](error/enum.AttributeError.html). These errors were
 //! designed to work with the [failure](https://crates.io/crates/failure)
 //! crate ecosystem.
@@ -58,7 +58,7 @@
 //! ## derive
 //!
 //! This feature enables the use of the dynomite derive feature which
-//! allows you do `#[derive(Item)]` for your structs
+//! allows you simple add `#[derive(Item)]` to your structs.
 //!
 //! To disable either of these features
 //!
@@ -89,13 +89,16 @@ mod ext;
 pub use crate::error::AttributeError;
 pub use crate::ext::DynamoDbExt;
 
-/// type alias for map of named attribute values
+/// Type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
 
 /// A type which can be represented as a set of string keys and
 /// `AttributeValues` and may also be coersed from the same set of values
 ///
 /// # Examples
+///
+/// Below is an example of doing this manually for demonstration. You can also do
+/// this automatically using `#[derive(Item)]` on your structs
 ///
 /// ```
 /// use std::collections::HashMap;
@@ -146,10 +149,10 @@ pub trait Item: Into<Attributes> + FromAttributes {
 }
 
 /// A type capable of being converted into an attrbute value or converted from
-/// an `AttributeValue`
+/// an AWS `AttributeValue`
 ///
 /// Implementations of this are provided for each type of `AttributeValue` field
-/// which maps to a native rustlang type
+/// which maps to a native Rustlang type
 ///
 /// # Examples
 ///
