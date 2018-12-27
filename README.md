@@ -20,14 +20,7 @@ to get started
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.1"
-```
-
-Optionally, you can install a companion crate which allows you to derive
-dynomite types for your structs at compile time (recommended)
-
-```toml
-dynomite-derive = "0.1"
+dynomite = "0.2"
 ```
 
 ## 🤸 Examples
@@ -53,10 +46,5 @@ In another, run a rust binary with a client initialized like you see the the [lo
 ## 🚧 Planned work
 
 * retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
-
-### 🤔 Alternatives
-
-The [korat](https://crates.io/crates/korat) crate was the the original inspiration for this crate. It's focus is very similar but fell short on a few
-accounts. It does not work on stable rust and it's api is not documented. Dynomite intends to build on similar features as well as build out others.
 
 Doug Tangren (softprops) 2018
