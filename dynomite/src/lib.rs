@@ -487,7 +487,7 @@ numeric_set_attr!(u64 => BTreeSet<u64>);
 /// This syntax for this macro is the same as [maplit](https://crates.io/crates/maplit).
 ///
 /// A avoid using `&str` slices for values when creating a mapping for a `String` `AttributeValue`.
-/// Instead use a `String`
+/// Instead use a `String`.
 ///
 /// ## Example
 ///
