@@ -93,7 +93,7 @@ fn main() {
         rt.block_on(
             client
                 .clone()
-                .stream_scan(ScanInput {
+                .scan_pages(ScanInput {
                     limit: Some(1), // to demonstrate we're getting through more than one page
                     table_name: table_name.clone(),
                     filter_expression: Some("title = :title".into()),
@@ -102,7 +102,10 @@ fn main() {
                     )),
                     ..ScanInput::default()
                 })
-                .for_each(|item| Ok(println!("stream_scan() item {:#?}", Book::from_attrs(item)))) // attempt to convert a attribute map to a book type
+                .for_each(|item| {
+                    println!("stream_scan() item {:#?}", Book::from_attrs(item));
+                    Ok(())
+                }) // attempt to convert a attribute map to a book type
         ),
     );
 
