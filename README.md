@@ -53,7 +53,6 @@ In another, run a rust binary with a client initialized like you see the the [lo
 ## 🚧 Planned work
 
 * retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
-* derive Attribute for enum types allowing for dynamodb items to have enumerable values
 
 ### 🤔 Alternatives
 
