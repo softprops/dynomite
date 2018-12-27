@@ -1,31 +1,32 @@
 //! Dynomite provides a set of interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which make working with aws Dynamodb more productive in rust.
+//! which make working with aws Dynamodb more productive in Rust.
 //!
-//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database aws offers
+//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database AWS offers
 //! as a managed service. It's abstractions include a table comprised of a collection
-//!  of items which are a composed of a collection of named attributes which
+//!  of "items" which are a composed of a collection of named "attributes" which
 //! can be one of a finite set of types. You can learn more about its core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! interfaces for interacting with the dynamodb API. It's representation
-//! of Items is essentially a `HashMap` of `String`
+//! interfaces for interacting with the raw DynamoDB API. Rusoto's representation
+//! of DynomoDB items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
 //! types which fits dynamodb's nosql contract well.
 //! AttributeValues are able to represent multiple types of values in a
 //! single container type.
 //!
-//! However, when programming in rust we're afforded stricter, more concise typing
+//! However, when programming in Rust we're afforded stricter, more concise typing
 //! tools than HashMaps when working with data. Dynomite is intended to make those types
 //! interface more transparently with rusoto item type apis.
 //!
 //! Dynomite provides a set of building blocks for making interactions with
-//! dynamodb feel more natural for rust's native types.
+//! DynamoDB feel more natural with Rust's native types.
 //!
-//! At a low level, [Attribute](dynomite/trait.Attribute.html) type implementations
-//! provide conversion interfaces to and from native rust types which represent
-//! dynamodb's notion of "attributes".
+//! At a lower level, the `[Attribute](dynomite/trait.Attribute.html)` type implementations
+//! provide conversion interfaces to and from native rust scalar types which represent
+//! dynamodb's notion of "attributes". You can implement `Attribute` for your own
+//! types an leverage higher level functionality.
 //!
 //! At a higher level, [Item](dynomite/trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
@@ -40,7 +41,7 @@
 //!
 //! Operations that may fail typically result in an
 //! [AttributeError](error/enum.AttributeError.html). These errors were
-//! designed to work well with the [failure](https://crates.io/crates/failure)
+//! designed to work with the [failure](https://crates.io/crates/failure)
 //! crate ecosystem.
 //!
 //! # Cargo Features
@@ -58,7 +59,10 @@
 // note: this is used inside the attr_map! macro
 pub use rusoto_dynamodb as dynamodb;
 use rusoto_dynamodb::AttributeValue;
-use std::collections::{HashMap, HashSet};
+use std::{
+    borrow::Cow,
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+};
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
 
@@ -142,7 +146,7 @@ pub trait Item: Into<Attributes> + FromAttributes {
 ///     "test".to_string().into_attr().s,
 ///      AttributeValue {
 ///        s: Some("test".to_string()),
-///        ..Default::default()
+///        ..AttributeValue::default()
 ///      }.s
 ///    );
 /// }
@@ -163,11 +167,38 @@ pub trait FromAttributes: Sized {
     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
 }
 
+/// Coerces a homogenious Map of attribute values into a homogeneous Map of types
+/// that implement Attribute
+impl<A: Attribute> FromAttributes for HashMap<String, A> {
+    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+        attrs
+            .into_iter()
+            .try_fold(HashMap::new(), |mut result, (k, v)| {
+                result.insert(k, A::from_attr(v)?);
+                Ok(result)
+            })
+    }
+}
+
+/// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
+/// that implement Attribute
+impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
+    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+        attrs
+            .into_iter()
+            .try_fold(BTreeMap::new(), |mut result, (k, v)| {
+                result.insert(k, A::from_attr(v)?);
+                Ok(result)
+            })
+    }
+}
+
+/// A Map type for Items, represented as the M AttributeValue type
 impl<T: Item> Attribute for T {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             m: Some(self.into()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -178,12 +209,46 @@ impl<T: Item> Attribute for T {
     }
 }
 
+/// A Map type for Items for HashMaps, represented as the M AttributeValue type
+#[allow(clippy::implicit_hasher)]
+impl<A: Attribute> Attribute for HashMap<String, A> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .m
+            .ok_or(AttributeError::InvalidType)
+            .and_then(Self::from_attrs) // because FromAttributes is impl by all HashMap<String, A>
+    }
+}
+
+/// A Map type for Items for BTreeMaps, represented as the M AttributeValue type
+impl<A: Attribute> Attribute for BTreeMap<String, A> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .m
+            .ok_or(AttributeError::InvalidType)
+            .and_then(Self::from_attrs) // because FromAttributes is impl by all BTreeMap<String, A>
+    }
+}
+
+// a String type for uuids, represented by the S AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_hyphenated().to_string()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -194,11 +259,12 @@ impl Attribute for Uuid {
     }
 }
 
+/// A String type, represented by the S AttributeValue type
 impl Attribute for String {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             s: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -206,11 +272,28 @@ impl Attribute for String {
     }
 }
 
+impl<'a> Attribute for Cow<'a, str> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(match self {
+                Cow::Owned(o) => o,
+                Cow::Borrowed(b) => b.to_owned(),
+            }),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value.s.map(Cow::Owned).ok_or(AttributeError::InvalidType)
+    }
+}
+
+/// A String Set type, represented by the SS AttributeValue type
+#[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<String> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             ss: Some(self.drain().collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -221,11 +304,28 @@ impl Attribute for HashSet<String> {
     }
 }
 
+impl Attribute for BTreeSet<String> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            ss: Some(self.into_iter().collect()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .ss
+            .ok_or(AttributeError::InvalidType)
+            .map(|mut value| value.drain(..).collect())
+    }
+}
+
+/// A Binary Set type, represented by the BS AttributeValue type
+#[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<Vec<u8>> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             bs: Some(self.drain().collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -236,11 +336,12 @@ impl Attribute for HashSet<Vec<u8>> {
     }
 }
 
+// a Boolean type, represented by the BOOL AttributeValue type
 impl Attribute for bool {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             bool: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -248,11 +349,12 @@ impl Attribute for bool {
     }
 }
 
+// a Binary type, represented by the B AttributeValue type
 impl Attribute for Vec<u8> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             b: Some(self),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -260,11 +362,19 @@ impl Attribute for Vec<u8> {
     }
 }
 
-impl<T: Item> Attribute for Vec<T> {
+/// A List type for vectors, represented by the L AttributeValue type
+///
+/// Note: Vectors support homogenious collection values. This means
+/// the default supported scalars do not permit cases where you need
+/// to store a list of heterogenus values. To accomplish this you'll need
+/// to implement a wrapper type that represents your desired variants
+/// and implement `Attribute` for `YourType`. An `Vec<YourType>` implementation
+/// will already be provided
+impl<A: Attribute> Attribute for Vec<A> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
             l: Some(self.drain(..).map(|s| s.into_attr()).collect()),
-            ..Default::default()
+            ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -281,7 +391,7 @@ impl<T: Attribute> Attribute for Option<T> {
     fn into_attr(self: Self) -> AttributeValue {
         match self {
             Some(value) => value.into_attr(),
-            _ => Default::default(),
+            _ => AttributeValue::default(),
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -299,7 +409,7 @@ macro_rules! numeric_attr {
             fn into_attr(self) -> AttributeValue {
                 AttributeValue {
                     n: Some(self.to_string()),
-                    ..Default::default()
+                    ..AttributeValue::default()
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -312,13 +422,14 @@ macro_rules! numeric_attr {
     };
 }
 
-macro_rules! numeric_collection_attr {
+macro_rules! numeric_set_attr {
     ($type:ty => $collection:ty) => {
+        /// A Number set type, represented by the NS AttributeValue type
         impl Attribute for $collection {
             fn into_attr(self) -> crate::AttributeValue {
                 AttributeValue {
                     ns: Some(self.iter().map(|item| item.to_string()).collect()),
-                    ..Default::default()
+                    ..AttributeValue::default()
                 }
             }
             fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -327,8 +438,7 @@ macro_rules! numeric_collection_attr {
                     .drain(..)
                     .map(|ns| ns.parse().map_err(|_| AttributeError::InvalidFormat))
                     .collect();
-                let collected = results.drain(..).collect();
-                collected
+                results.drain(..).collect()
             }
         }
     };
@@ -336,26 +446,39 @@ macro_rules! numeric_collection_attr {
 
 // implement Attribute for numeric types
 numeric_attr!(u16);
+numeric_attr!(i16);
 numeric_attr!(u32);
 numeric_attr!(i32);
+numeric_attr!(u64);
 numeric_attr!(i64);
 numeric_attr!(f32);
 numeric_attr!(f64);
 
 // implement Attribute for numeric collections
-numeric_collection_attr!(u16 => HashSet<u16>);
-numeric_collection_attr!(u16 => Vec<u16>);
-numeric_collection_attr!(u32 => HashSet<u32>);
-numeric_collection_attr!(u32 => Vec<u32>);
-numeric_collection_attr!(i32 => HashSet<i32>);
-numeric_collection_attr!(i32 => Vec<i32>);
-numeric_collection_attr!(i64 => HashSet<i64>);
-numeric_collection_attr!(i64 => Vec<i64>);
-numeric_collection_attr!(f32 => Vec<f32>);
-numeric_collection_attr!(f64 => Vec<f64>);
+numeric_set_attr!(u16 => HashSet<u16>);
+numeric_set_attr!(u16 => BTreeSet<u16>);
+numeric_set_attr!(i16 => HashSet<i16>);
+numeric_set_attr!(i16 => BTreeSet<i16>);
+
+numeric_set_attr!(u32 => HashSet<u32>);
+numeric_set_attr!(u32 => BTreeSet<u32>);
+numeric_set_attr!(i32 => HashSet<i32>);
+numeric_set_attr!(i32 => BTreeSet<i32>);
+
+numeric_set_attr!(i64 => HashSet<i64>);
+numeric_set_attr!(i64 => BTreeSet<i64>);
+numeric_set_attr!(u64 => HashSet<u64>);
+numeric_set_attr!(u64 => BTreeSet<u64>);
+
+// note floats don't implement `Ord` and thus can't
+// be used in various XXXSet types
+//numeric_set_attr!(f32 => HashSet<f32>);
+//numeric_set_attr!(f32 => BTreeSet<f32>);
+//numeric_set_attr!(f64 => HashSet<f64>);
+//numeric_set_attr!(f64 => BTreeSet<f64>);
 
 #[macro_export]
-/// Create a `HashMap<String, AttributeValue>` from a list of key-value pairs
+/// Creates a `HashMap<String, AttributeValue>` from a list of key-value pairs
 ///
 /// This provides some convenience for some interfaces,
 ///  like [query](../rusoto_dynamodb/struct.QueryInput.html#structfield.expression_attribute_values)
@@ -364,7 +487,7 @@ numeric_collection_attr!(f64 => Vec<f64>);
 /// This syntax for this macro is the same as [maplit](https://crates.io/crates/maplit).
 ///
 /// A avoid using `&str` slices for values when creating a mapping for a `String` `AttributeValue`.
-/// Instead use a `String`
+/// Instead use a `String`.
 ///
 /// ## Example
 ///
@@ -409,6 +532,7 @@ macro_rules! attr_map {
 #[cfg(test)]
 mod test {
     use super::*;
+    use maplit::{btreemap, btreeset, hashmap};
 
     #[test]
     fn uuid_attr() {
@@ -422,7 +546,7 @@ mod test {
             Err(AttributeError::InvalidType),
             Uuid::from_attr(AttributeValue {
                 bool: Some(true),
-                ..Default::default()
+                ..AttributeValue::default()
             })
         );
     }
@@ -445,7 +569,7 @@ mod test {
             Ok(None),
             Option::<u32>::from_attr(AttributeValue {
                 bool: Some(true),
-                ..Default::default()
+                ..AttributeValue::default()
             })
         );
     }
@@ -466,11 +590,89 @@ mod test {
     }
 
     #[test]
-    fn byte_vec_attr() {
+    fn byte_vec_attr_from_attr() {
         let value = b"test".to_vec();
         assert_eq!(
             Ok(value.clone()),
             Vec::<u8>::from_attr(value.clone().into_attr())
+        );
+    }
+
+    #[test]
+    fn numeric_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&1.into_attr()).unwrap(),
+            r#"{"N":"1"}"#
+        );
+    }
+
+    #[test]
+    fn string_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&"foo".to_string().into_attr()).unwrap(),
+            r#"{"S":"foo"}"#
+        );
+    }
+
+    #[test]
+    fn byte_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&b"foo".to_vec().into_attr()).unwrap(),
+            r#"{"B":"Zm9v"}"# // ruosoto converts to base64 for us
+        );
+    }
+
+    #[test]
+    fn numeric_set_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&btreeset! { 1,2,3 }.into_attr()).unwrap(),
+            r#"{"NS":["1","2","3"]}"#
+        );
+    }
+
+    #[test]
+    fn numeric_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&vec![1, 2, 3, 3].into_attr()).unwrap(),
+            r#"{"L":[{"N":"1"},{"N":"2"},{"N":"3"},{"N":"3"}]}"#
+        );
+    }
+
+    #[test]
+    fn string_set_into_attr() {
+        assert_eq!(
+            serde_json::to_string(
+                &btreeset! { "a".to_string(), "b".to_string(), "c".to_string() }.into_attr()
+            )
+            .unwrap(),
+            r#"{"SS":["a","b","c"]}"#
+        );
+    }
+
+    #[test]
+    fn string_vec_into_attr() {
+        assert_eq!(
+            serde_json::to_string(
+                &vec! { "a".to_string(), "b".to_string(), "c".to_string() }.into_attr()
+            )
+            .unwrap(),
+            r#"{"L":[{"S":"a"},{"S":"b"},{"S":"c"}]}"#
+        );
+    }
+
+    #[test]
+    fn hashmap_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&hashmap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
+            r#"{"M":{"foo":{"N":"1"}}}"#
+        );
+    }
+
+    #[test]
+    fn btreemap_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&btreemap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
+            r#"{"M":{"foo":{"N":"1"}}}"#
         );
     }
 }
