@@ -19,7 +19,7 @@
   * `FromAttributes` is now implemented for `XXXMap` types of `String` to `Attribute` types.
      This means you now get free, Item-link integration for homogenious maps
   * much needed unit tests now cover the correctness of implementations!
-* the `DynamoDbExt.stream_xxx` methods which produced auto-paginating streams have been renamed to `DynamoDbExt.xxx_pages` to be more intention-revealing and inline with naming conventions of other language sdk's methods that implement similar functionality.
+* (breaking change) the `DynamoDbExt.stream_xxx` methods which produced auto-paginating streams have been renamed to `DynamoDbExt.xxx_pages` to be more intention-revealing and inline with naming conventions of other language sdk's methods that implement similar functionality.
 
 # 0.1.5
 
