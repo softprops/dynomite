@@ -46,12 +46,28 @@
 //!
 //! # Cargo Features
 //!
-//! This crate has one Cargo feature, "uuid",
-//! which adds support for implementing `Attribute` for
+//! This crate as two features which are both enabled by default
+//!
+//! ## uuid
+//!
+//! This features adds support for implementing `Attribute` for
 //! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
 //! type for producing and representing
-//! unique identifiers for items. This feature is enabled by default.
+//! unique identifiers for items..
 //!
+//! ## derive
+//!
+//! This feature enables the use of the dynomite derive feature which
+//! allows you do `#[derive(Item)]` for your structs
+//!
+//! To disable either of these features
+//!
+//! ```toml
+//! [dependencies.dynomite]
+//! version = "xxx"
+//! default-features = false
+//! features = ["feature-you-want"]
+//! ```
 
 #![deny(missing_docs)]
 
@@ -528,6 +544,18 @@ macro_rules! attr_map {
         }
     };
 }
+
+// Re-export #[derive(Item)]
+// work around for 2018 edition issue with needing to
+// import but the use dynomite::Item and dynomite_derive::Item
+// https://internals.rust-lang.org/t/2018-edition-custom-derives-and-shadowy-import-ux/9097
+#[cfg(feature = "derive")]
+#[allow(unused_imports)]
+#[macro_use]
+extern crate dynomite_derive;
+#[cfg(feature = "derive")]
+#[doc(hidden)]
+pub use dynomite_derive::*;
 
 #[cfg(test)]
 mod test {

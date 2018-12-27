@@ -30,7 +30,6 @@ mod tests {
 
     use super::Book;
     use dynomite::{Attribute, Attributes, FromAttributes};
-    use dynomite_derive::Attribute;
 
     #[test]
     fn to_and_from_book() {

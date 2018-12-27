@@ -1,6 +1,15 @@
 # 0.2.0 (unreleased)
 
 * upgraded to 2018 edition
+  * a side effect of this is that an interaction with 2018-style imports caused a name conflict with `dynomite::Item` and now `dynomite_derive::Item`. As a result the dynomite crate now has a
+  compiler feature flag called "derive" which is no by default that resolves this. If you do not wish to have the feature enabled by default add the following to your Cargo.toml
+
+  ```toml
+  [dependencies.dynomite]
+  version = "0.2"
+  default-features = false
+  features = ["uuid"]
+  ```
 * updates to supported Attribute type convertions
 
   * numeric sets (NS) no longer support vec type conversions, only sets types!

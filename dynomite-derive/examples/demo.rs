@@ -6,7 +6,6 @@ use dynomite::{
     },
     DynamoDbExt, FromAttributes, Item,
 };
-use dynomite_derive::Item;
 use futures::{Future, Stream};
 use std::sync::Arc;
 use tokio::runtime::Runtime;
