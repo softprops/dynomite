@@ -25,7 +25,7 @@ dynomite = "0.2"
 
 ## 🤸 Examples
 
-You can find some example application code under [dynomite-derive/examples](dynomite-derive/examples)
+You can find some example application code under [dynomite/examples](dynomite/examples)
 
 ### Dynamodb local
 

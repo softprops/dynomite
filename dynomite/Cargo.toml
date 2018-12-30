@@ -27,6 +27,7 @@ uuid = { version = "0.7", features = ["v4"], optional = true }
 [dev-dependencies]
 maplit = "1.0"
 serde_json = "1.0"
+tokio = "0.1"
 
 [features]
 default = ["uuid", "derive"]

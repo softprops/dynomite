@@ -1,9 +1,9 @@
-//! Dynomite-derive provides procedural macros for deriving dynamo types
+//! Dynomite-derive provides procedural macros for deriving dynomite types
 //! for your structs
 //!
-//! # examples
+//! # Examples
 //!
-//! ```
+//! ```ignore
 //! use dynomite::{Item, FromAttributes, Attributes};
 //! use dynomite::dynamodb::AttributeValue;
 //!
