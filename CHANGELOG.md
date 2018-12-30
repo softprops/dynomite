@@ -1,4 +1,4 @@
-# 0.2.0 (unreleased)
+# 0.2.0
 
 * upgraded to 2018 edition
   * a side effect of this is that an interaction with 2018-style imports caused a name conflict with `dynomite::Item` and now `dynomite_derive::Item`. As a result the dynomite crate now has a
