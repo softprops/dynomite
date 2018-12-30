@@ -771,10 +771,30 @@ mod test {
     }
 
     #[test]
+    fn hashmap_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"M":{"foo":{"N":"1"}}}"#).unwrap()
+            ),
+            Ok(hashmap! { "foo".to_string() => 1 })
+        );
+    }
+
+    #[test]
     fn btreemap_into_attr() {
         assert_eq!(
             serde_json::to_string(&btreemap! { "foo".to_string() => 1 }.into_attr()).unwrap(),
             r#"{"M":{"foo":{"N":"1"}}}"#
+        );
+    }
+
+    #[test]
+    fn btreemap_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"M":{"foo":{"N":"1"}}}"#).unwrap()
+            ),
+            Ok(btreemap! { "foo".to_string() => 1 })
         );
     }
 }
