@@ -1,3 +1,9 @@
+/// Assumes a you are running  the following `dynamodb-local`
+/// on your host machine
+///
+/// ```bash
+/// $ docker run -p 8000:8000 amazon/dynamodb-local
+/// ```
 use dynomite::{
     attr_map,
     dynamodb::{
