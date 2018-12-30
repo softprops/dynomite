@@ -638,10 +638,26 @@ mod test {
     }
 
     #[test]
+    fn numeric_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(serde_json::from_str::<AttributeValue>(r#"{"N":"1"}"#).unwrap()),
+            Ok(1)
+        );
+    }
+
+    #[test]
     fn string_into_attr() {
         assert_eq!(
             serde_json::to_string(&"foo".to_string().into_attr()).unwrap(),
             r#"{"S":"foo"}"#
+        );
+    }
+
+    #[test]
+    fn string_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(serde_json::from_str::<AttributeValue>(r#"{"S":"foo"}"#).unwrap()),
+            Ok("foo".to_string())
         );
     }
 
@@ -654,6 +670,17 @@ mod test {
     }
 
     #[test]
+    fn byte_vec_from_attr() {
+        // ruosoto converts to base64 for us
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"B":"Zm9v"}"#).unwrap()
+            ),
+            Ok(b"foo".to_vec())
+        );
+    }
+
+    #[test]
     fn numeric_set_into_attr() {
         assert_eq!(
             serde_json::to_string(&btreeset! { 1,2,3 }.into_attr()).unwrap(),
@@ -662,10 +689,33 @@ mod test {
     }
 
     #[test]
+    fn numeric_set_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"NS":["1","2","3"]}"#).unwrap()
+            ),
+            Ok(btreeset! { 1,2,3 })
+        );
+    }
+
+    #[test]
     fn numeric_vec_into_attr() {
         assert_eq!(
             serde_json::to_string(&vec![1, 2, 3, 3].into_attr()).unwrap(),
             r#"{"L":[{"N":"1"},{"N":"2"},{"N":"3"},{"N":"3"}]}"#
+        );
+    }
+
+    #[test]
+    fn numeric_vec_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(
+                    r#"{"L":[{"N":"1"},{"N":"2"},{"N":"3"},{"N":"3"}]}"#
+                )
+                .unwrap()
+            ),
+            Ok(vec![1, 2, 3, 3])
         );
     }
 
@@ -681,6 +731,16 @@ mod test {
     }
 
     #[test]
+    fn string_set_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"SS":["a","b","c"]}"#).unwrap()
+            ),
+            Ok(btreeset! { "a".to_string(), "b".to_string(), "c".to_string() })
+        );
+    }
+
+    #[test]
     fn string_vec_into_attr() {
         assert_eq!(
             serde_json::to_string(
@@ -688,6 +748,17 @@ mod test {
             )
             .unwrap(),
             r#"{"L":[{"S":"a"},{"S":"b"},{"S":"c"}]}"#
+        );
+    }
+
+    #[test]
+    fn string_vec_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"L":[{"S":"a"},{"S":"b"},{"S":"c"}]}"#)
+                    .unwrap()
+            ),
+            Ok(vec! { "a".to_string(), "b".to_string(), "c".to_string() })
         );
     }
 
