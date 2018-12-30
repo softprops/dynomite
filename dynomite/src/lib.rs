@@ -11,7 +11,7 @@
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
 //! interfaces for interacting with the raw DynamoDB API. If you are familiar with
 //! the [boto project](https://github.com/boto/botocore), Rusoto is Rust's analog to that. Rusoto's representation
-//! of DynomoDB items is essentially a `HashMap` of `String`
+//! of DynamoDB items is essentially a `HashMap` of `String`
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
 //! types which fits dynamodb's nosql contract well.
 //! AttributeValues are able to represent multiple types of values in a
