@@ -662,6 +662,22 @@ mod test {
     }
 
     #[test]
+    fn cow_str_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&Cow::Borrowed("foo").into_attr()).unwrap(),
+            r#"{"S":"foo"}"#
+        );
+    }
+
+    #[test]
+    fn cow_str_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(serde_json::from_str::<AttributeValue>(r#"{"S":"foo"}"#).unwrap()),
+            Ok(Cow::Borrowed("foo"))
+        );
+    }
+
+    #[test]
     fn byte_vec_into_attr() {
         assert_eq!(
             serde_json::to_string(&b"foo".to_vec().into_attr()).unwrap(),
@@ -797,4 +813,5 @@ mod test {
             Ok(btreemap! { "foo".to_string() => 1 })
         );
     }
+
 }
