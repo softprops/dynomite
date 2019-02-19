@@ -1,14 +1,49 @@
-use std::time::Duration;
+//! Adds retry functionality to dynamodb operations to fullfil [AWS robustness](https://docs.aws.amazon.com/general/latest/gr/api-retries.html)
+//! recommendations
 
 use crate::dynamodb::*;
-use futures_retry::{ErrorHandler as RetryErrorHandler, FutureRetry, RetryPolicy};
+use futures_backoff::Strategy;
 use rusoto_core::RusotoFuture;
+use std::{sync::Arc, time::Duration};
+
+/// Preconfigured Retry policies
+#[derive(Clone)]
+pub enum Policy {
+    /// Limited number of times to retry
+    Limit(usize),
+    /// Limited number of times to retry with fixed pause between retries
+    Pause(usize, Duration),
+    /// Limited number of times to retry with an expoential pause between retries
+    Exponential(usize, Duration),
+}
+
+/// A type which implements `DynamoDb` and retries all operations
+/// that are retryable
+#[derive(Clone)]
+pub struct RetryingDynamoDb<D> {
+    inner: Arc<D>,
+    strategy: Arc<Strategy>,
+}
+
+impl Into<Strategy> for Policy {
+    fn into(self) -> Strategy {
+        match self {
+            Policy::Limit(times) => Strategy::default()
+                .with_max_retries(times)
+                .with_jitter(true),
+            Policy::Pause(times, duration) => Strategy::fixed(duration)
+                .with_max_retries(times)
+                .with_jitter(true),
+            Policy::Exponential(times, duration) => Strategy::exponential(duration)
+                .with_max_retries(times)
+                .with_jitter(true),
+        }
+    }
+}
 
 trait Retry {
     fn retryable(&self) -> bool;
 }
-
-// todo: imply Retry for all error types
 
 impl Retry for BatchGetItemError {
     fn retryable(&self) -> bool {
@@ -19,125 +54,48 @@ impl Retry for BatchGetItemError {
     }
 }
 
-/// Retry policies
-#[derive(Clone)]
-pub enum Policy {
-    /// Limited number of times to retry
-    Limit(usize),
-    /// Limited number of times to retry with pause between retries
-    Pause(usize, Duration),
-}
-
-/// Handles Errors by retrying them based on a Policy
-struct ErrorHandler<D> {
-    current_attempt: usize,
-    policy: Policy,
-    display_name: D,
-}
-
-impl<D> ErrorHandler<D> {
-    fn new(
-        display_name: D,
-        policy: Policy,
-    ) -> Self {
-        Self {
-            current_attempt: 0,
-            display_name,
-            policy,
-        }
-    }
-}
-
-impl<D, E> RetryErrorHandler<E> for ErrorHandler<D>
-where
-    D: ::std::fmt::Display,
-    E: Retry,
-{
-    type OutError = E;
-
-    fn handle(
-        &mut self,
-        err: E,
-    ) -> RetryPolicy<E> {
-        let policy = self.policy.clone();
-        let allowance = match policy {
-            Policy::Limit(times) => times,
-            Policy::Pause(times, _) => times,
-        };
-        let attempts_left = allowance - self.current_attempt;
-        if attempts_left == 0 || !err.retryable() {
-            RetryPolicy::ForwardError(err)
-        } else {
-            self.current_attempt += 1;
-            match policy {
-                Policy::Limit(_) => RetryPolicy::Repeat,
-                Policy::Pause(_, duration) => RetryPolicy::WaitRetry(duration),
-            }
-        }
-    }
-}
-
-/// A type which implements `DynamoDb` and retries all operations
-/// that are retryable
-#[derive(Clone)]
-pub struct RetryingDynamoDb<D> {
-    inner: D,
-    policy: Policy,
-}
-
 impl<D> RetryingDynamoDb<D>
 where
     D: DynamoDb + 'static,
 {
     /// Return a new instance with a configured retry policy
     pub fn new(
-        inner: D,
+        inner: Arc<D>,
         policy: Policy,
     ) -> Self {
-        Self { inner, policy }
+        Self {
+            inner,
+            strategy: Arc::new(policy.into()),
+        }
     }
 
-    // https://gitlab.com/mexus/futures-retry/blob/0.2.1/examples/tcp-client-complex.rs
-    // todo something like the above
-    fn handle<R>(
+    fn retry<F, T, R>(
         &self,
-        err: R,
-    ) -> impl FnMut(R) -> RetryPolicy<R>
+        operation: F,
+    ) -> RusotoFuture<T, R>
     where
-        R: Retry,
+        F: FnMut() -> RusotoFuture<T, R> + Send + 'static,
+        R: Retry + From<rusoto_core::CredentialsError> + From<rusoto_core::HttpDispatchError>,
     {
-        let policy = self.policy.clone();
-        let mut attempts_left = match policy {
-            Policy::Limit(times) => times,
-            Policy::Pause(times, _) => times,
-        };
-        move |e| {
-            if attempts_left == 1 || !err.retryable() {
-                RetryPolicy::ForwardError(e)
-            } else {
-                attempts_left += 1;
-                match policy {
-                    Policy::Limit(_) => RetryPolicy::Repeat,
-                    Policy::Pause(_, duration) => RetryPolicy::WaitRetry(duration),
-                }
-            }
-        }
+        RusotoFuture::from_future(
+            self.strategy
+                .retry_if(operation, |err: &R| err.retryable()),
+        )
     }
 }
 
 // todo: in order to return RusotoFuture we'd need this (unrelated) https://github.com/rusoto/rusoto/blob/acb3c851474d1c2bd113171e93b930d59d2153ed/rusoto/core/src/future.rs#L215-L229
 impl<D> DynamoDb for RetryingDynamoDb<D>
 where
-    D: DynamoDb + Sync + Send + 'static,
+    D: DynamoDb + Clone + Sync + Send + 'static,
 {
     fn batch_get_item(
+
         &self,
         input: BatchGetItemInput,
     ) -> RusotoFuture<BatchGetItemOutput, BatchGetItemError> {
-        RusotoFuture::from_future(FutureRetry::new(
-            move || self.inner.batch_get_item(input.clone()),
-            ErrorHandler::new("batch_get_item", self.policy.clone()),
-        ))
+        let inner = self.inner.clone();
+        self.retry(move || inner.batch_get_item(input.clone()))
     }
 
     fn batch_write_item(
