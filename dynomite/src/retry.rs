@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use dynamodb::*;
+use crate::dynamodb::*;
 use futures_retry::{ErrorHandler as RetryErrorHandler, FutureRetry, RetryPolicy};
 use rusoto_core::RusotoFuture;
 
@@ -87,7 +87,7 @@ pub struct RetryingDynamoDb<D> {
 
 impl<D> RetryingDynamoDb<D>
 where
-    D: DynamoDb + 'static
+    D: DynamoDb + 'static,
 {
     /// Return a new instance with a configured retry policy
     pub fn new(

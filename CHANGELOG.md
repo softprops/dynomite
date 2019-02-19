@@ -1,8 +1,31 @@
+# 0.2.0
+
+* upgraded to 2018 edition
+  * a side effect of this is that an interaction with 2018-style imports caused a name conflict with `dynomite::Item` and now `dynomite_derive::Item`. As a result the dynomite crate now has a
+  compiler feature flag called "derive" which is no by default that resolves this. If you do not wish to have the feature enabled by default add the following to your Cargo.toml
+
+  ```toml
+  [dependencies.dynomite]
+  version = "0.2"
+  default-features = false
+  features = ["uuid"]
+  ```
+* updates to supported Attribute type conversions
+
+  * numeric sets (NS) no longer support vec type conversions, only sets types!
+  * list types (L) now support  any type that implements `Attribute`, previously this only
+     supported lists of types that implemented `Item` (a complex time). This means lists of scalars are now supported by default
+  * `Cow<str>` is now supported for String Attributes
+  * `FromAttributes` is now implemented for `XXXMap` types of `String` to `Attribute` types.
+     This means you now get free, Item-link integration for homogenious maps
+  * much needed unit tests now cover the correctness of implementations!
+* (breaking change) the `DynamoDbExt.stream_xxx` methods which produced auto-paginating streams have been renamed to `DynamoDbExt.xxx_pages` to be more intention-revealing and inline with naming conventions of other language sdk's methods that implement similar functionality.
+
 # 0.1.5
 
 * updated dependencies
 
-  * `Rusoto-*` 0.34 -> 0.35
+  * `Rusoto-*` 0.34 -> 0.36
 
 # 0.1.4
 

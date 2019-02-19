@@ -1,28 +1,13 @@
-#[macro_use]
-extern crate dynomite;
-#[macro_use]
-extern crate dynomite_derive;
-extern crate futures;
-extern crate rusoto_core;
-extern crate tokio;
-extern crate uuid;
-
-use std::sync::Arc;
-
-use dynamodb::{
-    AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
-    KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
+use dynomite::{
+    attr_map,
+    dynamodb::{
+        AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
+        KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
+    },
+    DynamoDbExt, FromAttributes, Item,
 };
-// dynomite re-exports `rusoto_dynamodb` for convenience
-use dynomite::dynamodb;
-// this enables extension methods on `DynamoDB` clients
-use dynomite::DynamoDbExt;
-// this enables a types to be coersed from attribute maps
-use dynomite::FromAttributes;
-// this enables `Item` methods on types which Item is implemented or derived for
-use dynomite::Item;
 use futures::{Future, Stream};
-use rusoto_core::Region;
+use std::sync::Arc;
 use tokio::runtime::Runtime;
 use uuid::Uuid;
 
@@ -37,10 +22,9 @@ pub struct Book {
 fn main() {
     let mut rt = Runtime::new().expect("failed to initialize futures runtime");
     // create rusoto client
-    let client = Arc::new(DynamoDbClient::new(Region::Custom {
-        name: "us-east-1".into(),
-        endpoint: "http://localhost:8000".into(),
-    }));
+    let client = Arc::new(RetryingDynamoDb::new(DynamoDbClient::new(
+        Default::default(),
+    )));
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists
@@ -106,7 +90,7 @@ fn main() {
         rt.block_on(
             client
                 .clone()
-                .stream_scan(ScanInput {
+                .scan_pages(ScanInput {
                     limit: Some(1), // to demonstrate we're getting through more than one page
                     table_name: table_name.clone(),
                     filter_expression: Some("title = :title".into()),
@@ -115,7 +99,10 @@ fn main() {
                     )),
                     ..ScanInput::default()
                 })
-                .for_each(|item| Ok(println!("stream_scan() item {:#?}", Book::from_attrs(item)))) // attempt to convert a attribute map to a book type
+                .for_each(|item| {
+                    println!("stream_scan() item {:#?}", Book::from_attrs(item));
+                    Ok(())
+                }) // attempt to convert a attribute map to a book type
         ),
     );
 
