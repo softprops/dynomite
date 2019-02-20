@@ -22,6 +22,7 @@ pub struct Book {
 
 // this will create a rust book shelf in your aws account!
 fn main() {
+    env_logger::init();
     let mut rt = Runtime::new().expect("failed to initialize futures runtime");
     // create rusoto client
     let client = Arc::new(RetryingDynamoDb::new(

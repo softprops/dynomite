@@ -78,7 +78,9 @@ where
         error: &R,
     ) -> bool {
         debug!("retrying operation {}", self.0);
-        self.0 += 1;
+        if let Some(value) = self.0.checked_add(1) {
+            self.0 = value;
+        }
         error.retryable()
     }
 }
