@@ -70,7 +70,6 @@
 //! ```
 
 #![deny(missing_docs)]
-
 // reexported
 // note: this is used inside the attr_map! macro
 pub use rusoto_dynamodb as dynamodb;
@@ -84,11 +83,11 @@ use uuid::Uuid;
 
 pub mod error;
 mod ext;
+pub mod retry;
 
-/// re-export at crate level for convenience
+pub use crate::{ext::DynamoDbExt, retry::RetryingDynamoDb};
+
 pub use crate::error::AttributeError;
-pub use crate::ext::DynamoDbExt;
-
 /// Type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
 

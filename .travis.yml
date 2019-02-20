@@ -6,7 +6,9 @@ language: rust
 matrix:
   fast_finish: true
   include:
-  - rust: nightly
+  # revisit to latest nightly when rustfmt tool is publishing again
+  # https://github.com/rust-lang/rustfmt/issues/3404#issuecomment-464405562
+  - rust: nightly-2019-02-08
   - rust: beta
   - rust: stable
 
@@ -19,7 +21,7 @@ branches:
 
 install: |
   # see https://github.com/xd009642/tarpaulin/issues/150 for tarpaulin nightly dependency
-  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-02-08 ]]; then
     RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f
     # should only be necessary until rustfmt produces consistent results in stable/nightly
     rustup component add rustfmt
@@ -27,7 +29,7 @@ install: |
 
 script:
 - |
-   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+   if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-02-08 ]]; then
      cargo fmt --all -- --check
    fi
 - cargo test
@@ -55,7 +57,7 @@ after_success:
   # report coverage to coveralls
   # see https://github.com/xd009642/tarpaulin for more information
   - '[ $TRAVIS_EVENT_TYPE != "cron" ] &&
-    [ $TRAVIS_RUST_VERSION = nightly ] &&
+    [ $TRAVIS_RUST_VERSION = nightly-2019-02-08 ] &&
     [ $TRAVIS_BRANCH = master ] &&
     [ $TRAVIS_PULL_REQUEST = false ] &&
     cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID || true'

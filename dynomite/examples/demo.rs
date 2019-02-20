@@ -4,9 +4,11 @@ use dynomite::{
         AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
         KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
     },
-    DynamoDbExt, FromAttributes, Item,
+    retry::Policy,
+    DynamoDbExt, FromAttributes, Item, RetryingDynamoDb,
 };
 use futures::{Future, Stream};
+use rusoto_core::Region;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
 use uuid::Uuid;
@@ -20,9 +22,13 @@ pub struct Book {
 
 // this will create a rust book shelf in your aws account!
 fn main() {
+    env_logger::init();
     let mut rt = Runtime::new().expect("failed to initialize futures runtime");
     // create rusoto client
-    let client = Arc::new(DynamoDbClient::new(Default::default()));
+    let client = Arc::new(RetryingDynamoDb::new(
+        DynamoDbClient::new(Region::default()),
+        Policy::default(),
+    ));
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists

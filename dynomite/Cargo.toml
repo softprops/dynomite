@@ -18,13 +18,16 @@ travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
 dynomite-derive = { version = "0.2.0", path = "../dynomite-derive", optional = true }
+log = "0.4"
 failure = "0.1"
 futures = "0.1"
+futures-backoff = "0.1"
 rusoto_core = "0.36"
 rusoto_dynamodb = "0.36"
 uuid = { version = "0.7", features = ["v4"], optional = true }
 
 [dev-dependencies]
+env_logger = "0.6"
 maplit = "1.0"
 serde_json = "1.0"
 tokio = "0.1"
