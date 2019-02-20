@@ -59,14 +59,14 @@ impl Into<Strategy> for Policy {
     }
 }
 
-/// Predicate trait that determines of an impl
+/// Predicate trait that determines if an impl
 /// type is retryable
 trait Retry {
     /// Return true if type is retryable
     fn retryable(&self) -> bool;
 }
 
-// wrap so we only pay for one arc
+// wrapper so we only pay for one arc
 struct Inner<D> {
     client: D,
     strategy: Strategy,
