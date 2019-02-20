@@ -18,9 +18,10 @@
 //!  let tables = client.list_tables(Default::default());
 //!  # }
 //! ```
-
+//!
 use crate::dynamodb::*;
-use futures_backoff::Strategy;
+use futures_backoff::{Condition, Strategy};
+use log::debug;
 use rusoto_core::{CredentialsError, HttpDispatchError, RusotoFuture};
 use std::{sync::Arc, time::Duration};
 
@@ -66,6 +67,22 @@ trait Retry {
     fn retryable(&self) -> bool;
 }
 
+struct Counter(u16);
+
+impl<R> Condition<R> for Counter
+where
+    R: Retry,
+{
+    fn should_retry(
+        &mut self,
+        error: &R,
+    ) -> bool {
+        debug!("retrying operation {}", self.0);
+        self.0 += 1;
+        error.retryable()
+    }
+}
+
 // wrapper so we only pay for one arc
 struct Inner<D> {
     client: D,
@@ -77,6 +94,15 @@ struct Inner<D> {
 #[derive(Clone)]
 pub struct RetryingDynamoDb<D> {
     inner: Arc<Inner<D>>,
+}
+
+impl<D> From<D> for RetryingDynamoDb<D>
+where
+    D: DynamoDb + 'static,
+{
+    fn from(client: D) -> Self {
+        RetryingDynamoDb::new(client, Policy::default())
+    }
 }
 
 impl<D> RetryingDynamoDb<D>
@@ -106,11 +132,7 @@ where
         F: FnMut() -> RusotoFuture<T, R> + Send + 'static,
         R: Retry + From<CredentialsError> + From<HttpDispatchError>,
     {
-        RusotoFuture::from_future(
-            self.inner
-                .strategy
-                .retry_if(operation, |err: &R| err.retryable()),
-        )
+        RusotoFuture::from_future(self.inner.strategy.retry_if(operation, Counter(0)))
     }
 }
 
