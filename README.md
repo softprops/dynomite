@@ -12,6 +12,12 @@ Goals
 * ☔ commitment to supporting applications built using stable rust
 * 📚 commitment to documentation
 
+Features
+
+* 💌 less boilerplate
+* ♻️ automatic async pagination
+* 🕶️ client level retry interfaces for [robust error handling](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
+
 Please see [API documentation](https://softprops.github.io/dynomite) for how
 to get started
 
@@ -41,10 +47,5 @@ $ docker run --rm -p 8000:8000 amazon/dynamodb-local
 ```
 
 In another, run a rust binary with a client initialized like you see the the [local.rs example](dynomite-derive/examples/local.rs)
-
-
-## 🚧 Planned work
-
-* retryable extensions to rusto's client based on [retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
 
 Doug Tangren (softprops) 2018
