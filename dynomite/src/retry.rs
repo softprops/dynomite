@@ -142,7 +142,6 @@ where
         self.retry(move || inner.client.create_table(input.clone()))
     }
 
-    /// <p>Deletes an existing backup of a table.</p> <p>You can call <code>DeleteBackup</code> at a maximum rate of 10 times per second.</p>
     fn delete_backup(
         &self,
         input: DeleteBackupInput,
