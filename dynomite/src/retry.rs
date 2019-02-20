@@ -1,7 +1,23 @@
-//! Adds retry functionality to dynamodb operations to fullfil [AWS robustness](https://docs.aws.amazon.com/general/latest/gr/api-retries.html)
-//! recommendations
+//! Adds [retry functionality](https://docs.aws.amazon.com/general/latest/gr/api-retries.html) to DynamoDB operations
 //!
-//! Specifcally this implementation focus on honoring [these documented retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+//! Specifcally this implementation focuses on honoring [these documented retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+//!
+//! # examples
+//! ```rust,no_run
+//!  use dynomite::{RetryingDynamoDb, retry::Policy};
+//!  use dynomite::dynamodb::{DynamoDb, DynamoDbClient};
+//!
+//!  # fn main() {
+//!  let client = RetryingDynamoDb::new(
+//!     DynamoDbClient::new(Default::default()),
+//!     Policy::default(),
+//!  );
+//!
+//!  // any operation will now be retried when
+//!  // appropriate
+//!  let tables = client.list_tables(Default::default());
+//!  # }
+//! ```
 
 use crate::dynamodb::*;
 use futures_backoff::Strategy;
@@ -182,7 +198,6 @@ where
         self.retry(move || inner.client.describe_continuous_backups(input.clone()))
     }
 
-    /// <p>Returns information about the specified global table.</p>
     fn describe_global_table(
         &self,
         input: DescribeGlobalTableInput,
