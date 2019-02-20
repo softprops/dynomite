@@ -83,7 +83,7 @@ use uuid::Uuid;
 
 pub mod error;
 mod ext;
-mod retry;
+pub mod retry;
 
 pub use crate::{ext::DynamoDbExt, retry::RetryingDynamoDb};
 
