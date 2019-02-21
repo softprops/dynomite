@@ -82,7 +82,7 @@ pub mod error;
 mod ext;
 pub mod retry;
 
-pub use crate::{ext::DynamoDbExt, retry::RetryingDynamoDb};
+pub use crate::{ext::DynamoDbExt, retry::Retries};
 
 pub use crate::error::AttributeError;
 /// Type alias for map of named attribute values

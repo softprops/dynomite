@@ -4,14 +4,13 @@
 //!
 //! # examples
 //! ```rust,no_run
-//!  use dynomite::{RetryingDynamoDb, retry::Policy};
+//!  use dynomite::{Retries, retry::Policy};
 //!  use dynomite::dynamodb::{DynamoDb, DynamoDbClient};
 //!
 //!  # fn main() {
-//!  let client = RetryingDynamoDb::new(
-//!     DynamoDbClient::new(Default::default()),
-//!     Policy::default(),
-//!  );
+//!  let client =
+//!     DynamoDbClient::new(Default::default())
+//!         .with_retries(Policy::default());
 //!
 //!  // any operation will now be retried when
 //!  // appropriate
@@ -98,12 +97,29 @@ pub struct RetryingDynamoDb<D> {
     inner: Arc<Inner<D>>,
 }
 
-impl<D> From<D> for RetryingDynamoDb<D>
+/// An interface for adapting a `DynamoDb` impl
+/// to a `RetryingDynamoDb` impl
+pub trait Retries<D>
 where
     D: DynamoDb + 'static,
 {
-    fn from(client: D) -> Self {
-        RetryingDynamoDb::new(client, Policy::default())
+    /// Consumes a `DynamoDb` impl and produces
+    /// a `DynamoDb` which retries its operations when appropriate
+    fn with_retries(
+        self,
+        policy: Policy,
+    ) -> RetryingDynamoDb<D>;
+}
+
+impl<D> Retries<D> for D
+where
+    D: DynamoDb + 'static,
+{
+    fn with_retries(
+        self,
+        policy: Policy,
+    ) -> RetryingDynamoDb<D> {
+        RetryingDynamoDb::new(self, policy)
     }
 }
 
