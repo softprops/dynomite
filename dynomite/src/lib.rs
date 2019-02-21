@@ -25,10 +25,10 @@
 //! provide conversion interfaces to and from native Rust scalar types which represent
 //! BynamoDB's notion of "attributes". The goal of this type is to make representing
 //! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
-//! types an leverage higher level functionality.
+//! types to leverage higher level functionality.
 //!
 //! At a higher level, [Item](trait.Item.html) type implementations
-//! provide converstion interfaces for complex types which represent
+//! provide conversion interfaces for complex types which represent
 //! DynamoDB's notion of "items".
 //!
 //! 💡 A cargo feature named [derive][derive] makes it easy to derive Item for your custom types by leverating
