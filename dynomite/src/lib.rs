@@ -23,7 +23,7 @@
 //!
 //! At the lowest level, the [Attribute](trait.Attribute.html) type implementations
 //! provide conversion interfaces to and from native Rust scalar types which represent
-//! BynamoDB's notion of "attributes". The goal of this type is to make representing
+//! DynamoDB's notion of "attributes". The goal of this type is to make representing
 //! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
 //! types to leverage higher level functionality.
 //!
