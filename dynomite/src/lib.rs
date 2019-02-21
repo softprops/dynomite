@@ -21,13 +21,13 @@
 //! Dynomite provides a set of building blocks for making interactions with
 //! DynamoDB feel more natural with Rust's native types.
 //!
-//! At the lowest level, the [Attribute](dynomite/trait.Attribute.html) type implementations
+//! At the lowest level, the [Attribute](trait.Attribute.html) type implementations
 //! provide conversion interfaces to and from native Rust scalar types which represent
-//! dynamodb's notion of "attributes". The goal of this type is to make representing
+//! BynamoDB's notion of "attributes". The goal of this type is to make representing
 //! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
 //! types an leverage higher level functionality.
 //!
-//! At a higher level, [Item](dynomite/trait.Item.html) type implementations
+//! At a higher level, [Item](trait.Item.html) type implementations
 //! provide converstion interfaces for complex types which represent
 //! DynamoDB's notion of "items".
 //!
