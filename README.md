@@ -46,10 +46,10 @@ In one terminal spin up a Docker container for [DynamoDB local](https://docs.aws
 $ docker run --rm -p 8000:8000 amazon/dynamodb-local
 ```
 
-In another, run a rust binary with a client initialized like you see the the [local.rs example](dynomite-derive/examples/local.rs)
+In another, run a rust binary with a client initialized like you see the the [local.rs example](dynomite/examples/local.rs)
 
 ## Resources
 
-* [how dynamodb works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
+* [how DynamoDB works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
 
 Doug Tangren (softprops) 2018

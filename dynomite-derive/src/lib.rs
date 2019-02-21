@@ -326,10 +326,12 @@ fn field_name_with_attribute(
     attribute_name: &str,
 ) -> Option<Ident> {
     field_with_attribute(fields, attribute_name).map(|field| {
-        field.ident.expect(&format!(
-            "should have an identifier with an {} attribute",
-            attribute_name
-        ))
+        field.ident.unwrap_or_else(|| {
+            panic!(
+                "should have an identifier with an {} attribute",
+                attribute_name
+            )
+        })
     })
 }
 

@@ -1,30 +1,27 @@
-//! Dynomite provides a set of high level interfaces built on top of
+//! Dynomite provides a set of high-level interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which make interacting with AWS Dynamodb more productive in Rust.
+//! which make interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.
 //!
-//! [Dynamodb](https://aws.amazon.com/dynamodb/) is a nosql database AWS offers
-//! as a managed service. It's core abstractions include a table comprised of a collection
-//!  of "items" which are themselves composed of a collection of named "attributes" which
-//! can be one of a finite set of types. You can learn more about DynanoDB's core components
+//! AWS DynamoDB is a fully managed NoSQL database. You can learn more about DynanoDB's core components
 //! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
 //!
 //! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! interfaces for interacting with the raw DynamoDB API. If you are familiar with
+//! low level interfaces for interacting with the raw DynamoDB API. If you are familiar with
 //! the [boto project](https://github.com/boto/botocore), Rusoto is Rust's analog to that. Rusoto's representation
-//! of DynamoDB items is essentially a `HashMap` of `String`
+//! of DynamoDB items is essentially a `HashMap` of `String` keys
 //! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
-//! types which fits dynamodb's nosql contract well.
+//! types which fits DynamoDB's NoSQL contract well.
 //! AttributeValues are able to represent multiple types of values in a
-//! single container type.
+//! uniform container type.
 //!
-//! However, when programming in Rust we're afforded stricter, more concise typing
+//! When programming in Rust we're afforded stricter, more concise typing
 //! tools than HashMaps when working with data. Dynomite is intended to make those types
 //! interface more transparently with rusoto item type apis.
 //!
 //! Dynomite provides a set of building blocks for making interactions with
 //! DynamoDB feel more natural with Rust's native types.
 //!
-//! At a lower level, the [Attribute](dynomite/trait.Attribute.html) type implementations
+//! At the lowest level, the [Attribute](dynomite/trait.Attribute.html) type implementations
 //! provide conversion interfaces to and from native Rust scalar types which represent
 //! dynamodb's notion of "attributes". The goal of this type is to make representing
 //! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
@@ -35,7 +32,7 @@
 //! DynamoDB's notion of "items".
 //!
 //! 💡 A cargo feature named [derive][derive] makes it easy to derive Item for your custom types by leverating
-//! the [dynomite-derive](../dynomite_derive/index.html) crate.
+//! the [dynomite-derive](../dynomite_derive/index.html) crate. This is enabled by default.
 //!
 //! # Errors
 //!
@@ -50,14 +47,14 @@
 //!
 //! ## uuid
 //!
-//! This features adds support for implementing `Attribute` for
+//! The `uuid` features adds support for implementing `Attribute` for
 //! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
 //! type for producing and representing
-//! unique identifiers for items..
+//! unique identifiers for items that satisfy [effective characteristcs for partion keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 //!
 //! ## derive
 //!
-//! This feature enables the use of the dynomite derive feature which
+//! The `derive` feature enables the use of the dynomite derive feature which
 //! allows you simple add `#[derive(Item)]` to your structs.
 //!
 //! To disable either of these features
@@ -91,13 +88,13 @@ pub use crate::error::AttributeError;
 /// Type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
 
-/// A type which can be represented as a set of string keys and
+/// A type which can be represented as a set of String keys and
 /// `AttributeValues` and may also be coersed from the same set of values
 ///
 /// # Examples
 ///
 /// Below is an example of doing this manually for demonstration. You can also do
-/// this automatically using `#[derive(Item)]` on your structs
+/// this automatically using `#[derive(Item)]` on your structs (the recommended approach).
 ///
 /// ```
 /// use std::collections::HashMap;
@@ -147,11 +144,10 @@ pub trait Item: Into<Attributes> + FromAttributes {
     fn key(&self) -> Attributes;
 }
 
-/// A type capable of being converted into an attrbute value or converted from
-/// an AWS `AttributeValue`
+/// A type capable of being converted into an or from and AWS `AttributeValue`
 ///
-/// Implementations of this are provided for each type of `AttributeValue` field
-/// which maps to a native Rustlang type
+/// Default implementations of this are provided for each type of `AttributeValue` field
+/// which map to naturally fitting native Rustlang types.
 ///
 /// # Examples
 ///
@@ -185,8 +181,9 @@ pub trait FromAttributes: Sized {
     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
 }
 
-/// Coerces a homogenious Map of attribute values into a homogeneous Map of types
+/// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types
 /// that implement Attribute
+#[allow(clippy::implicit_hasher)]
 impl<A: Attribute> FromAttributes for HashMap<String, A> {
     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
         attrs
@@ -211,7 +208,7 @@ impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
     }
 }
 
-/// A Map type for Items, represented as the M AttributeValue type
+/// A Map type for Items, represented as the `M` AttributeValue type
 impl<T: Item> Attribute for T {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -227,7 +224,7 @@ impl<T: Item> Attribute for T {
     }
 }
 
-/// A Map type for Items for HashMaps, represented as the M AttributeValue type
+/// A Map type for Items for HashMaps, represented as the `M` AttributeValue type
 #[allow(clippy::implicit_hasher)]
 impl<A: Attribute> Attribute for HashMap<String, A> {
     fn into_attr(self: Self) -> AttributeValue {
@@ -244,7 +241,7 @@ impl<A: Attribute> Attribute for HashMap<String, A> {
     }
 }
 
-/// A Map type for Items for BTreeMaps, represented as the M AttributeValue type
+/// A Map type for `Items` for `BTreeMaps`, represented as the `M` AttributeValue type
 impl<A: Attribute> Attribute for BTreeMap<String, A> {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
@@ -260,7 +257,7 @@ impl<A: Attribute> Attribute for BTreeMap<String, A> {
     }
 }
 
-// a String type for uuids, represented by the S AttributeValue type
+// A `String` type for `Uuids`, represented by the `S` AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
@@ -277,7 +274,7 @@ impl Attribute for Uuid {
     }
 }
 
-/// A String type, represented by the S AttributeValue type
+/// A `String` type, represented by the S AttributeValue type
 impl Attribute for String {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
