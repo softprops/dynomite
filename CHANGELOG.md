@@ -1,3 +1,26 @@
+# 0.2.1
+
+* Add support for configuring retrying requests [based on DynamoDB recommendations](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
+
+
+```rust
+use dynomite::{Retries, retry::Policy};
+use dynomite::dynamodb::{DynamoDb, DynamoDbClient};
+
+fn main() {
+   let client =
+      DynamoDbClient::new(Default::default())
+         .with_retries(Policy::default());
+
+   // any client operation will now be retried when
+   // appropriate
+   let tables = client.list_tables(Default::default());
+   // other important work...
+}
+```
+
+* update documentation to highly more concisely areas of focus
+
 # 0.2.0
 
 * upgraded to 2018 edition

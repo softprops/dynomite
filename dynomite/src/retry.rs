@@ -13,7 +13,7 @@
 //!     DynamoDbClient::new(Default::default())
 //!         .with_retries(Policy::default());
 //!
-//!  // any operation will now be retried when
+//!  // any client operation will now be retried when
 //!  // appropriate
 //!  let tables = client.list_tables(Default::default());
 //!  # }
