@@ -1,38 +1,35 @@
-//! Dynomite provides a set of high-level interfaces built on top of
+//! Dynomite is set of high-level interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
 //! which make interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.
 //!
-//! AWS DynamoDB is a fully managed NoSQL database. You can learn more about DynanoDB's core components
-//! [here](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
+//! ## Data Modeling
 //!
-//! [Rusoto](https://github.com/rusoto/rusoto) provides an excellent set of
-//! low level interfaces for interacting with the raw DynamoDB API. If you are familiar with
-//! the [boto project](https://github.com/boto/botocore), Rusoto is Rust's analog to that. Rusoto's representation
-//! of DynamoDB items is essentially a `HashMap` of `String` keys
-//! to [AttributeValue](https://rusoto.github.io/rusoto/rusoto_dynamodb/struct.AttributeValue.html)
-//! types which fits DynamoDB's NoSQL contract well.
-//! AttributeValues are able to represent multiple types of values in a
-//! uniform container type.
+//! Dynomite adapts Rust's native types to
+//! DynamoDB's [core components](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html)
+//! to form a coherent interface.
 //!
-//! When programming in Rust we're afforded stricter, more concise typing
-//! tools than HashMaps when working with data. Dynomite is intended to make those types
-//! interface more transparently with rusoto item type apis.
-//!
-//! Dynomite provides a set of building blocks for making interactions with
-//! DynamoDB feel more natural with Rust's native types.
-//!
-//! At the lowest level, the [Attribute](trait.Attribute.html) type implementations
-//! provide conversion interfaces to and from native Rust scalar types which represent
+//! The [Attribute](trait.Attribute.html) type
+//! provides conversion interfaces to and from Rust's native scalar types which represent
 //! DynamoDB's notion of "attributes". The goal of this type is to make representing
 //! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
 //! types to leverage higher level functionality.
 //!
-//! At a higher level, [Item](trait.Item.html) type implementations
-//! provide conversion interfaces for complex types which represent
+//! The [Item](trait.Item.html) type
+//! provides conversion interfaces for complex types which represent
 //! DynamoDB's notion of "items".
 //!
-//! 💡 A cargo feature named [derive][derive] makes it easy to derive Item for your custom types by leverating
-//! the [dynomite-derive](../dynomite_derive/index.html) crate. This is enabled by default.
+//! 💡 A cargo feature named "derive" makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
+//!
+//! ## Rusoto extensions
+//!
+//! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite
+//! adds client interfaces for creating async Stream-based auto pagination interfaces
+//!
+//! ## Robust retries
+//!
+//! By importing the [dynomite::Retries](retry/trait.Retries.html) trait, dynomite
+//! provides an interface for adding configuration retry policies so your
+//! rusoto DynamoDb clients.
 //!
 //! # Errors
 //!
@@ -50,7 +47,7 @@
 //! The `uuid` features adds support for implementing `Attribute` for
 //! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
 //! type for producing and representing
-//! unique identifiers for items that satisfy [effective characteristcs for partion keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+//! unique identifiers for items that satisfy [effective characteristcs for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 //!
 //! ## derive
 //!
@@ -88,8 +85,8 @@ pub use crate::error::AttributeError;
 /// Type alias for map of named attribute values
 pub type Attributes = HashMap<String, AttributeValue>;
 
-/// A type which can be represented as a set of String keys and
-/// `AttributeValues` and may also be coersed from the same set of values
+/// A type which can be converted to and from a set of String keys and
+/// `AttributeValues`.
 ///
 /// # Examples
 ///

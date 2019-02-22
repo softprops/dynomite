@@ -1,6 +1,7 @@
-//! Adds [retry functionality](https://docs.aws.amazon.com/general/latest/gr/api-retries.html) to DynamoDB operations
+//! Retry functionality
 //!
-//! Specifcally this implementation focuses on honoring [these documented retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+//! Specifcally this implementation focuses on honoring [these documented DynamoDB retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+//! on top AWS's general recommendations of for [retrying API requests](https://docs.aws.amazon.com/general/latest/gr/api-retries.html).
 //!
 //! # examples
 //! ```rust,no_run

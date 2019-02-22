@@ -34,7 +34,7 @@ fn main() {
     let client = Arc::new(
         DynamoDbClient::new(Region::Custom {
             name: "us-east-1".into(),
-            endpoint: "http://localhost:8000".into(),
+            endpoint: "http://localhost:8001".into(),
         })
         .with_retries(Policy::default()),
     );

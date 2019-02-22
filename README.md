@@ -50,6 +50,6 @@ In another, run a rust binary with a client initialized like you see the the [lo
 
 ## Resources
 
-* [how DynamoDB works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
+* [How DynamoDB works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
 
 Doug Tangren (softprops) 2018
