@@ -2,7 +2,7 @@
 name = "dynomite"
 version = "0.2.1"
 authors = ["softprops <d.tangren@gmail.com>"]
-description = "Provides type conversions between DynamoDB types and native Rust types"
+description = "Provides set of high-level productive DynamoDB interfaces"
 license = "MIT"
 keywords = ["dynamodb", "rusoto"]
 readme = "../README.md"
