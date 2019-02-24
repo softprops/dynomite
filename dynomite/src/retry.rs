@@ -28,7 +28,7 @@ use std::{sync::Arc, time::Duration};
 /// Preconfigured retry policies for failable operations
 ///
 /// A `Default` impl of retrying 5 times with an exponential backoff of 100 milliseconds
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Policy {
     /// Limited number of times to retry
     Limit(usize),
@@ -592,3 +592,22 @@ retry!(
     DescribeTimeToLiveError,
     DescribeTimeToLiveError::InternalServerError(_)
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn policy_has_default() {
+        assert_eq!(
+            Policy::default(),
+            Policy::Exponential(5, Duration::from_millis(100))
+        );
+    }
+
+    #[test]
+    fn policy_impl_into_for_strategy() {
+        // no great way to assert partialeq on stategy
+        // just just test that we can
+        let _: Strategy = Policy::default().into();
+    }
+}
