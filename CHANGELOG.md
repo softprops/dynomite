@@ -1,6 +1,6 @@
 # 0.2.1
 
-* Add support for configuring retrying requests [based on DynamoDB recommendations](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
+* Add support for configuring policies for retrying requests [based on DynamoDB recommendations](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
 
 
 ```rust
@@ -19,7 +19,7 @@ fn main() {
 }
 ```
 
-* update documentation to highly more concisely areas of focus
+* update documentation to highlight more concisely areas of focus
 
 # 0.2.0
 
