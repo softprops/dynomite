@@ -5,17 +5,17 @@ use crate::dynamodb::{
     ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
 use futures::{stream, Future, Stream};
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 
 /// Extension methods for DynamoDb client types
 ///
-/// A default impl is provided for `Arc` instances of `DynamoDb` which adds automatinting `Stream` interfaces that require
-/// taking ownership. In practice clone your `Arc`'d client when calling the stream methods.
+/// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds automatinting `Stream` interfaces that require
+/// taking ownership.
 ///
 pub trait DynamoDbExt {
-    // see https://github.com/boto/botocore/blob/5250e2e7a3209eb995283ac018aea37d3bc1da45/botocore/data/dynamodb/2012-08-10/paginators-1.json
+    // see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json
 
     /// An auto-paginating `Stream` oriented version of `list_backups`
     fn list_backups_pages(
@@ -42,9 +42,9 @@ pub trait DynamoDbExt {
     ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError>;
 }
 
-impl<D> DynamoDbExt for Arc<D>
+impl<D> DynamoDbExt for D
 where
-    D: DynamoDb + Send + Sync + 'static,
+    D: DynamoDb + Clone + Send + Sync + 'static,
 {
     fn list_backups_pages(
         self,
