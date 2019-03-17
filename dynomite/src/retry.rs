@@ -616,7 +616,6 @@ retry!(
     DescribeTimeToLiveError::InternalServerError(_)
 );
 
-// todo: fill this out...
 retry!(
     TransactGetItemsError,
     TransactGetItemsError::InternalServerError(_) TransactGetItemsError::ProvisionedThroughputExceeded(_)
