@@ -1,4 +1,4 @@
-# 0.3.0 (unreleased)
+# 0.3.0
 
 * Upgrade to latest rusoto version ([`0.37.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0370---2019-03-12)) with added support for new DynamoDB methods `describe_endpoints`, `transact_get_items`, and `transact_write_items`.
 * Upgrading to the latest rusoto means that clients are Cloneable. As such, `Arc` restrictions are removed on stream-based auto-pagination interfaces.

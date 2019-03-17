@@ -1,10 +1,10 @@
 [package]
 name = "dynomite"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "Provides set of high-level productive DynamoDB interfaces"
 license = "MIT"
-keywords = ["dynamodb", "rusoto"]
+keywords = ["dynamodb", "rusoto", "rusoto_dynamodb"]
 readme = "../README.md"
 documentation = "https://docs.rs/dynomite"
 homepage = "https://github.com/softprops/dynomite"
@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
-dynomite-derive = { version = "0.2.1", path = "../dynomite-derive", optional = true }
+dynomite-derive = { version = "0.3.0", path = "../dynomite-derive", optional = true }
 log = "0.4"
 failure = "0.1"
 futures = "0.1"
