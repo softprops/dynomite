@@ -15,7 +15,7 @@ type DynomiteStream<I, E> = Box<Stream<Item = I, Error = E> + Send>;
 /// taking ownership. In practice clone your `Arc`'d client when calling the stream methods.
 ///
 pub trait DynamoDbExt {
-    // see https://github.com/boto/botocore/blob/5250e2e7a3209eb995283ac018aea37d3bc1da45/botocore/data/dynamodb/2012-08-10/paginators-1.json
+    // see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json
 
     /// An auto-paginating `Stream` oriented version of `list_backups`
     fn list_backups_pages(

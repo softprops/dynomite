@@ -56,10 +56,10 @@ fn main() {
             attribute_name: "id".into(),
             attribute_type: "S".into(),
         }],
-        provisioned_throughput: ProvisionedThroughput {
+        provisioned_throughput: Some(ProvisionedThroughput {
             read_capacity_units: 1,
             write_capacity_units: 1,
-        },
+        }),
         ..CreateTableInput::default()
     }));
 

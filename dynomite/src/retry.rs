@@ -419,6 +419,29 @@ where
         let inner = self.inner.clone();
         self.retry(move || inner.client.update_time_to_live(input.clone()))
     }
+
+    fn describe_endpoints(
+        &self,
+    ) -> RusotoFuture<DescribeEndpointsResponse, DescribeEndpointsError> {
+        // no apparent retryable errors
+        self.inner.client.describe_endpoints()
+    }
+
+    fn transact_get_items(
+        &self,
+        input: TransactGetItemsInput,
+    ) -> RusotoFuture<TransactGetItemsOutput, TransactGetItemsError> {
+        let inner = self.inner.clone();
+        self.retry(move || inner.client.transact_get_items(input.clone()))
+    }
+
+    fn transact_write_items(
+        &self,
+        input: TransactWriteItemsInput,
+    ) -> RusotoFuture<TransactWriteItemsOutput, TransactWriteItemsError> {
+        let inner = self.inner.clone();
+        self.retry(move || inner.client.transact_write_items(input.clone()))
+    }
 }
 
 macro_rules! retry {
@@ -591,6 +614,17 @@ retry!(
 retry!(
     DescribeTimeToLiveError,
     DescribeTimeToLiveError::InternalServerError(_)
+);
+
+// todo: fill this out...
+retry!(
+    TransactGetItemsError,
+    TransactGetItemsError::InternalServerError(_) TransactGetItemsError::ProvisionedThroughputExceeded(_)
+);
+
+retry!(
+    TransactWriteItemsError,
+    TransactWriteItemsError::InternalServerError(_) TransactWriteItemsError::ProvisionedThroughputExceeded(_)
 );
 
 #[cfg(test)]

@@ -1,3 +1,8 @@
+# 0.3.0 (unreleased)
+
+* Upgrade to latest rusoto version with added support for new DynamoDB methods `describe_endpoints`, `transact_get_items`, `transact_write_items`
+* Upgrading to the latest rusoto means that clients are Cloneable, as such `Arc` restrictions are lifted.
+
 # 0.2.1
 
 * Add support for configuring policies for retrying requests [based on DynamoDB recommendations](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
