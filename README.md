@@ -26,7 +26,7 @@ to get started
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.2"
+dynomite = "0.3"
 ```
 
 ## 🤸 Examples
@@ -52,4 +52,4 @@ In another, run a rust binary with a client initialized like you see the the [lo
 
 * [How DynamoDB works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
 
-Doug Tangren (softprops) 2018
+Doug Tangren (softprops) 2018-2019
