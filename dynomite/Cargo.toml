@@ -22,8 +22,8 @@ log = "0.4"
 failure = "0.1"
 futures = "0.1"
 futures-backoff = "0.1"
-rusoto_core = "0.37"
-rusoto_dynamodb = "0.37"
+rusoto_core = "0.38"
+rusoto_dynamodb = "0.38"
 uuid = { version = "0.7", features = ["v4"], optional = true }
 
 [dev-dependencies]
