@@ -22,7 +22,7 @@
 use crate::dynamodb::*;
 use futures_backoff::{Condition, Strategy};
 use log::debug;
-use rusoto_core::{CredentialsError, HttpDispatchError, RusotoFuture};
+use rusoto_core::{RusotoFuture, RusotoError};
 use std::{sync::Arc, time::Duration};
 
 /// Preconfigured retry policies for failable operations
@@ -69,19 +69,22 @@ trait Retry {
 
 struct Counter(u16);
 
-impl<R> Condition<R> for Counter
+impl<R> Condition<RusotoError<R>> for Counter
 where
-    R: Retry,
+    R: Retry
 {
     fn should_retry(
         &mut self,
-        error: &R,
+        error: &RusotoError<R>,
     ) -> bool {
         debug!("retrying operation {}", self.0);
         if let Some(value) = self.0.checked_add(1) {
             self.0 = value;
         }
-        error.retryable()
+        match error {
+            RusotoError::Service(e) => e.retryable(),
+            _ => false
+        }
     }
 }
 
@@ -149,7 +152,7 @@ where
     ) -> RusotoFuture<T, R>
     where
         F: FnMut() -> RusotoFuture<T, R> + Send + 'static,
-        R: Retry + From<CredentialsError> + From<HttpDispatchError>,
+        R: Retry
     {
         RusotoFuture::from_future(self.inner.strategy.retry_if(operation, Counter(0)))
     }
@@ -444,10 +447,17 @@ where
     }
 }
 
+/// retry impl for Service error types
 macro_rules! retry {
     ($e:ty, $($p: pat)+) => {
         impl Retry for $e {
             fn retryable(&self) -> bool {
+                // we allow unreachable_patterns because
+                // _ => false because in some cases
+                // all variants are retryable
+                // in other cases, only a subset, hence
+                // this type matching
+                #[allow(unreachable_patterns)]
                 match self {
                    $($p)|+ => true,
                     _ => false
