@@ -147,7 +147,7 @@ fn expand_item(ast: DeriveInput) -> impl ToTokens {
             Fields::Named(named) => {
                 make_dynomite_item(vis, name, &named.named.into_iter().collect::<Vec<_>>())
             }
-            _ => panic!("Dyomite Items require named fields"),
+            _ => panic!("Dynomite Items require named fields"),
         },
         _ => panic!("Dynomite Items can only be generated for structs"),
     }
