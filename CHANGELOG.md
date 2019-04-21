@@ -1,3 +1,7 @@
+# 0.4.0
+
+* Upgrade to latest rusoto version [`0.38.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0380---2019-04-17)
+
 # 0.3.0
 
 * Upgrade to latest rusoto version ([`0.37.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0370---2019-03-12)) with added support for new DynamoDB methods `describe_endpoints`, `transact_get_items`, and `transact_write_items`.
