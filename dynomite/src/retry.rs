@@ -22,7 +22,7 @@
 use crate::dynamodb::*;
 use futures_backoff::{Condition, Strategy};
 use log::debug;
-use rusoto_core::{RusotoFuture, RusotoError};
+use rusoto_core::{RusotoError, RusotoFuture};
 use std::{sync::Arc, time::Duration};
 
 /// Preconfigured retry policies for failable operations
@@ -71,7 +71,7 @@ struct Counter(u16);
 
 impl<R> Condition<RusotoError<R>> for Counter
 where
-    R: Retry
+    R: Retry,
 {
     fn should_retry(
         &mut self,
@@ -83,7 +83,7 @@ where
         }
         match error {
             RusotoError::Service(e) => e.retryable(),
-            _ => false
+            _ => false,
         }
     }
 }
@@ -152,7 +152,7 @@ where
     ) -> RusotoFuture<T, R>
     where
         F: FnMut() -> RusotoFuture<T, R> + Send + 'static,
-        R: Retry
+        R: Retry,
     {
         RusotoFuture::from_future(self.inner.strategy.retry_if(operation, Counter(0)))
     }
@@ -424,7 +424,7 @@ where
     }
 
     fn describe_endpoints(
-        &self,
+        &self
     ) -> RusotoFuture<DescribeEndpointsResponse, DescribeEndpointsError> {
         // no apparent retryable errors
         self.inner.client.describe_endpoints()
