@@ -8,10 +8,8 @@ use futures::{stream, Future, Stream};
 
 #[cfg(feature = "default")]
 use rusoto_core_default::RusotoError;
-
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::RusotoError;
-
 use std::collections::HashMap;
 
 type DynomiteStream<I, E> = Box<Stream<Item = I, Error = RusotoError<E>> + Send>;

@@ -23,8 +23,9 @@ failure = "0.1"
 futures = "0.1"
 futures-backoff = "0.1"
 rusoto_core_default = { package = "rusoto_core", version = "0.38", optional = true }
-rusoto_core_rustls = { package = "rusoto_core", version = "0.38", default_features = false, features = ["rustls"], optional = true }
-rusoto_dynamodb = "0.38"
+rusoto_core_rustls = { package = "rusoto_core", version = "0.38", default_features = false, features=["rustls"], optional = true }
+rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.38", optional = true }
+rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.38", default_features = false, features=["rustls"], optional = true }
 uuid = { version = "0.7", features = ["v4"], optional = true }
 
 
@@ -35,6 +36,6 @@ serde_json = "1.0"
 tokio = "0.1"
 
 [features]
-default = ["uuid", "derive", "rusoto_core_default"]
-rustls = ["uuid", "derive", "rusoto_core_rustls"]
+default = ["uuid", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
+rustls = ["uuid", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
 derive = ["dynomite-derive"]

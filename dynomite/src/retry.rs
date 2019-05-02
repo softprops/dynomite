@@ -22,13 +22,10 @@
 use crate::dynamodb::*;
 use futures_backoff::{Condition, Strategy};
 use log::debug;
-
 #[cfg(feature = "default")]
 use rusoto_core_default::{RusotoError, RusotoFuture};
-
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::{RusotoError, RusotoFuture};
-
 use std::{sync::Arc, time::Duration};
 
 /// Preconfigured retry policies for failable operations
