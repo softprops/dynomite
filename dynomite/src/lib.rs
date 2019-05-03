@@ -66,8 +66,13 @@
 #![deny(missing_docs)]
 // reexported
 // note: this is used inside the attr_map! macro
-pub use rusoto_dynamodb as dynamodb;
-use rusoto_dynamodb::AttributeValue;
+#[cfg(feature = "default")]
+pub use rusoto_dynamodb_default as dynamodb;
+
+#[cfg(feature = "rustls")]
+pub use rusoto_dynamodb_rustls as dynamodb;
+
+use dynamodb::AttributeValue;
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
