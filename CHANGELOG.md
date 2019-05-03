@@ -1,3 +1,7 @@
+# 0.4.1
+
+* added a new `rustls` feature flag which when enabled replaces openssl with `rustls` [#54](https://github.com/softprops/dynomite/pull/55)
+
 # 0.4.0
 
 * Upgrade to latest rusoto version [`0.38.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0380---2019-04-17)

@@ -40,21 +40,26 @@
 //!
 //! # Cargo Features
 //!
-//! This crate as two features which are both enabled by default
+//! This crate as two features
 //!
 //! ## uuid
 //!
-//! The `uuid` features adds support for implementing `Attribute` for
+//! Enabled by default, the `uuid` features adds support for implementing `Attribute` for
 //! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
 //! type for producing and representing
 //! unique identifiers for items that satisfy [effective characteristcs for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 //!
 //! ## derive
 //!
-//! The `derive` feature enables the use of the dynomite derive feature which
+//! Enabled by default, the `derive` feature enables the use of the dynomite derive feature which
 //! allows you simple add `#[derive(Item)]` to your structs.
 //!
-//! To disable either of these features
+//! ## rustls
+//!
+//! Disabled by default, the `rustls` feature changes overrides rusoto's default tls
+//! dependency on openssl replacing it with `rustls`-based tls implementation
+//!
+//! To disable any of these features
 //!
 //! ```toml
 //! [dependencies.dynomite]
