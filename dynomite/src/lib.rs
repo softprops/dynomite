@@ -40,7 +40,7 @@
 //!
 //! # Cargo Features
 //!
-//! This crate as two features
+//! This crate as a few cargo features of note.
 //!
 //! ## uuid
 //!
@@ -56,8 +56,9 @@
 //!
 //! ## rustls
 //!
-//! Disabled by default, the `rustls` feature changes overrides rusoto's default tls
-//! dependency on openssl replacing it with `rustls`-based tls implementation
+//! Disabled by default, the `rustls` feature changes overrides Rusoto's default tls
+//! dependency on OpenSSL, replacing it with a [`rustls`](https://crates.io/crates/rustls) based tls implementation. When you
+//! enable this feature. It will also enable `uuid` and `derive` by default.
 //!
 //! To disable any of these features
 //!
