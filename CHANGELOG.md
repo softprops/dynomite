@@ -1,3 +1,5 @@
+# 0.5.0 (unreleased)
+
 * Upgrade to latest rusoto version [`0.39.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0390---2019-05-19)
 
 # 0.4.1
