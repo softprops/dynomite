@@ -78,6 +78,7 @@ pub use rusoto_dynamodb_default as dynamodb;
 #[cfg(feature = "rustls")]
 pub use rusoto_dynamodb_rustls as dynamodb;
 
+use bytes::Bytes;
 use dynamodb::AttributeValue;
 use std::{
     borrow::Cow,
@@ -347,7 +348,7 @@ impl Attribute for BTreeSet<String> {
 impl Attribute for HashSet<Vec<u8>> {
     fn into_attr(mut self: Self) -> AttributeValue {
         AttributeValue {
-            bs: Some(self.drain().collect()),
+            bs: Some(self.drain().map(Bytes::from).collect()),
             ..AttributeValue::default()
         }
     }
@@ -355,7 +356,7 @@ impl Attribute for HashSet<Vec<u8>> {
         value
             .bs
             .ok_or(AttributeError::InvalidType)
-            .map(|mut value| value.drain(..).collect())
+            .map(|mut value| value.drain(..).map(|bs| bs.as_ref().to_vec()).collect())
     }
 }
 
@@ -373,7 +374,7 @@ impl Attribute for bool {
 }
 
 // a Binary type, represented by the B AttributeValue type
-impl Attribute for Vec<u8> {
+impl Attribute for bytes::Bytes {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
             b: Some(self),
@@ -382,6 +383,22 @@ impl Attribute for Vec<u8> {
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
         value.b.ok_or(AttributeError::InvalidType)
+    }
+}
+
+// a Binary type, represented by the B AttributeValue type
+impl Attribute for Vec<u8> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            b: Some(self.into()),
+            ..AttributeValue::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .b
+            .ok_or(AttributeError::InvalidType)
+            .map(|bs| bs.as_ref().to_vec())
     }
 }
 
@@ -625,6 +642,15 @@ mod test {
     }
 
     #[test]
+    fn bytes_attr_from_attr() {
+        let value = Bytes::from("test");
+        assert_eq!(
+            Ok(value.clone()),
+            Bytes::from_attr(value.clone().into_attr())
+        );
+    }
+
+    #[test]
     fn byte_vec_attr_from_attr() {
         let value = b"test".to_vec();
         assert_eq!(
@@ -697,6 +723,24 @@ mod test {
                 serde_json::from_str::<AttributeValue>(r#"{"B":"Zm9v"}"#).unwrap()
             ),
             Ok(b"foo".to_vec())
+        );
+    }
+
+    #[test]
+    fn bytes_into_attr() {
+        assert_eq!(
+            serde_json::to_string(&Bytes::from("foo").into_attr()).unwrap(),
+            r#"{"B":"Zm9v"}"# // ruosoto converts to base64 for us
+        );
+    }
+
+    #[test]
+    fn bytes_from_attr() {
+        assert_eq!(
+            Attribute::from_attr(
+                serde_json::from_str::<AttributeValue>(r#"{"B":"Zm9v"}"#).unwrap()
+            ),
+            Ok(Bytes::from("foo"))
         );
     }
 
