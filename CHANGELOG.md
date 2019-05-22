@@ -2,6 +2,8 @@
 
 * Upgrade to latest rusoto version [`0.39.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0390---2019-05-19)
 
+This introduces a change to Rusoto DynamoDB where the representation of the DynamoDB value type `binary` types changed from `Vec<u8>` to `bytes::Bytes`. This should not break existing applications but dynomite users now get transparent support for Items which declare fields of type `byte::Bytes`, which will be interpreted the same opaque binary blob of bytes, for free.
+
 # 0.4.1
 
 * added a new `rustls` feature flag which when enabled replaces openssl with `rustls` [#54](https://github.com/softprops/dynomite/pull/55)
