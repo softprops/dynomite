@@ -1,6 +1,6 @@
 [package]
 name = "dynomite"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "Provides set of high-level productive DynamoDB interfaces"
 license = "MIT"
@@ -18,15 +18,15 @@ travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
 bytes = "0.4"
-dynomite-derive = { version = "0.5.0", path = "../dynomite-derive", optional = true }
+dynomite-derive = { version = "0.5.1", path = "../dynomite-derive", optional = true }
 log = "0.4"
 failure = "0.1"
 futures = "0.1"
 futures-backoff = "0.1"
-rusoto_core_default = { package = "rusoto_core", version = "0.39", optional = true }
-rusoto_core_rustls = { package = "rusoto_core", version = "0.39", default_features = false, features=["rustls"], optional = true }
-rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.39", optional = true }
-rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.39", default_features = false, features=["rustls"], optional = true }
+rusoto_core_default = { package = "rusoto_core", version = "0.40", optional = true }
+rusoto_core_rustls = { package = "rusoto_core", version = "0.40", default_features = false, features=["rustls"], optional = true }
+rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.40", optional = true }
+rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.40", default_features = false, features=["rustls"], optional = true }
 uuid = { version = "0.7", features = ["v4"], optional = true }
 
 
