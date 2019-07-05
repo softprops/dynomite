@@ -1,3 +1,7 @@
+# 0.5.1
+
+* Upgrade to the latest rusoto version [`0.40.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0400---2019-06-28)
+
 # 0.5.0
 
 * Upgrade to latest rusoto version [`0.39.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0390---2019-05-19)
