@@ -341,7 +341,14 @@ fn field_with_attribute(
 ) -> Option<Field> {
     let mut fields = fields.iter().cloned().filter(|field| {
         field.attrs.iter().any(|attr| match attr.parse_meta() {
-            Ok(Meta::Word(name)) => name == attribute_name,
+            Ok(Meta::Path(path)) => {
+                if path.segments.len() > 1 {
+                    return false;
+                }
+
+                let ident = &path.segments[0].ident;
+                ident == attribute_name
+            }
             _ => false,
         })
     });

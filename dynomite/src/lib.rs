@@ -861,5 +861,4 @@ mod test {
             Ok(btreemap! { "foo".to_string() => 1 })
         );
     }
-
 }
