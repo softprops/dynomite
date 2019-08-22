@@ -12,7 +12,7 @@ use rusoto_core_default::RusotoError;
 use rusoto_core_rustls::RusotoError;
 use std::collections::HashMap;
 
-type DynomiteStream<I, E> = Box<Stream<Item = I, Error = RusotoError<E>> + Send>;
+type DynomiteStream<I, E> = Box<dyn Stream<Item = I, Error = RusotoError<E>> + Send>;
 
 /// Extension methods for DynamoDb client types
 ///
