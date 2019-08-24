@@ -120,7 +120,7 @@ fn make_dynomite_attr(
     let from_match_arms = variants.iter().map(|var| {
         let vname = &var.ident;
         quote! {
-            stringify!(#vname) => Ok(#name::#vname),
+            stringify!(#vname) => ::std::result::Result::Ok(#name::#vname),
         }
     });
 
@@ -131,15 +131,15 @@ fn make_dynomite_attr(
                     #(#into_match_arms)*
                 };
                 ::dynomite::dynamodb::AttributeValue {
-                    s: Some(arm),
-                    ..Default::default()
+                    s: ::std::option::Option::Some(arm),
+                    ..::std::default::Default::default()
                 }
             }
-            fn from_attr(value: ::dynomite::dynamodb::AttributeValue) -> Result<Self, #err> {
+            fn from_attr(value: ::dynomite::dynamodb::AttributeValue) -> ::std::result::Result<Self, #err> {
                 value.s.ok_or(::dynomite::AttributeError::InvalidType)
                     .and_then(|value| match &value[..] {
                         #(#from_match_arms)*
-                        _ => Err(::dynomite::AttributeError::InvalidFormat)
+                        _ => ::std::result::Result::Err(::dynomite::AttributeError::InvalidFormat)
                     })
             }
         }
@@ -410,8 +410,8 @@ fn get_from_attributes_function(fields: &[Field]) -> syn::Result<impl ToTokens> 
     }).collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {
-        fn from_attrs(mut attrs: #attributes) -> Result<Self, #err> {
-            Ok(Self {
+        fn from_attrs(mut attrs: #attributes) -> ::std::result::Result<Self, #err> {
+            ::std::result::Result::Ok(Self {
                 #(#field_conversions),*
             })
         }
