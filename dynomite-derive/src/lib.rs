@@ -51,10 +51,15 @@ use syn::{
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
-#[proc_macro_derive(Item, attributes(hash, range))]
+#[proc_macro_derive(Item, attributes(hash, range, dynomite))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
-    let gen = expand_item(ast);
+
+    let gen = match expand_item(ast) {
+        Ok(g) => g,
+        Err(e) => return e.to_compile_error().into(),
+    };
+
     gen.into_token_stream().into()
 }
 
@@ -80,6 +85,7 @@ fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
     }
 }
 
+/// ```rust,ignore
 /// impl ::dynomite::Attribute for Name {
 ///   fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
 ///     let arm = match self {
@@ -98,6 +104,7 @@ fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
 ///       })
 ///   }
 /// }
+/// ```
 fn make_dynomite_attr(
     name: &Ident,
     variants: &[Variant],
@@ -139,7 +146,7 @@ fn make_dynomite_attr(
     }
 }
 
-fn expand_item(ast: DeriveInput) -> impl ToTokens {
+fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
     let name = &ast.ident;
     let vis = &ast.vis;
     match ast.data {
@@ -157,155 +164,311 @@ fn make_dynomite_item(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
-    let dynamodb_traits = get_dynomite_item_traits(vis, name, fields);
-    let from_attribute_map = get_from_attributes_trait(name, fields);
-    let to_attribute_map = get_to_attribute_map_trait(name, fields);
+) -> syn::Result<impl ToTokens> {
+    let dynamodb_traits = get_dynomite_item_traits(vis, name, fields)?;
+    let from_attribute_map = get_from_attributes_trait(name, fields)?;
+    let to_attribute_map = get_to_attribute_map_trait(name, fields)?;
 
-    quote! {
+    Ok(quote! {
         #from_attribute_map
         #to_attribute_map
         #dynamodb_traits
-    }
+    })
 }
 
 fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
+) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from = quote!(::std::convert::From);
-    let to_attribute_map = get_to_attribute_map_function(name, fields);
+    let to_attribute_map = get_to_attribute_map_function(name, fields)?;
 
-    quote! {
+    Ok(quote! {
         impl #from<#name> for #attributes {
             #to_attribute_map
         }
+    })
+}
+
+/// Get the items in `attributes` with only a single path segment with an
+/// ident of `dynomite`.
+fn dynomite_attributes<'a>(
+    attributes: &'a [syn::Attribute]
+) -> impl Iterator<Item = &'a syn::Attribute> {
+    attributes
+        .iter()
+        .filter(|attr| attr.path.segments.len() == 1 && attr.path.segments[0].ident == "dynomite")
+}
+
+/// Get `Ok` from `#[dynomite(name = value)]` if applicable, otherwise `Err`.
+fn get_name_eq_value_attribute_lit(
+    attribute: &syn::Attribute,
+    name: &'_ str,
+) -> syn::Result<syn::Lit> {
+    use syn::spanned::Spanned as _;
+
+    // #[dynomite()]
+    let mut tokens = match attribute.tokens.clone().into_iter().next() {
+        Some(proc_macro2::TokenTree::Group(g)) => g.stream().into_iter(),
+        _ => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
+    };
+
+    // #[dynomite(name)]
+    match tokens.next() {
+        Some(proc_macro2::TokenTree::Ident(ref ident)) if ident.to_string() == name => {}
+        Some(other) => {
+            return Err(syn::Error::new(
+                other.span(),
+                format!("expected `{}`", name),
+            ))
+        }
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
+    };
+
+    // #[dynomite(name = )]
+    match tokens.next() {
+        Some(proc_macro2::TokenTree::Punct(ref punct)) if punct.as_char() == '=' => {}
+        Some(other) => return Err(syn::Error::new(other.span(), "expected `=`")),
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
+    };
+
+    // #[dynomite(name = value)]
+    let lit = match tokens.next() {
+        Some(proc_macro2::TokenTree::Literal(lit)) => Ok(syn::Lit::new(lit)),
+        Some(other) => Err(syn::Error::new(
+            other.span(),
+            "expected value to be a literal",
+        )),
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
+    };
+
+    // Make sure there are no more tokens
+    if let Some(token) = tokens.next() {
+        return Err(syn::Error::new(
+            token.span(),
+            format!("expected form `#[dynomite({} = value)]`", name),
+        ));
     }
+
+    lit
+}
+
+/// The name of the field to be used during de/serialization
+///
+/// # Returns
+/// `Ok("foo")` from `#[dynomite(rename = "foo")]` if applicable, otherwise `Ok(field.ident)`
+/// - `Err` if multiple `#[dynomite(rename = "foo")]` attributes are present on `field`
+/// - `Err` if `value` in `#[dynomite(rename = value)]` is not a string literal
+/// - `Err` if `value` in `#[dynomite(rename = value)]` is an empty string literal
+fn get_field_deser_name(field: &Field) -> syn::Result<String> {
+    use syn::spanned::Spanned as _;
+
+    let rename_value_opt = {
+        let rename_value_lits = dynomite_attributes(&field.attrs)
+            .map(|attr| get_name_eq_value_attribute_lit(attr, "rename"))
+            .collect::<syn::Result<Vec<_>>>()?;
+
+        if rename_value_lits.len() > 1 {
+            // Pick the 2nd since it is the first duplicate
+            // TODO: get the attr's span, not just the lit's
+            let lit_to_err_on = &rename_value_lits[1];
+            return Err(syn::Error::new(
+                lit_to_err_on.span(),
+                "fields may have a maximum of 1 `#[dynomite(rename = \"...\")]` attribute",
+            ));
+        }
+
+        match rename_value_lits.get(0) {
+            Some(syn::Lit::Str(lit_str)) => {
+                let value = lit_str.value();
+
+                if value.trim().is_empty() {
+                    return Err(syn::Error::new(
+                        lit_str.span(),
+                        "expected non-empty string literal value in `#[dynomite(rename = \"...\")]` attribute",
+                    ));
+                }
+
+                value.into()
+            }
+            Some(other) => {
+                return Err(syn::Error::new(
+                    other.span(),
+                    "expected string literal value in `#[dynomite(rename = ...)]` attribute",
+                ));
+            }
+            _ => None,
+        }
+    };
+
+    Ok(rename_value_opt.unwrap_or_else(|| {
+        field
+            .ident
+            .as_ref()
+            .expect("should have an identifier")
+            .to_string()
+    }))
 }
 
 fn get_to_attribute_map_function(
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
+) -> syn::Result<impl ToTokens> {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
-    let field_conversions = fields.iter().map(|field| {
-        let field_name = &field.ident;
-        quote! {
-            values.insert(
-                stringify!(#field_name).to_string(),
-                #to_attribute_value(item.#field_name)
-            );
-        }
-    });
+    let field_conversions = fields
+        .iter()
+        .map(|field| {
+            let field_deser_name = &match get_field_deser_name(field) {
+                Ok(name) => name,
+                Err(e) => return Err(e),
+            };
 
-    quote! {
+            let field_ident = &field.ident;
+            Ok(quote! {
+                values.insert(
+                    #field_deser_name.to_string(),
+                    #to_attribute_value(item.#field_ident)
+                );
+            })
+        })
+        .collect::<syn::Result<Vec<_>>>()?;
+
+    Ok(quote! {
         fn from(item: #name) -> Self {
             let mut values = Self::new();
             #(#field_conversions)*
             values
         }
-    }
+    })
 }
 
-///
+/// ```rust,ignore
 /// impl ::dynomite::FromAttributes for Name {
 ///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
 ///     Ok(Self {
 ///        field_name: ::dynomite::Attribute::from_attr(
-///           item.remove("field_name").ok_or(Error::MissingField { name: "field_name".into() })?
+///           item.remove("field_deser_name").ok_or(Error::MissingField { name: "field_deser_name".into() })?
 ///        )
 ///      })
 ///   }
 /// }
+/// ```
 fn get_from_attributes_trait(
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
+) -> syn::Result<impl ToTokens> {
     let from_attrs = quote!(::dynomite::FromAttributes);
-    let from_attribute_map = get_from_attributes_function(fields);
+    let from_attribute_map = get_from_attributes_function(fields)?;
 
-    quote! {
+    Ok(quote! {
         impl #from_attrs for #name {
             #from_attribute_map
         }
-    }
+    })
 }
 
-fn get_from_attributes_function(fields: &[Field]) -> impl ToTokens {
+fn get_from_attributes_function(fields: &[Field]) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
     let err = quote!(::dynomite::AttributeError);
-    let field_conversions = fields.iter().map(|field| {
-        let field_name = &field.ident;
-        quote! {
-            #field_name: #from_attribute_value(
-                attrs.remove(stringify!(#field_name))
-                    .ok_or(::dynomite::AttributeError::MissingField { name: stringify!(#field_name).to_string() })?
-            )?
-        }
-    });
 
-    quote! {
+    let field_conversions = fields.iter().map(|field| {
+        let field_deser_name = &match get_field_deser_name(field) {
+            Ok(name) => name,
+            Err(e) => return Err(e),
+        };
+
+        let field_ident = &field.ident;
+        Ok(quote! {
+            #field_ident: #from_attribute_value(
+                attrs.remove(#field_deser_name)
+                    .ok_or(::dynomite::AttributeError::MissingField { name: #field_deser_name.to_string() })?
+            )?
+        })
+    }).collect::<syn::Result<Vec<_>>>()?;
+
+    Ok(quote! {
         fn from_attrs(mut attrs: #attributes) -> Result<Self, #err> {
             Ok(Self {
                 #(#field_conversions),*
             })
         }
-    }
+    })
 }
 
 fn get_dynomite_item_traits(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
-    let impls = get_item_impls(vis, name, fields);
+) -> syn::Result<impl ToTokens> {
+    let impls = get_item_impls(vis, name, fields)?;
 
-    quote! {
+    Ok(quote! {
         #impls
-    }
+    })
 }
 
 fn get_item_impls(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
-    let item_trait = get_item_trait(name, fields);
-    let key_struct = get_key_struct(vis, name, fields);
+) -> syn::Result<impl ToTokens> {
+    let item_trait = get_item_trait(name, fields)?;
+    let key_struct = get_key_struct(vis, name, fields)?;
 
-    quote! {
+    Ok(quote! {
         #item_trait
         #key_struct
-    }
+    })
 }
 
-///
+/// ```rust,ignore
 /// impl ::dynomite::Item for Name {
 ///   fn key(&self) -> ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue> {
 ///     let mut keys = ::std::collections::HashMap::new();
-///     keys.insert("field_name", to_attribute_value(field));
+///     keys.insert("field_deser_name", to_attribute_value(field));
 ///     keys
 ///   }
 /// }
-///
+/// ```
 fn get_item_trait(
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
+) -> syn::Result<impl ToTokens> {
     let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
         ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue>
     );
-    let hash_key_name = field_name_with_attribute(&fields, "hash");
-    let range_key_name = field_name_with_attribute(&fields, "range");
+    let hash_field = field_with_attribute(&fields, "hash");
+    let range_field = field_with_attribute(&fields, "range");
 
-    let hash_key_insert = get_key_inserter(&hash_key_name);
-    let range_key_insert = get_key_inserter(&range_key_name);
+    let hash_key_insert = hash_field.as_ref().map(get_key_inserter).transpose()?;
 
-    hash_key_name
+    let range_key_insert = range_field.as_ref().map(get_key_inserter).transpose()?;
+
+    Ok(hash_field
         .map(|_| {
             quote! {
                 impl #item for #name {
@@ -318,21 +481,7 @@ fn get_item_trait(
                 }
             }
         })
-        .unwrap_or(quote! {})
-}
-
-fn field_name_with_attribute(
-    fields: &[Field],
-    attribute_name: &str,
-) -> Option<Ident> {
-    field_with_attribute(fields, attribute_name).map(|field| {
-        field.ident.unwrap_or_else(|| {
-            panic!(
-                "should have an identifier with an {} attribute",
-                attribute_name
-            )
-        })
-    })
+        .unwrap_or(quote! {}))
 }
 
 fn field_with_attribute(
@@ -359,56 +508,93 @@ fn field_with_attribute(
     field
 }
 
+/// ```rust,ignore
 /// keys.insert(
-///   "field_name", to_attribute_value(field)
-/// )
-fn get_key_inserter(field_name: &Option<Ident>) -> impl ToTokens {
+///   "field_deser_name", to_attribute_value(field)
+/// );
+/// ```
+fn get_key_inserter(field: &Field) -> syn::Result<impl ToTokens> {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
-    field_name
-        .as_ref()
-        .map(|field_name| {
-            quote! {
-                keys.insert(
-                    stringify!(#field_name).to_string(),
-                    #to_attribute_value(self.#field_name.clone())
-                );
-            }
-        })
-        .unwrap_or(quote!())
+    let field_deser_name = &get_field_deser_name(field)?;
+    let field_ident = &field.ident;
+    Ok(quote! {
+        keys.insert(
+            #field_deser_name.to_string(),
+            #to_attribute_value(self.#field_ident.clone())
+        );
+    })
 }
 
-/// #[derive](Item, Debug, Clone, PartialEq)
+/// ```rust,ignore
+/// #[derive(Item, Debug, Clone, PartialEq)]
 /// pub struct NameKey {
-///    hash_key,
+///    hash_field,
 ///    range_key
 /// }
+/// ```
 fn get_key_struct(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
-) -> impl ToTokens {
-    // fixme: this `Span` ref is the only dependency we have on the proc_macro2 crate
-    // is this really needed?
+) -> syn::Result<impl ToTokens> {
     let name = Ident::new(&format!("{}Key", name), Span::call_site());
 
-    let hash_key = field_with_attribute(&fields, "hash");
-    let range_key = field_with_attribute(&fields, "range")
-        .map(|mut range_key| {
-            range_key.attrs = vec![];
-            quote! {#range_key}
+    let hash_field = field_with_attribute(&fields, "hash")
+        .map(|mut field| {
+            // rename the field to the de/ser name
+            if let Err(e) = rename_field_to_deser_name(&mut field) {
+                return Err(e);
+            }
+
+            // remove attributes (because key structs don't need attrs) but
+            // _after_ renaming the field so `get_field_deser_name` still works
+            field.attrs = vec![];
+
+            Ok(quote! {
+                #field
+            })
         })
+        .transpose()?;
+
+    let range_field = field_with_attribute(&fields, "range")
+        .map(|mut field| {
+            // rename the field to the de/ser name
+            if let Err(e) = rename_field_to_deser_name(&mut field) {
+                return Err(e);
+            }
+
+            // remove attributes (because key structs don't need attrs) but
+            // _after_ renaming the field so `get_field_deser_name` still works
+            field.attrs = vec![];
+
+            Ok(quote! {
+                #field
+            })
+        })
+        .transpose()?
         .unwrap_or(quote!());
 
-    hash_key
-        .map(|mut hash_key| {
-            hash_key.attrs = vec![];
+    Ok(hash_field
+        .map(|hash_field| {
             quote! {
                 #[derive(Item, Debug, Clone, PartialEq)]
                 #vis struct #name {
-                    #hash_key,
-                    #range_key
+                    #hash_field,
+                    #range_field
                 }
             }
         })
-        .unwrap_or(quote!())
+        .unwrap_or(quote!()))
+}
+
+/// Change `field.ident` to the value returned by `get_field_deser_name`
+fn rename_field_to_deser_name(field: &mut Field) -> syn::Result<()> {
+    let field_deser_name = get_field_deser_name(field)?;
+
+    field.ident = field
+        .ident
+        .as_ref()
+        .map(|ident| syn::Ident::new(&field_deser_name, ident.span()));
+
+    Ok(())
 }

@@ -25,10 +25,18 @@ pub struct Book {
     authors: Option<Vec<Author>>,
 }
 
+#[derive(Item, PartialEq, Debug, Clone)]
+struct Recipe {
+    #[hash]
+    #[dynomite(rename = "recipe_id")]
+    id: String,
+    servings: u64,
+}
+
 #[cfg(test)]
 mod tests {
 
-    use super::Book;
+    use super::{Book, Recipe};
     use dynomite::{Attribute, Attributes, FromAttributes};
 
     #[test]
@@ -48,5 +56,20 @@ mod tests {
             Bar,
         };
         assert_eq!(Foo::Bar, Foo::from_attr(Foo::Bar.into_attr()).unwrap());
+    }
+
+    #[test]
+    fn field_rename() {
+        let value = Recipe {
+            id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee".into(),
+            servings: 2,
+        };
+
+        let attrs: Attributes = value.clone().into();
+
+        assert!(attrs.contains_key("recipe_id"));
+        assert!(!attrs.contains_key("id"));
+
+        assert_eq!(value, Recipe::from_attrs(attrs).unwrap());
     }
 }
