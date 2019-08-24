@@ -211,40 +211,56 @@ fn get_name_eq_value_attribute_lit(
     // #[dynomite()]
     let mut tokens = match attribute.tokens.clone().into_iter().next() {
         Some(proc_macro2::TokenTree::Group(g)) => g.stream().into_iter(),
-        _ => return Err(syn::Error::new(
-            attribute.span(),
-            format!("expected form `#[dynomite({} = value)]`", name),
-        )),
+        _ => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
     };
 
     // #[dynomite(name)]
     match tokens.next() {
         Some(proc_macro2::TokenTree::Ident(ref ident)) if ident.to_string() == name => {}
-        Some(other) => return Err(syn::Error::new(other.span(), format!("expected `{}`", name))),
-        None => return Err(syn::Error::new(
-            attribute.span(),
-            format!("expected form `#[dynomite({} = value)]`", name),
-        )),
+        Some(other) => {
+            return Err(syn::Error::new(
+                other.span(),
+                format!("expected `{}`", name),
+            ))
+        }
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
     };
 
     // #[dynomite(name = )]
     match tokens.next() {
         Some(proc_macro2::TokenTree::Punct(ref punct)) if punct.as_char() == '=' => {}
         Some(other) => return Err(syn::Error::new(other.span(), "expected `=`")),
-        None => return Err(syn::Error::new(
-            attribute.span(),
-            format!("expected form `#[dynomite({} = value)]`", name),
-        )),
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
     };
 
     // #[dynomite(name = value)]
     let lit = match tokens.next() {
         Some(proc_macro2::TokenTree::Literal(lit)) => Ok(syn::Lit::new(lit)),
-        Some(other) => Err(syn::Error::new(other.span(), "expected value to be a literal")),
-        None => return Err(syn::Error::new(
-            attribute.span(),
-            format!("expected form `#[dynomite({} = value)]`", name),
+        Some(other) => Err(syn::Error::new(
+            other.span(),
+            "expected value to be a literal",
         )),
+        None => {
+            return Err(syn::Error::new(
+                attribute.span(),
+                format!("expected form `#[dynomite({} = value)]`", name),
+            ))
+        }
     };
 
     // Make sure there are no more tokens
@@ -279,7 +295,7 @@ fn get_field_deser_name(field: &Field) -> syn::Result<String> {
             let lit_to_err_on = &rename_value_lits[1];
             return Err(syn::Error::new(
                 lit_to_err_on.span(),
-                "fields may have a maximum of 1 `#[dynomite(rename = \"...\")]` attribute"
+                "fields may have a maximum of 1 `#[dynomite(rename = \"...\")]` attribute",
             ));
         }
 
@@ -299,9 +315,9 @@ fn get_field_deser_name(field: &Field) -> syn::Result<String> {
             Some(other) => {
                 return Err(syn::Error::new(
                     other.span(),
-                    "expected string literal value in `#[dynomite(rename = ...)]` attribute"
+                    "expected string literal value in `#[dynomite(rename = ...)]` attribute",
                 ));
-            },
+            }
             _ => None,
         }
     };
@@ -321,20 +337,23 @@ fn get_to_attribute_map_function(
 ) -> syn::Result<impl ToTokens> {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
-    let field_conversions = fields.iter().map(|field| {
-        let field_deser_name = &match get_field_deser_name(field) {
-            Ok(name) => name,
-            Err(e) => return Err(e),
-        };
+    let field_conversions = fields
+        .iter()
+        .map(|field| {
+            let field_deser_name = &match get_field_deser_name(field) {
+                Ok(name) => name,
+                Err(e) => return Err(e),
+            };
 
-        let field_ident = &field.ident;
-        Ok(quote! {
-            values.insert(
-                #field_deser_name.to_string(),
-                #to_attribute_value(item.#field_ident)
-            );
+            let field_ident = &field.ident;
+            Ok(quote! {
+                values.insert(
+                    #field_deser_name.to_string(),
+                    #to_attribute_value(item.#field_ident)
+                );
+            })
         })
-    }).collect::<syn::Result<Vec<_>>>()?;
+        .collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {
         fn from(item: #name) -> Self {
@@ -445,15 +464,9 @@ fn get_item_trait(
     let hash_field = field_with_attribute(&fields, "hash");
     let range_field = field_with_attribute(&fields, "range");
 
-    let hash_key_insert = hash_field
-        .as_ref()
-        .map(get_key_inserter)
-        .transpose()?;
+    let hash_key_insert = hash_field.as_ref().map(get_key_inserter).transpose()?;
 
-    let range_key_insert = range_field
-        .as_ref()
-        .map(get_key_inserter)
-        .transpose()?;
+    let range_key_insert = range_field.as_ref().map(get_key_inserter).transpose()?;
 
     Ok(hash_field
         .map(|_| {
@@ -468,8 +481,7 @@ fn get_item_trait(
                 }
             }
         })
-        .unwrap_or(quote! {})
-    )
+        .unwrap_or(quote! {}))
 }
 
 fn field_with_attribute(
@@ -541,7 +553,8 @@ fn get_key_struct(
             Ok(quote! {
                 #field
             })
-        }).transpose()?;
+        })
+        .transpose()?;
 
     let range_field = field_with_attribute(&fields, "range")
         .map(|mut field| {
@@ -571,8 +584,7 @@ fn get_key_struct(
                 }
             }
         })
-        .unwrap_or(quote!())
-    )
+        .unwrap_or(quote!()))
 }
 
 /// Change `field.ident` to the value returned by `get_field_deser_name`
