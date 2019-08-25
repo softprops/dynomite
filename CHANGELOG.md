@@ -1,3 +1,9 @@
+# 0.5.2
+
+* Item fields now support renaming [#65](https://github.com/softprops/dynomite/pull/68)
+
+Those familiar with `#[serde(rename = "actualName")]` will feel at home with `#[dynomite(rename = "actualName)]`. This feature brings a welcome ergnomic improvement when interacting with DynamoDB tables with attributes that don't follow [Rust's naming conventions](https://rust-lang-nursery.github.io/api-guidelines/naming.html).
+
 # 0.5.1
 
 * Upgrade to the latest rusoto version [`0.40.0`](https://github.com/rusoto/rusoto/blob/master/CHANGELOG.md#0400---2019-06-28)
