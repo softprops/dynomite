@@ -29,6 +29,7 @@ use uuid::Uuid;
 pub struct Book {
     #[hash]
     id: Uuid,
+    #[dynomite(rename = "bookTitle")]
     title: String,
 }
 
