@@ -20,7 +20,7 @@ use uuid::Uuid;
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
-    #[hash]
+    #[partition_key]
     id: Uuid,
     title: String,
 }

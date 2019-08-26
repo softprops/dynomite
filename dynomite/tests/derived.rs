@@ -2,7 +2,7 @@ use dynomite_derive::{Attribute, Item};
 
 #[derive(Item, Default, PartialEq, Debug, Clone)]
 pub struct Author {
-    #[hash]
+    #[partition_key]
     name: String,
 }
 
@@ -19,7 +19,7 @@ impl Default for Category {
 
 #[derive(Item, Default, PartialEq, Debug, Clone)]
 pub struct Book {
-    #[hash]
+    #[partition_key]
     title: String,
     category: Category,
     authors: Option<Vec<Author>>,
@@ -27,7 +27,7 @@ pub struct Book {
 
 #[derive(Item, PartialEq, Debug, Clone)]
 struct Recipe {
-    #[hash]
+    #[partition_key]
     #[dynomite(rename = "recipe_id")]
     id: String,
     servings: u64,
