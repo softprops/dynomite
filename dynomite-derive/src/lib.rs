@@ -465,7 +465,10 @@ fn get_item_trait(
     let partition_key_field = field_with_attribute(&fields, "partition_key");
     let sort_key_field = field_with_attribute(&fields, "sort_key");
 
-    let partition_key_insert = partition_key_field.as_ref().map(get_key_inserter).transpose()?;
+    let partition_key_insert = partition_key_field
+        .as_ref()
+        .map(get_key_inserter)
+        .transpose()?;
 
     let sort_key_insert = sort_key_field.as_ref().map(get_key_inserter).transpose()?;
 
