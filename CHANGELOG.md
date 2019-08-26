@@ -1,6 +1,6 @@
 # 0.5.2
 
-* Item fields now support renaming [#65](https://github.com/softprops/dynomite/pull/68)
+* Item fields now support renaming [#68](https://github.com/softprops/dynomite/pull/68)
 
 Those familiar with `#[serde(rename = "actualName")]` will feel at home with `#[dynomite(rename = "actualName)]`. This feature brings a welcome ergnomic improvement when interacting with DynamoDB tables with attributes that don't follow [Rust's naming conventions](https://rust-lang-nursery.github.io/api-guidelines/naming.html).
 
