@@ -10,7 +10,7 @@
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
 //! struct Person {
-//!   #[partition_key] id: String
+//!   #[dynomite(partition_key)] id: String
 //! }
 //!
 //! fn main() {
@@ -45,8 +45,8 @@ use syn::{
 ///
 /// # Attributes
 ///
-/// * `#[partition_key]` - required attribute, expected to be applied the target [partition attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
-/// * `#[sort_key]` - optional attribute, may be applied to one target [sort attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[dynomite(partition_key)]` - required attribute, expected to be applied the target [partition attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[dynomite(sort_key)]` - optional attribute, may be applied to one target [sort attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
 /// * `#[dynomite(rename = "actualName")]` - optional attribute, may be applied any item attribute field, useful when the DynamoDB table you're interfacing with has attributes whose names don't following Rust's naming conventions
 ///
 /// # Panics
@@ -286,9 +286,9 @@ fn get_field_deser_name(field: &Field) -> syn::Result<String> {
     use syn::spanned::Spanned as _;
 
     let rename_value_opt = {
-        let rename_value_lits = dynomite_attributes(&field.attrs)
-            .map(|attr| get_name_eq_value_attribute_lit(attr, "rename"))
-            .collect::<syn::Result<Vec<_>>>()?;
+        let rename_value_lits: Vec<_> = dynomite_attributes(&field.attrs)
+            .filter_map(|attr| get_name_eq_value_attribute_lit(attr, "rename").ok())
+            .collect();
 
         if rename_value_lits.len() > 1 {
             // Pick the 2nd since it is the first duplicate
@@ -488,26 +488,44 @@ fn get_item_trait(
         .unwrap_or(quote! {}))
 }
 
+/// Find a single `Field` from `fields` that has an attribute of the form
+/// `#[dynomite(attribute_name)]`.
+///
+/// # Panics
+/// - if there are multiple fields, in `fields`, with an attribute of the form
+///   `#[dynomite(attribute_name)]`
 fn field_with_attribute(
     fields: &[Field],
     attribute_name: &str,
 ) -> Option<Field> {
     let mut fields = fields.iter().cloned().filter(|field| {
         field.attrs.iter().any(|attr| match attr.parse_meta() {
-            Ok(Meta::Path(path)) => {
+            Ok(Meta::List(syn::MetaList { path, nested, .. })) => {
                 if path.segments.len() > 1 {
                     return false;
                 }
 
-                let ident = &path.segments[0].ident;
-                ident == attribute_name
+                if path.segments[0].ident != "dynomite" {
+                    return false;
+                }
+
+                match nested.first() {
+                    Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => {
+                        if path.segments.len() > 1 {
+                            return false;
+                        }
+
+                        path.segments[0].ident == attribute_name
+                    }
+                    _ => false,
+                }
             }
             _ => false,
         })
     });
     let field = fields.next();
     if fields.next().is_some() {
-        panic!("Can't set more than one {} key", attribute_name);
+        panic!("Can't set more than one `{}`", attribute_name);
     }
     field
 }

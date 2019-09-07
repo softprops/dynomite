@@ -27,7 +27,7 @@ use uuid::Uuid;
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
-    #[partition_key]
+    #[dynomite(partition_key)]
     id: Uuid,
     title: String,
 }
