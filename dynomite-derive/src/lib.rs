@@ -10,7 +10,7 @@
 //! // derive Item
 //! #[derive(Item, PartialEq, Debug, Clone)]
 //! struct Person {
-//!   #[hash] id: String
+//!   #[dynomite(partition_key)] id: String
 //! }
 //!
 //! fn main() {
@@ -45,14 +45,14 @@ use syn::{
 ///
 /// # Attributes
 ///
-/// * `#[hash]` - required attribute, expected to be applied the target [hash attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
-/// * `#[range]` - optional attribute, may be applied to one target [range attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[dynomite(partition_key)]` - required attribute, expected to be applied the target [partition attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) field with an derivable DynamoDB attribute value of String, Number or Binary
+/// * `#[dynomite(sort_key)]` - optional attribute, may be applied to one target [sort attribute](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes) field with an derivable DynamoDB attribute value of String, Number or Binary
 /// * `#[dynomite(rename = "actualName")]` - optional attribute, may be applied any item attribute field, useful when the DynamoDB table you're interfacing with has attributes whose names don't following Rust's naming conventions
 ///
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
-#[proc_macro_derive(Item, attributes(hash, range, dynomite))]
+#[proc_macro_derive(Item, attributes(partition_key, sort_key, dynomite))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
 
@@ -286,9 +286,9 @@ fn get_field_deser_name(field: &Field) -> syn::Result<String> {
     use syn::spanned::Spanned as _;
 
     let rename_value_opt = {
-        let rename_value_lits = dynomite_attributes(&field.attrs)
-            .map(|attr| get_name_eq_value_attribute_lit(attr, "rename"))
-            .collect::<syn::Result<Vec<_>>>()?;
+        let rename_value_lits: Vec<_> = dynomite_attributes(&field.attrs)
+            .filter_map(|attr| get_name_eq_value_attribute_lit(attr, "rename").ok())
+            .collect();
 
         if rename_value_lits.len() > 1 {
             // Pick the 2nd since it is the first duplicate
@@ -462,21 +462,24 @@ fn get_item_trait(
     let attribute_map = quote!(
         ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue>
     );
-    let hash_field = field_with_attribute(&fields, "hash");
-    let range_field = field_with_attribute(&fields, "range");
+    let partition_key_field = field_with_attribute(&fields, "partition_key");
+    let sort_key_field = field_with_attribute(&fields, "sort_key");
 
-    let hash_key_insert = hash_field.as_ref().map(get_key_inserter).transpose()?;
+    let partition_key_insert = partition_key_field
+        .as_ref()
+        .map(get_key_inserter)
+        .transpose()?;
 
-    let range_key_insert = range_field.as_ref().map(get_key_inserter).transpose()?;
+    let sort_key_insert = sort_key_field.as_ref().map(get_key_inserter).transpose()?;
 
-    Ok(hash_field
+    Ok(partition_key_field
         .map(|_| {
             quote! {
                 impl #item for #name {
                     fn key(&self) -> #attribute_map {
                         let mut keys = ::std::collections::HashMap::new();
-                        #hash_key_insert
-                        #range_key_insert
+                        #partition_key_insert
+                        #sort_key_insert
                         keys
                     }
                 }
@@ -485,26 +488,44 @@ fn get_item_trait(
         .unwrap_or(quote! {}))
 }
 
+/// Find a single `Field` from `fields` that has an attribute of the form
+/// `#[dynomite(attribute_name)]`.
+///
+/// # Panics
+/// - if there are multiple fields, in `fields`, with an attribute of the form
+///   `#[dynomite(attribute_name)]`
 fn field_with_attribute(
     fields: &[Field],
     attribute_name: &str,
 ) -> Option<Field> {
     let mut fields = fields.iter().cloned().filter(|field| {
         field.attrs.iter().any(|attr| match attr.parse_meta() {
-            Ok(Meta::Path(path)) => {
+            Ok(Meta::List(syn::MetaList { path, nested, .. })) => {
                 if path.segments.len() > 1 {
                     return false;
                 }
 
-                let ident = &path.segments[0].ident;
-                ident == attribute_name
+                if path.segments[0].ident != "dynomite" {
+                    return false;
+                }
+
+                match nested.first() {
+                    Some(syn::NestedMeta::Meta(syn::Meta::Path(path))) => {
+                        if path.segments.len() > 1 {
+                            return false;
+                        }
+
+                        path.segments[0].ident == attribute_name
+                    }
+                    _ => false,
+                }
             }
             _ => false,
         })
     });
     let field = fields.next();
     if fields.next().is_some() {
-        panic!("Can't set more than one {} key", attribute_name);
+        panic!("Can't set more than one `{}`", attribute_name);
     }
     field
 }
@@ -529,7 +550,7 @@ fn get_key_inserter(field: &Field) -> syn::Result<impl ToTokens> {
 /// ```rust,ignore
 /// #[derive(Item, Debug, Clone, PartialEq)]
 /// pub struct NameKey {
-///    hash_field,
+///    partition_key_field,
 ///    range_key
 /// }
 /// ```
@@ -540,7 +561,7 @@ fn get_key_struct(
 ) -> syn::Result<impl ToTokens> {
     let name = Ident::new(&format!("{}Key", name), Span::call_site());
 
-    let hash_field = field_with_attribute(&fields, "hash")
+    let partition_key_field = field_with_attribute(&fields, "partition_key")
         .map(|mut field| {
             // rename the field to the de/ser name
             if let Err(e) = rename_field_to_deser_name(&mut field) {
@@ -557,7 +578,7 @@ fn get_key_struct(
         })
         .transpose()?;
 
-    let range_field = field_with_attribute(&fields, "range")
+    let sort_key_field = field_with_attribute(&fields, "sort_key")
         .map(|mut field| {
             // rename the field to the de/ser name
             if let Err(e) = rename_field_to_deser_name(&mut field) {
@@ -575,13 +596,13 @@ fn get_key_struct(
         .transpose()?
         .unwrap_or(quote!());
 
-    Ok(hash_field
-        .map(|hash_field| {
+    Ok(partition_key_field
+        .map(|partition_key_field| {
             quote! {
                 #[derive(Item, Debug, Clone, PartialEq)]
                 #vis struct #name {
-                    #hash_field,
-                    #range_field
+                    #partition_key_field,
+                    #sort_key_field
                 }
             }
         })
