@@ -1,3 +1,15 @@
+# 0.6.0
+
+* Breaking change. Rename Item attributes to align with current aws docs [#76](https://github.com/softprops/dynomite/pull/76)
+
+
+`#[hash]` and `#[range]` are now more closely aligned with the [AWS docs](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey) vocabulary
+
+`#[hash]` is now  `#[dynomite(partition_key)]`
+`#[range]` is now `#[dynomite(sort_key)]`
+
+This was a breaking change but one we think was worth it.
+
 # 0.5.2
 
 * Item fields now support renaming [#68](https://github.com/softprops/dynomite/pull/68)
