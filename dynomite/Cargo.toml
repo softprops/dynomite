@@ -27,7 +27,7 @@ rusoto_core_default = { package = "rusoto_core", version = "0.40", optional = tr
 rusoto_core_rustls = { package = "rusoto_core", version = "0.40", default_features = false, features=["rustls"], optional = true }
 rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.40", optional = true }
 rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.40", default_features = false, features=["rustls"], optional = true }
-uuid = { version = "0.7", features = ["v4"], optional = true }
+uuid = { version = "0.8", features = ["v4"], optional = true }
 
 
 [dev-dependencies]
