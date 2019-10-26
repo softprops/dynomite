@@ -1,3 +1,7 @@
+# 0.6.1
+
+* Update rusoto dependencies to 0.41.0
+
 # 0.6.0
 
 * Breaking change. Rename Item attributes to align with current aws docs [#76](https://github.com/softprops/dynomite/pull/76)
