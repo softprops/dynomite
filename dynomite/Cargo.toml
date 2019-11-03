@@ -18,7 +18,7 @@ travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
 bytes = "0.4"
-dynomite-derive = { version = "0.6.0", path = "../dynomite-derive", optional = true }
+dynomite-derive = { version = "0.7.0", path = "../dynomite-derive", optional = true }
 log = "0.4"
 failure = "0.1"
 futures = "0.1"
@@ -27,11 +27,11 @@ rusoto_core_default = { package = "rusoto_core", version = "0.41", optional = tr
 rusoto_core_rustls = { package = "rusoto_core", version = "0.41", default_features = false, features=["rustls"], optional = true }
 rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.41", optional = true }
 rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.41", default_features = false, features=["rustls"], optional = true }
-uuid = { version = "0.7", features = ["v4"], optional = true }
+uuid = { version = "0.8", features = ["v4"], optional = true }
 
 
 [dev-dependencies]
-env_logger = "0.6"
+env_logger = "0.7"
 maplit = "1.0"
 serde_json = "1.0"
 tokio = "0.1"

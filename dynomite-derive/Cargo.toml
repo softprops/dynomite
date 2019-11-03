@@ -1,6 +1,6 @@
 [package]
 name = "dynomite-derive"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "Derives AWS DynamoDB dynomite types from native Rust struct types"
 license = "MIT"
