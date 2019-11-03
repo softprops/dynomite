@@ -194,9 +194,7 @@ fn get_to_attribute_map_trait(
 
 /// Get the items in `attributes` with only a single path segment with an
 /// ident of `dynomite`.
-fn dynomite_attributes(
-    attributes: &[syn::Attribute]
-) -> impl Iterator<Item = &'_ syn::Attribute> {
+fn dynomite_attributes(attributes: &[syn::Attribute]) -> impl Iterator<Item = &'_ syn::Attribute> {
     attributes
         .iter()
         .filter(|attr| attr.path.segments.len() == 1 && attr.path.segments[0].ident == "dynomite")
