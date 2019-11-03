@@ -431,14 +431,16 @@ impl<T: Attribute> Attribute for Option<T> {
     fn into_attr(self: Self) -> AttributeValue {
         match self {
             Some(value) => value.into_attr(),
-            _ => AttributeValue::default(),
+            _ => AttributeValue {
+                null: Some(true),
+                ..Default::default()
+            },
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-        match Attribute::from_attr(value) {
-            Ok(value) => Ok(Some(value)),
-            Err(AttributeError::InvalidType) => Ok(None),
-            Err(err) => Err(err),
+        match value.null {
+            Some(true) => Ok(None),
+            _ => Ok(Some(Attribute::from_attr(value)?)),
         }
     }
 }
@@ -611,14 +613,14 @@ mod test {
 
     #[test]
     fn option_none_attr() {
-        let value: Option<u32> = Default::default();
+        let value: Option<u32> = None;
         assert_eq!(Ok(value), Attribute::from_attr(value.into_attr()));
     }
 
     #[test]
     fn option_invalid_attr() {
         assert_eq!(
-            Ok(None),
+            Err(AttributeError::InvalidType),
             Option::<u32>::from_attr(AttributeValue {
                 bool: Some(true),
                 ..AttributeValue::default()
