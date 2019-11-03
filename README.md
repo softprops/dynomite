@@ -26,7 +26,7 @@ to get started
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.6"
+dynomite = "0.7"
 ```
 
 ## 🤸 Examples
