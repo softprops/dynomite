@@ -1,3 +1,9 @@
+# 0.7.0
+
+* Breaking change. Improved support for optional attribute values [#84](https://github.com/softprops/dynomite/pull/84)
+
+Previously Dynomite's support for `Option` types did not map correctly to DynamoDB's notion of [null value types](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html): in serialized form `{ "NULL": true }`. Instead, Dynomite would not serialize the field at all which in some cases would not actually nullify the field in DynamoDB. Kudos to [@elslooo](https://github.com/elslooo) for discovering and fixing the bug. Because some applications may have relied on this previous behavior, we're bumping the version.
+
 # 0.6.0
 
 * Breaking change. Rename Item attributes to align with current aws docs [#76](https://github.com/softprops/dynomite/pull/76)
