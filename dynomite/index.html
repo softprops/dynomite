@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `dynomite` crate."><meta name="keywords" content="rust, rustlang, rust-lang, dynomite"><title>dynomite - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../dynomite/index.html'><div class='logo-container'><img src='../rust-logo.png' alt='logo'></div></a><p class='location'>Crate dynomite</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all dynomite's items</p></a><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#traits">Traits</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'dynomite', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/dynomite/lib.rs.html#1-866' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>dynomite</a></span></h1><div class='docblock'><p>Dynomite is set of high-level interfaces built on top of
+<a href="https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html">rusoto_dynamodb</a>
+which make interacting with <a href="https://aws.amazon.com/dynamodb/">AWS DynamoDB</a> more productive.</p>
+<h2 id="data-modeling" class="section-header"><a href="#data-modeling">Data Modeling</a></h2>
+<p>Dynomite adapts Rust's native types to
+DynamoDB's <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html">core components</a>
+to form a coherent interface.</p>
+<p>The <a href="trait.Attribute.html">Attribute</a> type
+provides conversion interfaces to and from Rust's native scalar types which represent
+DynamoDB's notion of &quot;attributes&quot;. The goal of this type is to make representing
+AWS typed values feel more natural and ergonomic in Rust. You can implement <code>Attribute</code> for your own
+types to leverage higher level functionality.</p>
+<p>The <a href="trait.Item.html">Item</a> type
+provides conversion interfaces for complex types which represent
+DynamoDB's notion of &quot;items&quot;.</p>
+<p>💡 A cargo feature named &quot;derive&quot; makes it easy to derive <code>Item</code> instances for your custom types. This feature is enabled by default.</p>
+<h2 id="rusoto-extensions" class="section-header"><a href="#rusoto-extensions">Rusoto extensions</a></h2>
+<p>By importing the <a href="trait.DynamoDbExt.html">dynomite::DynamoDbExt</a> trait, dynomite
+adds client interfaces for creating async Stream-based auto pagination interfaces</p>
+<h2 id="robust-retries" class="section-header"><a href="#robust-retries">Robust retries</a></h2>
+<p>By importing the <a href="retry/trait.Retries.html">dynomite::Retries</a> trait, dynomite
+provides an interface for adding configuration retry policies so your
+rusoto DynamoDb clients.</p>
+<h1 id="errors" class="section-header"><a href="#errors">Errors</a></h1>
+<p>Some operations which require coercion from AWS to Rust types may fail result in an
+<a href="error/enum.AttributeError.html">AttributeError</a>. These errors were
+designed to work with the <a href="https://crates.io/crates/failure">failure</a>
+crate ecosystem.</p>
+<h1 id="cargo-features" class="section-header"><a href="#cargo-features">Cargo Features</a></h1>
+<p>This crate as a few cargo features of note.</p>
+<h2 id="uuid" class="section-header"><a href="#uuid">uuid</a></h2>
+<p>Enabled by default, the <code>uuid</code> features adds support for implementing <code>Attribute</code> for
+the <a href="https://crates.io/crates/uuid">uuid</a> crate type <code>Uuid</code>, a useful
+type for producing and representing
+unique identifiers for items that satisfy <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html">effective characteristcs for partition keys</a></p>
+<h2 id="derive" class="section-header"><a href="#derive">derive</a></h2>
+<p>Enabled by default, the <code>derive</code> feature enables the use of the dynomite derive feature which
+allows you simple add <code>#[derive(Item)]</code> to your structs.</p>
+<h2 id="rustls" class="section-header"><a href="#rustls">rustls</a></h2>
+<p>Disabled by default, the <code>rustls</code> feature changes overrides Rusoto's default tls
+dependency on OpenSSL, replacing it with a <a href="https://crates.io/crates/rustls"><code>rustls</code></a> based tls implementation. When you
+enable this feature. It will also enable <code>uuid</code> and <code>derive</code> by default.</p>
+<p>To disable any of these features</p>
+<pre><code class="language-toml">[dependencies.dynomite]
+version = &quot;xxx&quot;
+default-features = false
+features = [&quot;feature-you-want&quot;]
+</code></pre>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub use rusoto_dynamodb_default as dynamodb;</code></td></tr><tr><td><code>pub use crate::retry::<a class="trait" href="../dynomite/retry/trait.Retries.html" title="trait dynomite::retry::Retries">Retries</a>;</code></td></tr><tr><td><code>pub use crate::error::<a class="enum" href="../dynomite/error/enum.AttributeError.html" title="enum dynomite::error::AttributeError">AttributeError</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="error/index.html" title='dynomite::error mod'>error</a></td><td class='docblock-short'><p>Dynomite error types</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="retry/index.html" title='dynomite::retry mod'>retry</a></td><td class='docblock-short'><p>Retry functionality</p>
+</td></tr></table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table><tr class='module-item'><td><a class="macro" href="macro.attr_map.html" title='dynomite::attr_map macro'>attr_map</a></td><td class='docblock-short'><p>Creates a <code>HashMap&lt;String, AttributeValue&gt;</code> from a list of key-value pairs</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.Attribute.html" title='dynomite::Attribute trait'>Attribute</a></td><td class='docblock-short'><p>A type capable of being converted into an or from and AWS <code>AttributeValue</code></p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.DynamoDbExt.html" title='dynomite::DynamoDbExt trait'>DynamoDbExt</a></td><td class='docblock-short'><p>Extension methods for DynamoDb client types</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.FromAttributes.html" title='dynomite::FromAttributes trait'>FromAttributes</a></td><td class='docblock-short'><p>A type capable of being produced from
+a set of string keys and <code>AttributeValues</code></p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.Item.html" title='dynomite::Item trait'>Item</a></td><td class='docblock-short'><p>A type which can be converted to and from a set of String keys and
+<code>AttributeValues</code>.</p>
+</td></tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table><tr class='module-item'><td><a class="type" href="type.Attributes.html" title='dynomite::Attributes type'>Attributes</a></td><td class='docblock-short'><p>Type alias for map of named attribute values</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "dynomite";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

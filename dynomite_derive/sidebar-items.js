@@ -1,0 +1,1 @@
+initSidebarItems({"derive":[["Attribute","Derives `dynomite::Attribute` for enum types"],["Item","Derives `dynomite::Item` type for struts with named fields"]]});
