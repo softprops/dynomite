@@ -52,8 +52,15 @@ jobs:
     - name: Coverage
       if: matrix.rust == 'stable'
       run: |
+        # tarpaulin knows how to extract data from ci
+        # ci services and GitHub actions is not one of them
+        # work around that by masquerading as travis
+        # https://github.com/xd009642/coveralls-api/blob/6da4ccd7c6eaf1df04cfd1e560362de70fa80605/src/lib.rs#L247-L262
+        export TRAVIS_JOB_ID=${GITHUB_SHA}
+        export TRAVIS_PULL_REQUEST=false
+        export TRAVIS_BRANCH=${GITHUB_REF##*/}
         cargo install cargo-tarpaulin
-        cargo tarpaulin
+        cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
 
   publish-docs:
     runs-on: ubuntu-latest
