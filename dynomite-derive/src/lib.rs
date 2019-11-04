@@ -194,9 +194,7 @@ fn get_to_attribute_map_trait(
 
 /// Get the items in `attributes` with only a single path segment with an
 /// ident of `dynomite`.
-fn dynomite_attributes<'a>(
-    attributes: &'a [syn::Attribute]
-) -> impl Iterator<Item = &'a syn::Attribute> {
+fn dynomite_attributes(attributes: &[syn::Attribute]) -> impl Iterator<Item = &'_ syn::Attribute> {
     attributes
         .iter()
         .filter(|attr| attr.path.segments.len() == 1 && attr.path.segments[0].ident == "dynomite")
@@ -222,7 +220,7 @@ fn get_name_eq_value_attribute_lit(
 
     // #[dynomite(name)]
     match tokens.next() {
-        Some(proc_macro2::TokenTree::Ident(ref ident)) if ident.to_string() == name => {}
+        Some(proc_macro2::TokenTree::Ident(ref ident)) if *ident == name => {}
         Some(other) => {
             return Err(syn::Error::new(
                 other.span(),
