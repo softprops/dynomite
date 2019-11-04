@@ -59,9 +59,6 @@ jobs:
         export TRAVIS_JOB_ID=${GITHUB_SHA}
         export TRAVIS_PULL_REQUEST=false
         export TRAVIS_BRANCH=${GITHUB_REF##*/}
-        echo "GITHUB_REF: ${GITHUB_REF}"
-        echo "TRAVIS_JOB_ID: ${TRAVIS_JOB_ID}"
-        echo "TRAVIS_BRANCH: ${TRAVIS_BRANCH}"
         cargo install cargo-tarpaulin
         cargo tarpaulin --ciserver travis-ci --coveralls $TRAVIS_JOB_ID
 
