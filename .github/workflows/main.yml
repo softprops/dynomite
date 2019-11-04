@@ -49,6 +49,11 @@ jobs:
       uses: actions/checkout@v1
     - name: Test
       run: cargo test
+    - name: Coverage
+      if: matrix.rust == 'stable'
+      run: |
+        cargo install cargo-tarpaulin
+        cargo tarpaulin
 
   publish-docs:
     runs-on: ubuntu-latest
