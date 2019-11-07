@@ -21,7 +21,7 @@ bytes = "0.4"
 dynomite-derive = { version = "0.7.0", path = "../dynomite-derive", optional = true }
 log = "0.4"
 failure = "0.1"
-futures = "0.1"
+futures = "0.3"
 futures-backoff = "0.1"
 rusoto_core_default = { package = "rusoto_core", version = "0.41", optional = true }
 rusoto_core_rustls = { package = "rusoto_core", version = "0.41", default_features = false, features=["rustls"], optional = true }
