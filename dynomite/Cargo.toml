@@ -17,7 +17,7 @@ maintenance = { status = "actively-developed" }
 travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
-bytes = "0.4"
+bytes = "0.5"
 dynomite-derive = { version = "0.7.0", path = "../dynomite-derive", optional = true }
 log = "0.4"
 failure = "0.1"
