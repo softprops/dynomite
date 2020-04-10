@@ -130,8 +130,8 @@ fn main() {
         rt.block_on(
             client
                 .get_item(GetItemInput {
-                    table_name: table_name.clone(),
-                    key: book.clone().key(), // get a book by key
+                    table_name: table_name,
+                    key: book.key(), // get a book by key
                     ..GetItemInput::default()
                 })
                 .map(|result| result.item.map(Book::from_attrs)) // attempt to convert a attribute map to a book type

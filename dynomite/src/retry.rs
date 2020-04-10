@@ -8,7 +8,6 @@
 //!  use dynomite::{Retries, retry::Policy};
 //!  use dynomite::dynamodb::{DynamoDb, DynamoDbClient};
 //!
-//!  # fn main() {
 //!  let client =
 //!     DynamoDbClient::new(Default::default())
 //!         .with_retries(Policy::default());
@@ -16,7 +15,6 @@
 //!  // any client operation will now be retried when
 //!  // appropriate
 //!  let tables = client.list_tables(Default::default());
-//!  # }
 //! ```
 //!
 use crate::dynamodb::*;

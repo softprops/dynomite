@@ -106,47 +106,45 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// this automatically using `#[derive(Item)]` on your structs (the recommended approach).
 ///
 /// ```
+/// use dynomite::{
+///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes, Item,
+/// };
 /// use std::collections::HashMap;
-/// use dynomite::{AttributeError, Item, Attribute, FromAttributes, Attributes};
-/// use dynomite::dynamodb::AttributeValue;
 ///
-/// #[derive(PartialEq,Debug, Clone)]
+/// #[derive(PartialEq, Debug, Clone)]
 /// struct Person {
-///   id: String
+///     id: String,
 /// }
 ///
 /// impl Item for Person {
-///   fn key(&self) -> Attributes {
-///     let mut attrs = HashMap::new();
-///     attrs.insert("id".into(), "123".to_string().into_attr());
-///     attrs
-///   }
+///     fn key(&self) -> Attributes {
+///         let mut attrs = HashMap::new();
+///         attrs.insert("id".into(), "123".to_string().into_attr());
+///         attrs
+///     }
 /// }
 ///
 /// impl FromAttributes for Person {
-///    fn from_attrs(
-///      attrs: Attributes
-///    ) -> Result<Self, AttributeError> {
-///      Ok(Self {
-///        id: attrs.get("id")
-///          .and_then(|val| val.s.clone())
-///          .ok_or(AttributeError::MissingField { name: "id".into() })?
-///      })
-///    }
+///     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+///         Ok(Self {
+///             id: attrs
+///                 .get("id")
+///                 .and_then(|val| val.s.clone())
+///                 .ok_or(AttributeError::MissingField { name: "id".into() })?,
+///         })
+///     }
 /// }
 ///
 /// impl Into<Attributes> for Person {
-///   fn into(self: Self) -> Attributes {
-///     let mut attrs = HashMap::new();
-///     attrs.insert("id".into(), "123".to_string().into_attr());
-///     attrs
-///   }
+///     fn into(self: Self) -> Attributes {
+///         let mut attrs = HashMap::new();
+///         attrs.insert("id".into(), "123".to_string().into_attr());
+///         attrs
+///     }
 /// }
-/// fn main() {
-///   let person = Person { id: "123".into() };
-///   let attrs: Attributes = person.clone().into();
-///   assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
-/// }
+/// let person = Person { id: "123".into() };
+/// let attrs: Attributes = person.clone().into();
+/// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
 /// ```
 pub trait Item: Into<Attributes> + FromAttributes {
     /// Returns the set of attributes which make up this item's primary key
@@ -161,18 +159,16 @@ pub trait Item: Into<Attributes> + FromAttributes {
 /// # Examples
 ///
 /// ```
-/// use dynomite::Attribute;
-/// use dynomite::dynamodb::AttributeValue;
+/// use dynomite::{dynamodb::AttributeValue, Attribute};
 ///
-/// fn main() {
-///   assert_eq!(
+/// assert_eq!(
 ///     "test".to_string().into_attr().s,
-///      AttributeValue {
-///        s: Some("test".to_string()),
-///        ..AttributeValue::default()
-///      }.s
-///    );
-/// }
+///     AttributeValue {
+///         s: Some("test".to_string()),
+///         ..AttributeValue::default()
+///     }
+///     .s
+/// );
 /// ```
 pub trait Attribute: Sized {
     /// Returns a conversion into an `AttributeValue`
@@ -537,7 +533,6 @@ numeric_set_attr!(u64 => BTreeSet<u64>);
 /// use dynomite::dynamodb::QueryInput;
 /// use dynomite::attr_map;
 ///
-/// # fn main() {
 /// let query = QueryInput {
 ///   table_name: "some_table".into(),
 ///   key_condition_expression: Some(
@@ -550,7 +545,6 @@ numeric_set_attr!(u64 => BTreeSet<u64>);
 ///    ),
 ///    ..QueryInput::default()
 /// };
-/// # }
 macro_rules! attr_map {
     (@single $($x:tt)*) => (());
     (@count $($rest:expr),*) => (<[()]>::len(&[$(attr_map!(@single $rest)),*]));
@@ -637,28 +631,19 @@ mod test {
     #[test]
     fn string_attr() {
         let value = "test".to_string();
-        assert_eq!(
-            Ok(value.clone()),
-            String::from_attr(value.clone().into_attr())
-        );
+        assert_eq!(Ok(value.clone()), String::from_attr(value.into_attr()));
     }
 
     #[test]
     fn bytes_attr_from_attr() {
         let value = Bytes::from("test");
-        assert_eq!(
-            Ok(value.clone()),
-            Bytes::from_attr(value.clone().into_attr())
-        );
+        assert_eq!(Ok(value.clone()), Bytes::from_attr(value.into_attr()));
     }
 
     #[test]
     fn byte_vec_attr_from_attr() {
         let value = b"test".to_vec();
-        assert_eq!(
-            Ok(value.clone()),
-            Vec::<u8>::from_attr(value.clone().into_attr())
-        );
+        assert_eq!(Ok(value.clone()), Vec::<u8>::from_attr(value.into_attr()));
     }
 
     #[test]
