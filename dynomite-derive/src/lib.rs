@@ -13,7 +13,6 @@
 //!   #[dynomite(partition_key)] id: String
 //! }
 //!
-//! fn main() {
 //!   let person = Person { id: "123".into() };
 //!   // convert person to string keys and attribute values
 //!   let attributes: Attributes = person.clone().into();
@@ -28,7 +27,6 @@
 //!   let key_attributes: Attributes = key.clone().into();
 //!   // convert attributes into person type
 //!   assert_eq!(key, PersonKey::from_attrs(key_attributes).unwrap());
-//! }
 //! ```
 
 extern crate proc_macro;

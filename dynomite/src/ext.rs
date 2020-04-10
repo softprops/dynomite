@@ -18,7 +18,6 @@ type DynomiteStream<I, E> = Box<dyn Stream<Item = I, Error = RusotoError<E>> + S
 ///
 /// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds automatinting `Stream` interfaces that require
 /// taking ownership.
-///
 pub trait DynamoDbExt {
     // see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json
 
