@@ -146,6 +146,7 @@ where
         self,
         input: QueryInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError> {
+        #[allow(clippy::large_enum_variant)]
         enum PageState {
             Next(Option<HashMap<String, AttributeValue>>, QueryInput),
             End,
@@ -188,6 +189,7 @@ where
         self,
         input: ScanInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError> {
+        #[allow(clippy::large_enum_variant)]
         enum PageState {
             Next(Option<HashMap<String, AttributeValue>>, ScanInput),
             End,
