@@ -208,17 +208,15 @@ where
                                 ..input.clone()
                             })
                             .await?;
-                        Ok(Some({
-                            let next_state =
-                                match resp.last_evaluated_key.filter(|next| !next.is_empty()) {
-                                    Some(next) => PageState::Next(Some(next), input),
-                                    _ => PageState::End,
-                                };
-                            (
-                                stream::iter(resp.items.unwrap_or_default().into_iter().map(Ok)),
-                                next_state,
-                            )
-                        }))
+                        let next_state =
+                            match resp.last_evaluated_key.filter(|next| !next.is_empty()) {
+                                Some(next) => PageState::Next(Some(next), input),
+                                _ => PageState::End,
+                            };
+                        Ok(Some((
+                            stream::iter(resp.items.unwrap_or_default().into_iter().map(Ok)),
+                            next_state,
+                        )))
                     }
                 },
             )
