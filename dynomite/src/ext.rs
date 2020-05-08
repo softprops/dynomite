@@ -15,7 +15,7 @@ type DynomiteStream<I, E> = Pin<Box<dyn Stream<Item = Result<I, RusotoError<E>>>
 
 /// Extension methods for DynamoDb client types
 ///
-/// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds automatinting `Stream` interfaces that require
+/// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds autopaginating `Stream` interfaces that require
 /// taking ownership.
 pub trait DynamoDbExt {
     // see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json
