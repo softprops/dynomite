@@ -89,9 +89,9 @@ use uuid::Uuid;
 
 pub mod error;
 mod ext;
-pub mod retry;
+//pub mod retry;
 
-pub use crate::{ext::DynamoDbExt, retry::Retries};
+pub use crate::ext::DynamoDbExt; //, retry::Retries};
 
 pub use crate::error::AttributeError;
 /// Type alias for map of named attribute values
