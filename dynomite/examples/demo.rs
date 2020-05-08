@@ -6,7 +6,7 @@ use dynomite::{
     },
     DynamoDbExt, FromAttributes, Item,
 };
-use futures::TryStreamExt;
+use futures::{future, TryStreamExt};
 use std::error::Error;
 use uuid::Uuid;
 
@@ -109,7 +109,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             })
             .try_for_each(|item| {
                 println!("stream_scan() item {:#?}", Book::from_attrs(item));
-                Ok(())
+                future::ready(Ok(()))
             })
             .await? // attempt to convert a attribute map to a book type
     );

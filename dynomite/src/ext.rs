@@ -5,14 +5,13 @@ use crate::dynamodb::{
     ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
 use futures::{stream, Stream, TryStreamExt};
-
 #[cfg(feature = "default")]
 use rusoto_core_default::RusotoError;
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::RusotoError;
-use std::collections::HashMap;
+use std::{collections::HashMap, pin::Pin};
 
-type DynomiteStream<I, E> = Box<dyn Stream<Item = Result<I, RusotoError<E>>> + Send>;
+type DynomiteStream<I, E> = Pin<Box<dyn Stream<Item = Result<I, RusotoError<E>>> + Send>>;
 
 /// Extension methods for DynamoDb client types
 ///
@@ -62,7 +61,7 @@ where
             // end of pages
             End,
         }
-        Box::new(
+        Box::pin(
             stream::try_unfold(PageState::Start(None), move |state| {
                 let clone = self.clone();
                 let input = input.clone();
@@ -114,7 +113,7 @@ where
             Next(String),
             End,
         }
-        Box::new(
+        Box::pin(
             stream::try_unfold(PageState::Start(None), move |state| {
                 let clone = self.clone();
                 let input = input.clone();
@@ -161,7 +160,7 @@ where
             Next(HashMap<String, AttributeValue>),
             End,
         }
-        Box::new(
+        Box::pin(
             stream::try_unfold(PageState::Start(None), move |state| {
                 let clone = self.clone();
                 let input = input.clone();
@@ -206,7 +205,7 @@ where
             Next(HashMap<String, AttributeValue>),
             End,
         }
-        Box::new(
+        Box::pin(
             stream::try_unfold(PageState::Start(None), move |state| {
                 let clone = self.clone();
                 let input = input.clone();
