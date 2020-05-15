@@ -47,7 +47,7 @@
 //! Enabled by default, the `uuid` features adds support for implementing `Attribute` for
 //! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
 //! type for producing and representing
-//! unique identifiers for items that satisfy [effective characteristcs for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+//! unique identifiers for items that satisfy [effective characteristics for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 //!
 //! ## derive
 //!
