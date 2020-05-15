@@ -10,10 +10,8 @@ use dynomite::{
         AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
         KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
     },
-    //retry::Policy,
-    DynamoDbExt,
-    FromAttributes,
-    Item, // Retries,
+    retry::Policy,
+    DynamoDbExt, FromAttributes, Item, Retries,
 };
 use futures::{future, TryStreamExt};
 use std::error::Error;
@@ -41,8 +39,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let client = DynamoDbClient::new(Region::Custom {
         name: "us-east-1".into(),
         endpoint: "http://localhost:8000".into(),
-    });
-    //.with_retries(Policy::default());
+    })
+    .with_retries(Policy::default());
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists

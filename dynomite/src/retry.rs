@@ -1,6 +1,6 @@
 //! Retry functionality
 //!
-//! Specifcally this implementation focuses on honoring [these documented DynamoDB retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
+//! Specifically this implementation focuses on honoring [these documented DynamoDB retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)
 //! on top AWS's general recommendations of for [retrying API requests](https://docs.aws.amazon.com/general/latest/gr/api-retries.html).
 //!
 //! # examples
@@ -18,15 +18,15 @@
 //! ```
 //!
 use crate::dynamodb::*;
-use futures_backoff::{Condition, Strategy};
+use again::{Condition, RetryPolicy};
 use log::debug;
 #[cfg(feature = "default")]
-use rusoto_core_default::{RusotoError, RusotoFuture};
+use rusoto_core_default::RusotoError;
 #[cfg(feature = "rustls")]
-use rusoto_core_rustls::{RusotoError, RusotoFuture};
+use rusoto_core_rustls::RusotoError;
 use std::{sync::Arc, time::Duration};
 
-/// Preconfigured retry policies for failable operations
+/// Pre-configured retry policies for fallible operations
 ///
 /// A `Default` impl of retrying 5 times with an exponential backoff of 100 milliseconds
 #[derive(Clone, PartialEq, Debug)]
@@ -35,7 +35,7 @@ pub enum Policy {
     Limit(usize),
     /// Limited number of times to retry with fixed pause between retries
     Pause(usize, Duration),
-    /// Limited number of times to retry with an expoential pause between retries
+    /// Limited number of times to retry with an exponential pause between retries
     Exponential(usize, Duration),
 }
 
@@ -45,16 +45,16 @@ impl Default for Policy {
     }
 }
 
-impl Into<Strategy> for Policy {
-    fn into(self) -> Strategy {
+impl Into<RetryPolicy> for Policy {
+    fn into(self) -> RetryPolicy {
         match self {
-            Policy::Limit(times) => Strategy::default()
+            Policy::Limit(times) => RetryPolicy::default()
                 .with_max_retries(times)
                 .with_jitter(true),
-            Policy::Pause(times, duration) => Strategy::fixed(duration)
+            Policy::Pause(times, duration) => RetryPolicy::fixed(duration)
                 .with_max_retries(times)
                 .with_jitter(true),
-            Policy::Exponential(times, duration) => Strategy::exponential(duration)
+            Policy::Exponential(times, duration) => RetryPolicy::exponential(duration)
                 .with_max_retries(times)
                 .with_jitter(true),
         }
@@ -74,7 +74,7 @@ impl<R> Condition<RusotoError<R>> for Counter
 where
     R: Retry,
 {
-    fn should_retry(
+    fn is_retryable(
         &mut self,
         error: &RusotoError<R>,
     ) -> bool {
@@ -92,7 +92,7 @@ where
 // wrapper so we only pay for one arc
 struct Inner<D> {
     client: D,
-    strategy: Strategy,
+    policy: RetryPolicy,
 }
 
 /// A type which implements `DynamoDb` and retries all operations
@@ -140,311 +140,667 @@ where
         Self {
             inner: Arc::new(Inner {
                 client,
-                strategy: policy.into(),
+                policy: policy.into(),
             }),
         }
     }
-
-    /// Retry and operation based on this clients configured retry policy
-    #[inline]
-    fn retry<F, T, R>(
-        &self,
-        operation: F,
-    ) -> RusotoFuture<T, R>
-    where
-        F: FnMut() -> RusotoFuture<T, R> + Send + 'static,
-        R: Retry,
-    {
-        RusotoFuture::from_future(self.inner.strategy.retry_if(operation, Counter(0)))
-    }
 }
 
+#[async_trait::async_trait]
 impl<D> DynamoDb for RetryingDynamoDb<D>
 where
-    D: DynamoDb + Sync + Send + 'static,
+    D: DynamoDb + Sync + Send + Clone + 'static,
 {
-    fn batch_get_item(
+    async fn batch_get_item(
         &self,
         input: BatchGetItemInput,
-    ) -> RusotoFuture<BatchGetItemOutput, BatchGetItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.batch_get_item(input.clone()))
+    ) -> Result<BatchGetItemOutput, RusotoError<BatchGetItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.batch_get_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn batch_write_item(
+    async fn batch_write_item(
         &self,
         input: BatchWriteItemInput,
-    ) -> RusotoFuture<BatchWriteItemOutput, BatchWriteItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.batch_write_item(input.clone()))
+    ) -> Result<BatchWriteItemOutput, RusotoError<BatchWriteItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.batch_write_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn create_backup(
+    async fn create_backup(
         &self,
         input: CreateBackupInput,
-    ) -> RusotoFuture<CreateBackupOutput, CreateBackupError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.create_backup(input.clone()))
+    ) -> Result<CreateBackupOutput, RusotoError<CreateBackupError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.create_backup(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn create_global_table(
+    async fn create_global_table(
         &self,
         input: CreateGlobalTableInput,
-    ) -> RusotoFuture<CreateGlobalTableOutput, CreateGlobalTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.create_global_table(input.clone()))
+    ) -> Result<CreateGlobalTableOutput, RusotoError<CreateGlobalTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.create_global_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn create_table(
+    async fn create_table(
         &self,
         input: CreateTableInput,
-    ) -> RusotoFuture<CreateTableOutput, CreateTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.create_table(input.clone()))
+    ) -> Result<CreateTableOutput, RusotoError<CreateTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.create_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn delete_backup(
+    async fn delete_backup(
         &self,
         input: DeleteBackupInput,
-    ) -> RusotoFuture<DeleteBackupOutput, DeleteBackupError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.delete_backup(input.clone()))
+    ) -> Result<DeleteBackupOutput, RusotoError<DeleteBackupError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.delete_backup(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn delete_item(
+    async fn delete_item(
         &self,
         input: DeleteItemInput,
-    ) -> RusotoFuture<DeleteItemOutput, DeleteItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.delete_item(input.clone()))
+    ) -> Result<DeleteItemOutput, RusotoError<DeleteItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.delete_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn delete_table(
+    async fn delete_table(
         &self,
         input: DeleteTableInput,
-    ) -> RusotoFuture<DeleteTableOutput, DeleteTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.delete_table(input.clone()))
+    ) -> Result<DeleteTableOutput, RusotoError<DeleteTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.delete_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_backup(
+    async fn describe_backup(
         &self,
         input: DescribeBackupInput,
-    ) -> RusotoFuture<DescribeBackupOutput, DescribeBackupError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_backup(input.clone()))
+    ) -> Result<DescribeBackupOutput, RusotoError<DescribeBackupError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_backup(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_continuous_backups(
+    async fn describe_continuous_backups(
         &self,
         input: DescribeContinuousBackupsInput,
-    ) -> RusotoFuture<DescribeContinuousBackupsOutput, DescribeContinuousBackupsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_continuous_backups(input.clone()))
+    ) -> Result<DescribeContinuousBackupsOutput, RusotoError<DescribeContinuousBackupsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_continuous_backups(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_global_table(
+    async fn describe_contributor_insights(
+        &self,
+        input: DescribeContributorInsightsInput,
+    ) -> Result<DescribeContributorInsightsOutput, RusotoError<DescribeContributorInsightsError>>
+    {
+        self.inner.client.describe_contributor_insights(input).await
+    }
+
+    async fn describe_global_table(
         &self,
         input: DescribeGlobalTableInput,
-    ) -> RusotoFuture<DescribeGlobalTableOutput, DescribeGlobalTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_global_table(input.clone()))
+    ) -> Result<DescribeGlobalTableOutput, RusotoError<DescribeGlobalTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_global_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_global_table_settings(
+    async fn describe_global_table_settings(
         &self,
         input: DescribeGlobalTableSettingsInput,
-    ) -> RusotoFuture<DescribeGlobalTableSettingsOutput, DescribeGlobalTableSettingsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_global_table_settings(input.clone()))
+    ) -> Result<DescribeGlobalTableSettingsOutput, RusotoError<DescribeGlobalTableSettingsError>>
+    {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_global_table_settings(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_limits(&self) -> RusotoFuture<DescribeLimitsOutput, DescribeLimitsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_limits())
+    async fn describe_limits(
+        &self
+    ) -> Result<DescribeLimitsOutput, RusotoError<DescribeLimitsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    async move { client.describe_limits().await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_table(
+    async fn describe_table(
         &self,
         input: DescribeTableInput,
-    ) -> RusotoFuture<DescribeTableOutput, DescribeTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_table(input.clone()))
+    ) -> Result<DescribeTableOutput, RusotoError<DescribeTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_time_to_live(
+    async fn describe_table_replica_auto_scaling(
+        &self,
+        input: DescribeTableReplicaAutoScalingInput,
+    ) -> Result<
+        DescribeTableReplicaAutoScalingOutput,
+        RusotoError<DescribeTableReplicaAutoScalingError>,
+    > {
+        self.inner
+            .client
+            .describe_table_replica_auto_scaling(input)
+            .await
+    }
+
+    async fn describe_time_to_live(
         &self,
         input: DescribeTimeToLiveInput,
-    ) -> RusotoFuture<DescribeTimeToLiveOutput, DescribeTimeToLiveError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.describe_time_to_live(input.clone()))
+    ) -> Result<DescribeTimeToLiveOutput, RusotoError<DescribeTimeToLiveError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.describe_time_to_live(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn get_item(
+    async fn get_item(
         &self,
         input: GetItemInput,
-    ) -> RusotoFuture<GetItemOutput, GetItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.get_item(input.clone()))
+    ) -> Result<GetItemOutput, RusotoError<GetItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.get_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn list_backups(
+    async fn list_backups(
         &self,
         input: ListBackupsInput,
-    ) -> RusotoFuture<ListBackupsOutput, ListBackupsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.list_backups(input.clone()))
+    ) -> Result<ListBackupsOutput, RusotoError<ListBackupsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.list_backups(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn list_global_tables(
+    async fn list_contributor_insights(
+        &self,
+        input: ListContributorInsightsInput,
+    ) -> Result<ListContributorInsightsOutput, RusotoError<ListContributorInsightsError>> {
+        self.inner.client.list_contributor_insights(input).await
+    }
+
+    async fn list_global_tables(
         &self,
         input: ListGlobalTablesInput,
-    ) -> RusotoFuture<ListGlobalTablesOutput, ListGlobalTablesError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.list_global_tables(input.clone()))
+    ) -> Result<ListGlobalTablesOutput, RusotoError<ListGlobalTablesError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.list_global_tables(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn list_tables(
+    async fn list_tables(
         &self,
         input: ListTablesInput,
-    ) -> RusotoFuture<ListTablesOutput, ListTablesError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.list_tables(input.clone()))
+    ) -> Result<ListTablesOutput, RusotoError<ListTablesError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.list_tables(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn list_tags_of_resource(
+    async fn list_tags_of_resource(
         &self,
         input: ListTagsOfResourceInput,
-    ) -> RusotoFuture<ListTagsOfResourceOutput, ListTagsOfResourceError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.list_tags_of_resource(input.clone()))
+    ) -> Result<ListTagsOfResourceOutput, RusotoError<ListTagsOfResourceError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.list_tags_of_resource(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn put_item(
+    async fn put_item(
         &self,
         input: PutItemInput,
-    ) -> RusotoFuture<PutItemOutput, PutItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.put_item(input.clone()))
+    ) -> Result<PutItemOutput, RusotoError<PutItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.put_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn query(
+    async fn query(
         &self,
         input: QueryInput,
-    ) -> RusotoFuture<QueryOutput, QueryError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.query(input.clone()))
+    ) -> Result<QueryOutput, RusotoError<QueryError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.query(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn restore_table_from_backup(
+    async fn restore_table_from_backup(
         &self,
         input: RestoreTableFromBackupInput,
-    ) -> RusotoFuture<RestoreTableFromBackupOutput, RestoreTableFromBackupError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.restore_table_from_backup(input.clone()))
+    ) -> Result<RestoreTableFromBackupOutput, RusotoError<RestoreTableFromBackupError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.restore_table_from_backup(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn restore_table_to_point_in_time(
+    async fn restore_table_to_point_in_time(
         &self,
         input: RestoreTableToPointInTimeInput,
-    ) -> RusotoFuture<RestoreTableToPointInTimeOutput, RestoreTableToPointInTimeError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.restore_table_to_point_in_time(input.clone()))
+    ) -> Result<RestoreTableToPointInTimeOutput, RusotoError<RestoreTableToPointInTimeError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.restore_table_to_point_in_time(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn scan(
+    async fn scan(
         &self,
         input: ScanInput,
-    ) -> RusotoFuture<ScanOutput, ScanError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.scan(input.clone()))
+    ) -> Result<ScanOutput, RusotoError<ScanError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.scan(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn tag_resource(
+    async fn tag_resource(
         &self,
         input: TagResourceInput,
-    ) -> RusotoFuture<(), TagResourceError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.tag_resource(input.clone()))
+    ) -> Result<(), RusotoError<TagResourceError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.tag_resource(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn untag_resource(
+    async fn untag_resource(
         &self,
         input: UntagResourceInput,
-    ) -> RusotoFuture<(), UntagResourceError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.untag_resource(input.clone()))
+    ) -> Result<(), RusotoError<UntagResourceError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.untag_resource(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_continuous_backups(
+    async fn update_continuous_backups(
         &self,
         input: UpdateContinuousBackupsInput,
-    ) -> RusotoFuture<UpdateContinuousBackupsOutput, UpdateContinuousBackupsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_continuous_backups(input.clone()))
+    ) -> Result<UpdateContinuousBackupsOutput, RusotoError<UpdateContinuousBackupsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_continuous_backups(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_global_table(
+    async fn update_contributor_insights(
+        &self,
+        input: UpdateContributorInsightsInput,
+    ) -> Result<UpdateContributorInsightsOutput, RusotoError<UpdateContributorInsightsError>> {
+        // todo: retry
+        self.inner
+            .clone()
+            .client
+            .update_contributor_insights(input)
+            .await
+    }
+
+    async fn update_global_table(
         &self,
         input: UpdateGlobalTableInput,
-    ) -> RusotoFuture<UpdateGlobalTableOutput, UpdateGlobalTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_global_table(input.clone()))
+    ) -> Result<UpdateGlobalTableOutput, RusotoError<UpdateGlobalTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_global_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_global_table_settings(
+    async fn update_global_table_settings(
         &self,
         input: UpdateGlobalTableSettingsInput,
-    ) -> RusotoFuture<UpdateGlobalTableSettingsOutput, UpdateGlobalTableSettingsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_global_table_settings(input.clone()))
+    ) -> Result<UpdateGlobalTableSettingsOutput, RusotoError<UpdateGlobalTableSettingsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_global_table_settings(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_item(
+    async fn update_item(
         &self,
         input: UpdateItemInput,
-    ) -> RusotoFuture<UpdateItemOutput, UpdateItemError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_item(input.clone()))
+    ) -> Result<UpdateItemOutput, RusotoError<UpdateItemError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_item(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_table(
+    async fn update_table(
         &self,
         input: UpdateTableInput,
-    ) -> RusotoFuture<UpdateTableOutput, UpdateTableError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_table(input.clone()))
+    ) -> Result<UpdateTableOutput, RusotoError<UpdateTableError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_table(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn update_time_to_live(
+    async fn update_table_replica_auto_scaling(
+        &self,
+        input: UpdateTableReplicaAutoScalingInput,
+    ) -> Result<UpdateTableReplicaAutoScalingOutput, RusotoError<UpdateTableReplicaAutoScalingError>>
+    {
+        self.inner
+            .client
+            .update_table_replica_auto_scaling(input)
+            .await
+    }
+
+    async fn update_time_to_live(
         &self,
         input: UpdateTimeToLiveInput,
-    ) -> RusotoFuture<UpdateTimeToLiveOutput, UpdateTimeToLiveError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.update_time_to_live(input.clone()))
+    ) -> Result<UpdateTimeToLiveOutput, RusotoError<UpdateTimeToLiveError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.update_time_to_live(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn describe_endpoints(
+    async fn describe_endpoints(
         &self
-    ) -> RusotoFuture<DescribeEndpointsResponse, DescribeEndpointsError> {
+    ) -> Result<DescribeEndpointsResponse, RusotoError<DescribeEndpointsError>> {
         // no apparent retryable errors
-        self.inner.client.describe_endpoints()
+        self.inner.client.describe_endpoints().await
     }
 
-    fn transact_get_items(
+    async fn transact_get_items(
         &self,
         input: TransactGetItemsInput,
-    ) -> RusotoFuture<TransactGetItemsOutput, TransactGetItemsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.transact_get_items(input.clone()))
+    ) -> Result<TransactGetItemsOutput, RusotoError<TransactGetItemsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.transact_get_items(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 
-    fn transact_write_items(
+    async fn transact_write_items(
         &self,
         input: TransactWriteItemsInput,
-    ) -> RusotoFuture<TransactWriteItemsOutput, TransactWriteItemsError> {
-        let inner = self.inner.clone();
-        self.retry(move || inner.client.transact_write_items(input.clone()))
+    ) -> Result<TransactWriteItemsOutput, RusotoError<TransactWriteItemsError>> {
+        self.inner
+            .policy
+            .retry_if(
+                move || {
+                    let client = self.inner.clone().client.clone();
+                    let input = input.clone();
+                    async move { client.transact_write_items(input).await }
+                },
+                Counter(0),
+            )
+            .await
     }
 }
 
@@ -649,9 +1005,8 @@ mod tests {
     }
 
     #[test]
-    fn policy_impl_into_for_strategy() {
-        // no great way to assert partialeq on stategy
-        // just just test that we can
-        let _: Strategy = Policy::default().into();
+    fn policy_impl_into_for_retry_policy() {
+        fn test(_: impl Into<RetryPolicy>) {}
+        test(Policy::default())
     }
 }

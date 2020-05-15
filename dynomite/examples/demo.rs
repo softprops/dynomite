@@ -4,7 +4,8 @@ use dynomite::{
         AttributeDefinition, CreateTableInput, DynamoDb, DynamoDbClient, GetItemInput,
         KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
     },
-    DynamoDbExt, FromAttributes, Item,
+    retry::Policy,
+    DynamoDbExt, FromAttributes, Item, Retries,
 };
 use futures::{future, TryStreamExt};
 use std::error::Error;
@@ -29,7 +30,7 @@ pub struct Book {
 async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
     // create rusoto client
-    let client = DynamoDbClient::new(Region::default()); //.with_retries(Policy::default());
+    let client = DynamoDbClient::new(Region::default()).with_retries(Policy::default());
 
     // create a book table with a single string (S) primary key.
     // if this table does not already exists
