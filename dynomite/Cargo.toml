@@ -21,7 +21,6 @@ async-trait = "0.1"
 again = "0.1"
 bytes = "0.5"
 dynomite-derive = { version = "0.7.0", path = "../dynomite-derive", optional = true }
-failure = "0.1"
 futures = "0.3"
 log = "0.4"
 rusoto_core_default = { package = "rusoto_core", version = "0.43", optional = true }
