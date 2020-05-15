@@ -218,6 +218,14 @@
 <span id="218">218</span>
 <span id="219">219</span>
 <span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Extention interfaces for rusoto `DynamoDb`</span>
 
@@ -225,19 +233,18 @@
     <span class="ident">AttributeValue</span>, <span class="ident">BackupSummary</span>, <span class="ident">DynamoDb</span>, <span class="ident">ListBackupsError</span>, <span class="ident">ListBackupsInput</span>, <span class="ident">ListTablesError</span>,
     <span class="ident">ListTablesInput</span>, <span class="ident">QueryError</span>, <span class="ident">QueryInput</span>, <span class="ident">ScanError</span>, <span class="ident">ScanInput</span>,
 };
-<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">stream</span>, <span class="ident">Future</span>, <span class="ident">Stream</span>};
-
+<span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">stream</span>, <span class="ident">Stream</span>, <span class="ident">TryStreamExt</span>};
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;default&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">rusoto_core_default</span>::<span class="ident">RusotoError</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rustls&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">rusoto_core_rustls</span>::<span class="ident">RusotoError</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections</span>::<span class="ident">HashMap</span>, <span class="ident">pin</span>::<span class="ident">Pin</span>};
 
-<span class="kw">type</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="ident">I</span>, <span class="ident">Error</span> <span class="op">=</span> <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span>;
+<span class="kw">type</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">E</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Pin</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">Stream</span><span class="op">&lt;</span><span class="ident">Item</span> <span class="op">=</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">I</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">E</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Send</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="doccomment">/// Extension methods for DynamoDb client types</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// A default impl is provided for `DynamoDb  Clone + Send + Sync + &#39;static` which adds automatinting `Stream` interfaces that require</span>
+<span class="doccomment">/// A default impl is provided for `DynamoDb  Clone + Send + Sync + &#39;static` which adds autopaginating `Stream` interfaces that require</span>
 <span class="doccomment">/// taking ownership.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">DynamoDbExt</span> {
     <span class="comment">// see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json</span>
@@ -276,42 +283,47 @@
         <span class="ident">input</span>: <span class="ident">ListBackupsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">BackupSummary</span>, <span class="ident">ListBackupsError</span><span class="op">&gt;</span> {
         <span class="kw">enum</span> <span class="ident">PageState</span> {
-            <span class="ident">Start</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
-            <span class="ident">Next</span>(<span class="ident">String</span>),
+            <span class="ident">Next</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">ListBackupsInput</span>),
             <span class="ident">End</span>,
         }
-        <span class="ident">Box</span>::<span class="ident">new</span>(
-            <span class="ident">stream</span>::<span class="ident">unfold</span>(<span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="prelude-val">None</span>), <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">exclusive_start_backup_arn</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
-                    <span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="ident">start</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">start</span>,
-                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>),
-                    <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
-                };
-                <span class="prelude-val">Some</span>(
-                    <span class="self">self</span>.<span class="ident">clone</span>()
-                        .<span class="ident">list_backups</span>(<span class="ident">ListBackupsInput</span> {
-                            <span class="ident">exclusive_start_backup_arn</span>,
-                            ..<span class="ident">input</span>.<span class="ident">clone</span>()
-                        })
-                        .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">resp</span><span class="op">|</span> {
-                            <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_backup_arn</span> {
-                                <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                    <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">is_empty</span>() {
-                                        <span class="ident">PageState</span>::<span class="ident">End</span>
-                                    } <span class="kw">else</span> {
-                                        <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>)
-                                    }
-                                }
-                                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
-                            };
-                            (
-                                <span class="ident">stream</span>::<span class="ident">iter_ok</span>(<span class="ident">resp</span>.<span class="ident">backup_summaries</span>.<span class="ident">unwrap_or_default</span>()),
-                                <span class="ident">next_state</span>,
-                            )
-                        }),
-                )
-            })
-            .<span class="ident">flatten</span>(),
+        <span class="ident">Box</span>::<span class="ident">pin</span>(
+            <span class="ident">stream</span>::<span class="ident">try_unfold</span>(
+                <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">input</span>.<span class="ident">exclusive_start_backup_arn</span>.<span class="ident">clone</span>(), <span class="ident">input</span>),
+                <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="ident">clone</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+                    <span class="kw">async</span> <span class="kw">move</span> {
+                        <span class="kw">let</span> (<span class="ident">exclusive_start_backup_arn</span>, <span class="ident">input</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
+                            <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">start</span>, <span class="ident">input</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">start</span>, <span class="ident">input</span>),
+                            <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">as</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListBackupsError</span><span class="op">&gt;</span><span class="op">&gt;</span>
+                            }
+                        };
+                        <span class="kw">let</span> <span class="ident">resp</span> <span class="op">=</span> <span class="ident">clone</span>
+                            .<span class="ident">list_backups</span>(<span class="ident">ListBackupsInput</span> {
+                                <span class="ident">exclusive_start_backup_arn</span>,
+                                ..<span class="ident">input</span>.<span class="ident">clone</span>()
+                            })
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>
+                            .<span class="ident">last_evaluated_backup_arn</span>
+                            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">next</span><span class="op">|</span> <span class="op">!</span><span class="ident">next</span>.<span class="ident">is_empty</span>())
+                        {
+                            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="prelude-val">Some</span>(<span class="ident">next</span>), <span class="ident">input</span>),
+                            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
+                        };
+                        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((
+                            <span class="ident">stream</span>::<span class="ident">iter</span>(
+                                <span class="ident">resp</span>.<span class="ident">backup_summaries</span>
+                                    .<span class="ident">unwrap_or_default</span>()
+                                    .<span class="ident">into_iter</span>()
+                                    .<span class="ident">map</span>(<span class="prelude-val">Ok</span>),
+                            ),
+                            <span class="ident">next_state</span>,
+                        )))
+                    }
+                },
+            )
+            .<span class="ident">try_flatten</span>(),
         )
     }
 
@@ -320,41 +332,42 @@
         <span class="ident">input</span>: <span class="ident">ListTablesInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">ListTablesError</span><span class="op">&gt;</span> {
         <span class="kw">enum</span> <span class="ident">PageState</span> {
-            <span class="ident">Start</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>),
-            <span class="ident">Next</span>(<span class="ident">String</span>),
+            <span class="ident">Next</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>, <span class="ident">ListTablesInput</span>),
             <span class="ident">End</span>,
         }
-        <span class="ident">Box</span>::<span class="ident">new</span>(
-            <span class="ident">stream</span>::<span class="ident">unfold</span>(<span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="prelude-val">None</span>), <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">exclusive_start_table_name</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
-                    <span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="ident">start</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">start</span>,
-                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>),
-                    <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
-                };
-                <span class="prelude-val">Some</span>(
-                    <span class="self">self</span>.<span class="ident">list_tables</span>(<span class="ident">ListTablesInput</span> {
-                        <span class="ident">exclusive_start_table_name</span>,
-                        ..<span class="ident">input</span>.<span class="ident">clone</span>()
-                    })
-                    .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">resp</span><span class="op">|</span> {
-                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_table_name</span> {
-                            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">is_empty</span>() {
-                                    <span class="ident">PageState</span>::<span class="ident">End</span>
-                                } <span class="kw">else</span> {
-                                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>)
-                                }
+        <span class="ident">Box</span>::<span class="ident">pin</span>(
+            <span class="ident">stream</span>::<span class="ident">try_unfold</span>(
+                <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">input</span>.<span class="ident">exclusive_start_table_name</span>.<span class="ident">clone</span>(), <span class="ident">input</span>),
+                <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="ident">clone</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+                    <span class="kw">async</span> <span class="kw">move</span> {
+                        <span class="kw">let</span> (<span class="ident">exclusive_start_table_name</span>, <span class="ident">input</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
+                            <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">start</span>, <span class="ident">input</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">start</span>, <span class="ident">input</span>),
+                            <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">as</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListTablesError</span><span class="op">&gt;</span><span class="op">&gt;</span>
                             }
+                        };
+                        <span class="kw">let</span> <span class="ident">resp</span> <span class="op">=</span> <span class="ident">clone</span>
+                            .<span class="ident">list_tables</span>(<span class="ident">ListTablesInput</span> {
+                                <span class="ident">exclusive_start_table_name</span>,
+                                ..<span class="ident">input</span>.<span class="ident">clone</span>()
+                            })
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>
+                            .<span class="ident">last_evaluated_table_name</span>
+                            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">next</span><span class="op">|</span> <span class="op">!</span><span class="ident">next</span>.<span class="ident">is_empty</span>())
+                        {
+                            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="prelude-val">Some</span>(<span class="ident">next</span>), <span class="ident">input</span>),
                             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
                         };
-                        (
-                            <span class="ident">stream</span>::<span class="ident">iter_ok</span>(<span class="ident">resp</span>.<span class="ident">table_names</span>.<span class="ident">unwrap_or_default</span>()),
+                        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((
+                            <span class="ident">stream</span>::<span class="ident">iter</span>(<span class="ident">resp</span>.<span class="ident">table_names</span>.<span class="ident">unwrap_or_default</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="prelude-val">Ok</span>)),
                             <span class="ident">next_state</span>,
-                        )
-                    }),
-                )
-            })
-            .<span class="ident">flatten</span>(),
+                        )))
+                    }
+                },
+            )
+            .<span class="ident">try_flatten</span>(),
         )
     }
 
@@ -362,39 +375,42 @@
         <span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">QueryInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span>, <span class="ident">QueryError</span><span class="op">&gt;</span> {
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">large_enum_variant</span>)]</span>
         <span class="kw">enum</span> <span class="ident">PageState</span> {
-            <span class="ident">Start</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-            <span class="ident">Next</span>(<span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span>),
+            <span class="ident">Next</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">QueryInput</span>),
             <span class="ident">End</span>,
         }
-        <span class="ident">Box</span>::<span class="ident">new</span>(
-            <span class="ident">stream</span>::<span class="ident">unfold</span>(<span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="prelude-val">None</span>), <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">exclusive_start_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
-                    <span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="ident">start</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">start</span>,
-                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>),
-                    <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
-                };
-                <span class="prelude-val">Some</span>(
-                    <span class="self">self</span>.<span class="ident">query</span>(<span class="ident">QueryInput</span> {
-                        <span class="ident">exclusive_start_key</span>,
-                        ..<span class="ident">input</span>.<span class="ident">clone</span>()
-                    })
-                    .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">resp</span><span class="op">|</span> {
-                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_key</span> {
-                            <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">is_empty</span>() {
-                                    <span class="ident">PageState</span>::<span class="ident">End</span>
-                                } <span class="kw">else</span> {
-                                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>)
-                                }
+        <span class="ident">Box</span>::<span class="ident">pin</span>(
+            <span class="ident">stream</span>::<span class="ident">try_unfold</span>(
+                <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">input</span>.<span class="ident">exclusive_start_key</span>.<span class="ident">clone</span>(), <span class="ident">input</span>),
+                <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="ident">clone</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+                    <span class="kw">async</span> <span class="kw">move</span> {
+                        <span class="kw">let</span> (<span class="ident">exclusive_start_key</span>, <span class="ident">input</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
+                            <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">start</span>, <span class="ident">input</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">start</span>, <span class="ident">input</span>),
+                            <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> {
+                                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">as</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">QueryError</span><span class="op">&gt;</span><span class="op">&gt;</span>
                             }
-                            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
                         };
-                        (<span class="ident">stream</span>::<span class="ident">iter_ok</span>(<span class="ident">resp</span>.<span class="ident">items</span>.<span class="ident">unwrap_or_default</span>()), <span class="ident">next_state</span>)
-                    }),
-                )
-            })
-            .<span class="ident">flatten</span>(),
+                        <span class="kw">let</span> <span class="ident">resp</span> <span class="op">=</span> <span class="ident">clone</span>
+                            .<span class="ident">query</span>(<span class="ident">QueryInput</span> {
+                                <span class="ident">exclusive_start_key</span>,
+                                ..<span class="ident">input</span>.<span class="ident">clone</span>()
+                            })
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span>
+                            <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_key</span>.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">next</span><span class="op">|</span> <span class="op">!</span><span class="ident">next</span>.<span class="ident">is_empty</span>()) {
+                                <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="prelude-val">Some</span>(<span class="ident">next</span>), <span class="ident">input</span>),
+                                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
+                            };
+                        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((
+                            <span class="ident">stream</span>::<span class="ident">iter</span>(<span class="ident">resp</span>.<span class="ident">items</span>.<span class="ident">unwrap_or_default</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="prelude-val">Ok</span>)),
+                            <span class="ident">next_state</span>,
+                        )))
+                    }
+                },
+            )
+            .<span class="ident">try_flatten</span>(),
         )
     }
 
@@ -402,40 +418,40 @@
         <span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ScanInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">DynomiteStream</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span>, <span class="ident">ScanError</span><span class="op">&gt;</span> {
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">large_enum_variant</span>)]</span>
         <span class="kw">enum</span> <span class="ident">PageState</span> {
-            <span class="ident">Start</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span><span class="op">&gt;</span>),
-            <span class="ident">Next</span>(<span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span>),
+            <span class="ident">Next</span>(<span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AttributeValue</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">ScanInput</span>),
             <span class="ident">End</span>,
         }
-        <span class="ident">Box</span>::<span class="ident">new</span>(
-            <span class="ident">stream</span>::<span class="ident">unfold</span>(<span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="prelude-val">None</span>), <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
-                <span class="kw">let</span> <span class="ident">exclusive_start_key</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
-                    <span class="ident">PageState</span>::<span class="ident">Start</span>(<span class="ident">start</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">start</span>,
-                    <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">next</span>),
-                    <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">None</span>,
-                };
-                <span class="prelude-val">Some</span>(
-                    <span class="self">self</span>.<span class="ident">clone</span>()
-                        .<span class="ident">scan</span>(<span class="ident">ScanInput</span> {
-                            <span class="ident">exclusive_start_key</span>,
-                            ..<span class="ident">input</span>.<span class="ident">clone</span>()
-                        })
-                        .<span class="ident">map</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">resp</span><span class="op">|</span> {
-                            <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_key</span> {
-                                <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                                    <span class="kw">if</span> <span class="ident">next</span>.<span class="ident">is_empty</span>() {
-                                        <span class="ident">PageState</span>::<span class="ident">End</span>
-                                    } <span class="kw">else</span> {
-                                        <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">next</span>)
-                                    }
-                                }
+        <span class="ident">Box</span>::<span class="ident">pin</span>(
+            <span class="ident">stream</span>::<span class="ident">try_unfold</span>(
+                <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">input</span>.<span class="ident">exclusive_start_key</span>.<span class="ident">clone</span>(), <span class="ident">input</span>),
+                <span class="kw">move</span> <span class="op">|</span><span class="ident">state</span><span class="op">|</span> {
+                    <span class="kw">let</span> <span class="ident">clone</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
+                    <span class="kw">async</span> <span class="kw">move</span> {
+                        <span class="kw">let</span> (<span class="ident">exclusive_start_key</span>, <span class="ident">input</span>) <span class="op">=</span> <span class="kw">match</span> <span class="ident">state</span> {
+                            <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="ident">start</span>, <span class="ident">input</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="ident">start</span>, <span class="ident">input</span>),
+                            <span class="ident">PageState</span>::<span class="ident">End</span> <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="kw">as</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ScanError</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+                        };
+                        <span class="kw">let</span> <span class="ident">resp</span> <span class="op">=</span> <span class="ident">clone</span>
+                            .<span class="ident">scan</span>(<span class="ident">ScanInput</span> {
+                                <span class="ident">exclusive_start_key</span>,
+                                ..<span class="ident">input</span>.<span class="ident">clone</span>()
+                            })
+                            .<span class="kw">await</span><span class="question-mark">?</span>;
+                        <span class="kw">let</span> <span class="ident">next_state</span> <span class="op">=</span>
+                            <span class="kw">match</span> <span class="ident">resp</span>.<span class="ident">last_evaluated_key</span>.<span class="ident">filter</span>(<span class="op">|</span><span class="ident">next</span><span class="op">|</span> <span class="op">!</span><span class="ident">next</span>.<span class="ident">is_empty</span>()) {
+                                <span class="prelude-val">Some</span>(<span class="ident">next</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">Next</span>(<span class="prelude-val">Some</span>(<span class="ident">next</span>), <span class="ident">input</span>),
                                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">PageState</span>::<span class="ident">End</span>,
                             };
-                            (<span class="ident">stream</span>::<span class="ident">iter_ok</span>(<span class="ident">resp</span>.<span class="ident">items</span>.<span class="ident">unwrap_or_default</span>()), <span class="ident">next_state</span>)
-                        }),
-                )
-            })
-            .<span class="ident">flatten</span>(),
+                        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>((
+                            <span class="ident">stream</span>::<span class="ident">iter</span>(<span class="ident">resp</span>.<span class="ident">items</span>.<span class="ident">unwrap_or_default</span>().<span class="ident">into_iter</span>().<span class="ident">map</span>(<span class="prelude-val">Ok</span>)),
+                            <span class="ident">next_state</span>,
+                        )))
+                    }
+                },
+            )
+            .<span class="ident">try_flatten</span>(),
         )
     }
 }
