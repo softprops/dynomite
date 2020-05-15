@@ -1,3 +1,8 @@
+# 0.8.0
+
+* Breaking change. upgrade to rusoto@0.43.0 which itself is contains a number of breaking changes, albeit very useful ones. Dynomite is now based on standard libraries futures which means that async/await style programming are supported out of the box. This also impacted the dependency of `futures` upgraded to `0.3` which included breaking changes in streams apis which impacted autopaginating interfaces. See the `examples/` directory in this repo for up to date examples of current usage
+* Breaking change. Dropped `failure` crate support. This wasn't adding any value over `std::error::Error` and was removed as an unnecessary dependency and replaced with an impl of `std::error::Error`
+
 # 0.7.0
 
 * Breaking change. Improved support for optional attribute values [#84](https://github.com/softprops/dynomite/pull/84)

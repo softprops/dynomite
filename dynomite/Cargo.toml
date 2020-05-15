@@ -1,6 +1,6 @@
 [package]
 name = "dynomite"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["softprops <d.tangren@gmail.com>"]
 description = "Provides set of high-level productive DynamoDB interfaces"
 license = "MIT"
@@ -20,7 +20,7 @@ travis-ci = { repository = "softprops/dynomite" }
 async-trait = "0.1"
 again = "0.1"
 bytes = "0.5"
-dynomite-derive = { version = "0.7.0", path = "../dynomite-derive", optional = true }
+dynomite-derive = { version = "0.8.0", path = "../dynomite-derive", optional = true }
 futures = "0.3"
 log = "0.4"
 rusoto_core_default = { package = "rusoto_core", version = "0.43", optional = true }
