@@ -35,7 +35,7 @@ You can find some example application code under [dynomite/examples](dynomite/ex
 
 ### Dynamodb local
 
-AWS provides [a convient way to host a local instance of DynamoDB](https://hub.docker.com/r/amazon/dynamodb-local/) for
+AWS provides [a convenient way to host a local instance of DynamoDB](https://hub.docker.com/r/amazon/dynamodb-local/) for
 testing.
 
 Here is a short example of how to get up a testing locally quickly with both dynomite as well as rusoto_dynamodb.
