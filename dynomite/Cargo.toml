@@ -10,6 +10,7 @@ documentation = "https://docs.rs/dynomite"
 homepage = "https://github.com/softprops/dynomite"
 repository = "https://github.com/softprops/dynomite"
 edition = "2018"
+categories = ["database"]
 
 [badges]
 coveralls = { repository = "softprops/dynomite" }
