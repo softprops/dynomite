@@ -4,19 +4,18 @@ use crate::dynamodb::{
     AttributeValue, BackupSummary, DynamoDb, ListBackupsError, ListBackupsInput, ListTablesError,
     ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
-use futures::{stream, Future, Stream};
-
+use futures::{stream, Stream, TryStreamExt};
 #[cfg(feature = "default")]
 use rusoto_core_default::RusotoError;
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::RusotoError;
-use std::collections::HashMap;
+use std::{collections::HashMap, pin::Pin};
 
-type DynomiteStream<I, E> = Box<dyn Stream<Item = I, Error = RusotoError<E>> + Send>;
+type DynomiteStream<I, E> = Pin<Box<dyn Stream<Item = Result<I, RusotoError<E>>> + Send>>;
 
 /// Extension methods for DynamoDb client types
 ///
-/// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds automatinting `Stream` interfaces that require
+/// A default impl is provided for `DynamoDb  Clone + Send + Sync + 'static` which adds autopaginating `Stream` interfaces that require
 /// taking ownership.
 pub trait DynamoDbExt {
     // see https://github.com/boto/botocore/blob/6906e8e7e8701c80f0b270c42be509cff4375e38/botocore/data/dynamodb/2012-08-10/paginators-1.json
@@ -55,42 +54,47 @@ where
         input: ListBackupsInput,
     ) -> DynomiteStream<BackupSummary, ListBackupsError> {
         enum PageState {
-            Start(Option<String>),
-            Next(String),
+            Next(Option<String>, ListBackupsInput),
             End,
         }
-        Box::new(
-            stream::unfold(PageState::Start(None), move |state| {
-                let exclusive_start_backup_arn = match state {
-                    PageState::Start(start) => start,
-                    PageState::Next(next) => Some(next),
-                    PageState::End => return None,
-                };
-                Some(
-                    self.clone()
-                        .list_backups(ListBackupsInput {
-                            exclusive_start_backup_arn,
-                            ..input.clone()
-                        })
-                        .map(move |resp| {
-                            let next_state = match resp.last_evaluated_backup_arn {
-                                Some(next) => {
-                                    if next.is_empty() {
-                                        PageState::End
-                                    } else {
-                                        PageState::Next(next)
-                                    }
-                                }
-                                _ => PageState::End,
-                            };
-                            (
-                                stream::iter_ok(resp.backup_summaries.unwrap_or_default()),
-                                next_state,
-                            )
-                        }),
-                )
-            })
-            .flatten(),
+        Box::pin(
+            stream::try_unfold(
+                PageState::Next(input.exclusive_start_backup_arn.clone(), input),
+                move |state| {
+                    let clone = self.clone();
+                    async move {
+                        let (exclusive_start_backup_arn, input) = match state {
+                            PageState::Next(start, input) => (start, input),
+                            PageState::End => {
+                                return Ok(None) as Result<_, RusotoError<ListBackupsError>>
+                            }
+                        };
+                        let resp = clone
+                            .list_backups(ListBackupsInput {
+                                exclusive_start_backup_arn,
+                                ..input.clone()
+                            })
+                            .await?;
+                        let next_state = match resp
+                            .last_evaluated_backup_arn
+                            .filter(|next| !next.is_empty())
+                        {
+                            Some(next) => PageState::Next(Some(next), input),
+                            _ => PageState::End,
+                        };
+                        Ok(Some((
+                            stream::iter(
+                                resp.backup_summaries
+                                    .unwrap_or_default()
+                                    .into_iter()
+                                    .map(Ok),
+                            ),
+                            next_state,
+                        )))
+                    }
+                },
+            )
+            .try_flatten(),
         )
     }
 
@@ -99,41 +103,42 @@ where
         input: ListTablesInput,
     ) -> DynomiteStream<String, ListTablesError> {
         enum PageState {
-            Start(Option<String>),
-            Next(String),
+            Next(Option<String>, ListTablesInput),
             End,
         }
-        Box::new(
-            stream::unfold(PageState::Start(None), move |state| {
-                let exclusive_start_table_name = match state {
-                    PageState::Start(start) => start,
-                    PageState::Next(next) => Some(next),
-                    PageState::End => return None,
-                };
-                Some(
-                    self.list_tables(ListTablesInput {
-                        exclusive_start_table_name,
-                        ..input.clone()
-                    })
-                    .map(move |resp| {
-                        let next_state = match resp.last_evaluated_table_name {
-                            Some(next) => {
-                                if next.is_empty() {
-                                    PageState::End
-                                } else {
-                                    PageState::Next(next)
-                                }
+        Box::pin(
+            stream::try_unfold(
+                PageState::Next(input.exclusive_start_table_name.clone(), input),
+                move |state| {
+                    let clone = self.clone();
+                    async move {
+                        let (exclusive_start_table_name, input) = match state {
+                            PageState::Next(start, input) => (start, input),
+                            PageState::End => {
+                                return Ok(None) as Result<_, RusotoError<ListTablesError>>
                             }
+                        };
+                        let resp = clone
+                            .list_tables(ListTablesInput {
+                                exclusive_start_table_name,
+                                ..input.clone()
+                            })
+                            .await?;
+                        let next_state = match resp
+                            .last_evaluated_table_name
+                            .filter(|next| !next.is_empty())
+                        {
+                            Some(next) => PageState::Next(Some(next), input),
                             _ => PageState::End,
                         };
-                        (
-                            stream::iter_ok(resp.table_names.unwrap_or_default()),
+                        Ok(Some((
+                            stream::iter(resp.table_names.unwrap_or_default().into_iter().map(Ok)),
                             next_state,
-                        )
-                    }),
-                )
-            })
-            .flatten(),
+                        )))
+                    }
+                },
+            )
+            .try_flatten(),
         )
     }
 
@@ -141,39 +146,42 @@ where
         self,
         input: QueryInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, QueryError> {
+        #[allow(clippy::large_enum_variant)]
         enum PageState {
-            Start(Option<HashMap<String, AttributeValue>>),
-            Next(HashMap<String, AttributeValue>),
+            Next(Option<HashMap<String, AttributeValue>>, QueryInput),
             End,
         }
-        Box::new(
-            stream::unfold(PageState::Start(None), move |state| {
-                let exclusive_start_key = match state {
-                    PageState::Start(start) => start,
-                    PageState::Next(next) => Some(next),
-                    PageState::End => return None,
-                };
-                Some(
-                    self.query(QueryInput {
-                        exclusive_start_key,
-                        ..input.clone()
-                    })
-                    .map(move |resp| {
-                        let next_state = match resp.last_evaluated_key {
-                            Some(next) => {
-                                if next.is_empty() {
-                                    PageState::End
-                                } else {
-                                    PageState::Next(next)
-                                }
+        Box::pin(
+            stream::try_unfold(
+                PageState::Next(input.exclusive_start_key.clone(), input),
+                move |state| {
+                    let clone = self.clone();
+                    async move {
+                        let (exclusive_start_key, input) = match state {
+                            PageState::Next(start, input) => (start, input),
+                            PageState::End => {
+                                return Ok(None) as Result<_, RusotoError<QueryError>>
                             }
-                            _ => PageState::End,
                         };
-                        (stream::iter_ok(resp.items.unwrap_or_default()), next_state)
-                    }),
-                )
-            })
-            .flatten(),
+                        let resp = clone
+                            .query(QueryInput {
+                                exclusive_start_key,
+                                ..input.clone()
+                            })
+                            .await?;
+                        let next_state =
+                            match resp.last_evaluated_key.filter(|next| !next.is_empty()) {
+                                Some(next) => PageState::Next(Some(next), input),
+                                _ => PageState::End,
+                            };
+                        Ok(Some((
+                            stream::iter(resp.items.unwrap_or_default().into_iter().map(Ok)),
+                            next_state,
+                        )))
+                    }
+                },
+            )
+            .try_flatten(),
         )
     }
 
@@ -181,40 +189,40 @@ where
         self,
         input: ScanInput,
     ) -> DynomiteStream<HashMap<String, AttributeValue>, ScanError> {
+        #[allow(clippy::large_enum_variant)]
         enum PageState {
-            Start(Option<HashMap<String, AttributeValue>>),
-            Next(HashMap<String, AttributeValue>),
+            Next(Option<HashMap<String, AttributeValue>>, ScanInput),
             End,
         }
-        Box::new(
-            stream::unfold(PageState::Start(None), move |state| {
-                let exclusive_start_key = match state {
-                    PageState::Start(start) => start,
-                    PageState::Next(next) => Some(next),
-                    PageState::End => return None,
-                };
-                Some(
-                    self.clone()
-                        .scan(ScanInput {
-                            exclusive_start_key,
-                            ..input.clone()
-                        })
-                        .map(move |resp| {
-                            let next_state = match resp.last_evaluated_key {
-                                Some(next) => {
-                                    if next.is_empty() {
-                                        PageState::End
-                                    } else {
-                                        PageState::Next(next)
-                                    }
-                                }
+        Box::pin(
+            stream::try_unfold(
+                PageState::Next(input.exclusive_start_key.clone(), input),
+                move |state| {
+                    let clone = self.clone();
+                    async move {
+                        let (exclusive_start_key, input) = match state {
+                            PageState::Next(start, input) => (start, input),
+                            PageState::End => return Ok(None) as Result<_, RusotoError<ScanError>>,
+                        };
+                        let resp = clone
+                            .scan(ScanInput {
+                                exclusive_start_key,
+                                ..input.clone()
+                            })
+                            .await?;
+                        let next_state =
+                            match resp.last_evaluated_key.filter(|next| !next.is_empty()) {
+                                Some(next) => PageState::Next(Some(next), input),
                                 _ => PageState::End,
                             };
-                            (stream::iter_ok(resp.items.unwrap_or_default()), next_state)
-                        }),
-                )
-            })
-            .flatten(),
+                        Ok(Some((
+                            stream::iter(resp.items.unwrap_or_default().into_iter().map(Ok)),
+                            next_state,
+                        )))
+                    }
+                },
+            )
+            .try_flatten(),
         )
     }
 }
