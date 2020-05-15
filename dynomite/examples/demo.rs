@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }),
             ..CreateTableInput::default()
         })
-        .await?;
+        .await;
 
     let book = Book {
         id: Uuid::new_v4(),
@@ -102,7 +102,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .scan_pages(ScanInput {
                 limit: Some(1), // to demonstrate we're getting through more than one page
                 table_name: table_name.clone(),
-                filter_expression: Some("title = :title".into()),
+                filter_expression: Some("bookTitle = :title".into()),
                 expression_attribute_values: Some(attr_map!(
                     ":title" => "rust".to_string()
                 )),
