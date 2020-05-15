@@ -1,6 +1,34 @@
-# dynomite  [![GitHub Actions](https://github.com/softprops/dynomite/workflows/Main/badge.svg)](https://github.com/softprops/dynomite/actions) [![Coverage Status](https://coveralls.io/repos/softprops/dynomite/badge.svg?branch=master&service=github)](https://coveralls.io/github/softprops/dynomite?branch=master) [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE) [![crates.io](http://meritbadge.herokuapp.com/dynomite)](https://crates.io/crates/dynomite) [![Released API docs](https://docs.rs/dynomite/badge.svg)](http://docs.rs/dynomite) [![Master API docs](https://img.shields.io/badge/docs-master-green.svg)](https://softprops.github.io/dynomite)
+<div align="center">
+  🦀🧨
+</div>
 
-> dynomite makes DynamoDB fit your types (and visa versa)
+<h1 align="center">
+  dynomite
+</h1>
+
+<p align="center">
+   dynomite makes DynamoDB fit your types (and visa versa)
+</p>
+
+<div align="center">
+  <a href="https://github.com/softprops/dynomite/actions">
+    <img src="https://github.com/softprops/dynomite/workflows/Main/badge.svg"/>
+  </a>
+  <a href="https://crates.io/crates/dynomite">
+    <img src="http://meritbadge.herokuapp.com/dynomite"/>
+  </a>
+  <a href="http://docs.rs/dynomite">
+    <img src="https://docs.rs/dynomite/badge.svg"/>
+  </a>
+  <a href="https://softprops.github.io/dynomite">
+   <img src="https://img.shields.io/badge/docs-master-green.svg"/>
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"/>
+  </a>
+</div>
+
+<br />
 
 ## Overview
 
