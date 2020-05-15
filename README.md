@@ -26,19 +26,19 @@ to get started
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.7"
+dynomite = "0.8"
 ```
 
 ## 🤸 Examples
 
 You can find some example application code under [dynomite/examples](dynomite/examples)
 
-### Dynamodb local
+### DynamoDB local
 
 AWS provides [a convenient way to host a local instance of DynamoDB](https://hub.docker.com/r/amazon/dynamodb-local/) for
 testing.
 
-Here is a short example of how to get up a testing locally quickly with both dynomite as well as rusoto_dynamodb.
+Here is a short example of how to get up a testing locally quickly with both dynomite as well as `rusoto_dynamodb`.
 
 In one terminal spin up a Docker container for [DynamoDB local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.UsageNotes.html) listening on port `8000`
 
@@ -52,4 +52,4 @@ In another, run a rust binary with a client initialized like you see the the [lo
 
 * [How DynamoDB works](https://www.slideshare.net/AmazonWebServices/amazon-dynamodb-under-the-hood-how-we-built-a-hyperscale-database-dat321-aws-reinvent-2018)
 
-Doug Tangren (softprops) 2018-2019
+Doug Tangren (softprops) 2018-2020
