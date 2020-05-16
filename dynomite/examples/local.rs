@@ -14,14 +14,12 @@ use dynomite::{
     DynamoDbExt, FromAttributes, Item, Retries,
 };
 use futures::{future, TryStreamExt};
-use std::error::Error;
-use uuid::Uuid;
-
 #[cfg(feature = "default")]
 use rusoto_core_default::Region;
-
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::Region;
+use std::error::Error;
+use uuid::Uuid;
 
 #[derive(Item, Debug, Clone)]
 pub struct Book {
@@ -31,26 +29,20 @@ pub struct Book {
     title: String,
 }
 
-// this will create a rust book shelf in your aws account!
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    env_logger::init();
-    // create rusoto client
-    let client = DynamoDbClient::new(Region::Custom {
-        name: "us-east-1".into(),
-        endpoint: "http://localhost:8000".into(),
-    })
-    .with_retries(Policy::default());
-
-    // create a book table with a single string (S) primary key.
-    // if this table does not already exists
-    // this may take a second or two to provision.
-    // it will fail if this table already exists but that's okay,
-    // this is just an example :)
-    let table_name = "books".to_string();
+/// create a book table with a single string (S) primary key.
+/// if this table does not already exists
+/// this may take a second or two to provision.
+/// it will fail if this table already exists but that's okay,
+/// this is just an example :)
+async fn bootstrap<D>(
+    client: &D,
+    table_name: String,
+) where
+    D: DynamoDb,
+{
     let _ = client
         .create_table(CreateTableInput {
-            table_name: table_name.clone(),
+            table_name,
             key_schema: vec![KeySchemaElement {
                 attribute_name: "id".into(),
                 key_type: "HASH".into(),
@@ -66,6 +58,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
             ..CreateTableInput::default()
         })
         .await;
+}
+
+// this will create a rust book shelf in your aws account!
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    env_logger::init();
+    // create rusoto client
+    let client = DynamoDbClient::new(Region::Custom {
+        name: "us-east-1".into(),
+        endpoint: "http://localhost:8000".into(),
+    })
+    .with_retries(Policy::default());
+
+    let table_name = "books".to_string();
+
+    bootstrap(&client, table_name.clone()).await;
 
     let book = Book {
         id: Uuid::new_v4(),
