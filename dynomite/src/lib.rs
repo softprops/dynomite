@@ -44,10 +44,20 @@
 //!
 //! ## uuid
 //!
-//! Enabled by default, the `uuid` features adds support for implementing `Attribute` for
-//! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
+//! Enabled by default, the `uuid` feature adds support for implementing `Attribute` for
+//! the [uuid](https://crates.io/crates/uuid) crate's type `Uuid`, a useful
 //! type for producing and representing
 //! unique identifiers for items that satisfy [effective characteristics for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+//!
+//! ## humantime
+//!
+//! Enabled by default, the `humantime` feature adds an implementation of `Attribute` for
+//! the std's [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html), which
+//! internally turns the SystemTime into an [rfc3339 timestamp](https://www.ietf.org/rfc/rfc3339.txt)
+//! using an implementation in the [humantime](https://github.com/tailhook/humantime) crate.
+//! Just like the SystemTime implemented in the in Rust's std, this serialization format is accurate
+//! to the nanosecond.
+//! The timestamps become strings which are human readable, which makes database administration easier.
 //!
 //! ## derive
 //!
