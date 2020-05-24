@@ -55,7 +55,7 @@
 //! the std's [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html), which
 //! internally turns the SystemTime into an [rfc3339 timestamp](https://www.ietf.org/rfc/rfc3339.txt)
 //! using an implementation in the [humantime](https://github.com/tailhook/humantime) crate.
-//! Just like the SystemTime implemented in the in Rust's std, this serialization format is accurate
+//! Just like the SystemTime implemented in Rust's std, this serialization format is accurate
 //! to the nanosecond.
 //! The timestamps become strings which are human readable, which makes database administration easier.
 //!
