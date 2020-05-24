@@ -279,6 +279,22 @@ impl Attribute for Uuid {
     }
 }
 
+#[cfg(feature = "humantime")]
+impl Attribute for std::time::SystemTime {
+	fn into_attr(self: Self) -> AttributeValue {
+		AttributeValue {
+			s: Some(humantime::format_rfc3339_nanos(self).to_string()),
+			..Default::default()
+		}
+	}
+	fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+		value
+			.s
+			.ok_or(AttributeError::InvalidType)
+			.and_then(|s| humantime::parse_rfc3339(&s).map_err(|_| AttributeError::InvalidFormat))
+	}
+}
+
 /// A `String` type, represented by the S AttributeValue type
 impl Attribute for String {
     fn into_attr(self: Self) -> AttributeValue {
@@ -593,6 +609,24 @@ mod test {
         assert_eq!(
             Err(AttributeError::InvalidType),
             Uuid::from_attr(AttributeValue {
+                bool: Some(true),
+                ..AttributeValue::default()
+            })
+        );
+    }
+
+    #[test]
+    fn system_time_attr() {
+		use std::time::SystemTime;
+        let value = SystemTime::now();
+        assert_eq!(Ok(value), std::time::SystemTime::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    fn system_time_invalid_attr() {
+        assert_eq!(
+            Err(AttributeError::InvalidType),
+            std::time::SystemTime::from_attr(AttributeValue {
                 bool: Some(true),
                 ..AttributeValue::default()
             })
