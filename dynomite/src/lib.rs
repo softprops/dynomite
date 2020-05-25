@@ -49,12 +49,12 @@
 //! type for producing and representing
 //! unique identifiers for items that satisfy [effective characteristics for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
 //!
-//! ## humantime
+//! ## chrono
 //!
-//! Enabled by default, the `humantime` feature adds an implementation of `Attribute` for
+//! Enabled by default, the `chrono` feature adds an implementation of `Attribute` for
 //! the std's [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html), which
 //! internally turns the SystemTime into an [rfc3339 timestamp](https://www.ietf.org/rfc/rfc3339.txt)
-//! using an implementation in the [humantime](https://github.com/tailhook/humantime) crate.
+//! using an implementation in the [chrono](https://github.com/chronotope/chrono) crate.
 //! Just like the SystemTime implemented in Rust's std, this serialization format is accurate
 //! to the nanosecond.
 //! The timestamps become strings which are human readable, which makes database administration easier.
@@ -289,11 +289,13 @@ impl Attribute for Uuid {
     }
 }
 
-#[cfg(feature = "humantime")]
+#[cfg(feature = "chrono")]
 impl Attribute for std::time::SystemTime {
 	fn into_attr(self: Self) -> AttributeValue {
+        let dt: chrono::DateTime<chrono::offset::Utc> = self.into();
+
 		AttributeValue {
-			s: Some(humantime::format_rfc3339_nanos(self).to_string()),
+			s: Some(dt.to_rfc3339()),
 			..Default::default()
 		}
 	}
@@ -301,7 +303,12 @@ impl Attribute for std::time::SystemTime {
 		value
 			.s
 			.ok_or(AttributeError::InvalidType)
-			.and_then(|s| humantime::parse_rfc3339(&s).map_err(|_| AttributeError::InvalidFormat))
+			.and_then(|s| {
+                match chrono::DateTime::parse_from_rfc3339(&s) {
+                    Ok(date_time) => Ok(date_time.into()),
+                    Err(_) => Err(AttributeError::InvalidFormat)
+                }
+            })
 	}
 }
 
@@ -626,6 +633,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature="chrono")]
     fn system_time_attr() {
 		use std::time::SystemTime;
         let value = SystemTime::now();
@@ -633,6 +641,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature="chrono")]
     fn system_time_invalid_attr() {
         assert_eq!(
             Err(AttributeError::InvalidType),
