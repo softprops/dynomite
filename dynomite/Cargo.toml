@@ -40,5 +40,5 @@ tokio = { version = "0.2", features = ["macros"] }
 
 [features]
 default = ["uuid", "chrono", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
-rustls = ["uuid", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
+rustls = ["uuid", "chrono", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
 derive = ["dynomite-derive"]
