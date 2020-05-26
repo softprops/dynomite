@@ -44,10 +44,20 @@
 //!
 //! ## uuid
 //!
-//! Enabled by default, the `uuid` features adds support for implementing `Attribute` for
-//! the [uuid](https://crates.io/crates/uuid) crate type `Uuid`, a useful
+//! Enabled by default, the `uuid` feature adds support for implementing `Attribute` for
+//! the [uuid](https://crates.io/crates/uuid) crate's type `Uuid`, a useful
 //! type for producing and representing
 //! unique identifiers for items that satisfy [effective characteristics for partition keys](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/bp-partition-key-design.html)
+//!
+//! ## chrono
+//!
+//! Enabled by default, the `chrono` feature adds an implementation of `Attribute` for
+//! the std's [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html), which
+//! internally turns the SystemTime into an [rfc3339 timestamp](https://www.ietf.org/rfc/rfc3339.txt)
+//! using an implementation in the [chrono](https://github.com/chronotope/chrono) crate.
+//! Just like the SystemTime implemented in Rust's std, this serialization format is accurate
+//! to the nanosecond.
+//! The timestamps become strings which are human readable, which makes database administration easier.
 //!
 //! ## derive
 //!
@@ -277,6 +287,29 @@ impl Attribute for Uuid {
             .ok_or(AttributeError::InvalidType)
             .and_then(|s| Uuid::parse_str(s.as_str()).map_err(|_| AttributeError::InvalidFormat))
     }
+}
+
+#[cfg(feature = "chrono")]
+impl Attribute for std::time::SystemTime {
+	fn into_attr(self: Self) -> AttributeValue {
+        let dt: chrono::DateTime<chrono::offset::Utc> = self.into();
+
+		AttributeValue {
+			s: Some(dt.to_rfc3339()),
+			..Default::default()
+		}
+	}
+	fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+		value
+			.s
+			.ok_or(AttributeError::InvalidType)
+			.and_then(|s| {
+                match chrono::DateTime::parse_from_rfc3339(&s) {
+                    Ok(date_time) => Ok(date_time.into()),
+                    Err(_) => Err(AttributeError::InvalidFormat)
+                }
+            })
+	}
 }
 
 /// A `String` type, represented by the S AttributeValue type
@@ -593,6 +626,26 @@ mod test {
         assert_eq!(
             Err(AttributeError::InvalidType),
             Uuid::from_attr(AttributeValue {
+                bool: Some(true),
+                ..AttributeValue::default()
+            })
+        );
+    }
+
+    #[test]
+    #[cfg(feature="chrono")]
+    fn system_time_attr() {
+		use std::time::SystemTime;
+        let value = SystemTime::now();
+        assert_eq!(Ok(value), std::time::SystemTime::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    #[cfg(feature="chrono")]
+    fn system_time_invalid_attr() {
+        assert_eq!(
+            Err(AttributeError::InvalidType),
+            std::time::SystemTime::from_attr(AttributeValue {
                 bool: Some(true),
                 ..AttributeValue::default()
             })

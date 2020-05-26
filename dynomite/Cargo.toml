@@ -29,6 +29,7 @@ rusoto_core_rustls = { package = "rusoto_core", version = "0.43", default_featur
 rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.43", optional = true }
 rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.43", default_features = false, features=["rustls"], optional = true }
 uuid = { version = "0.8", features = ["v4"], optional = true }
+chrono = { version = "0.4", optional = true }
 
 
 [dev-dependencies]
@@ -38,6 +39,6 @@ serde_json = "1.0"
 tokio = { version = "0.2", features = ["macros"] }
 
 [features]
-default = ["uuid", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
+default = ["uuid", "chrono", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
 rustls = ["uuid", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
 derive = ["dynomite-derive"]
