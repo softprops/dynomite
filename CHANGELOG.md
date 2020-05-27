@@ -1,6 +1,6 @@
 # 0.8.1
 
-* Add `Attribute` support for time types including `std::time::SystemTime`, `chrono::DateTime<{Utc,Local,FixedOffset}>`
+* Add `Attribute` support for time types including `std::time::SystemTime`, `chrono::DateTime<{Utc,Local,FixedOffset}>` [#101](https://github.com/softprops/dynomite/pull/101) [#102](https://github.com/softprops/dynomite/pull/102)
 
 # 0.8.0
 
