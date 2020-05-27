@@ -1,3 +1,7 @@
+# 0.8.1
+
+* Add `Attribute` support for time types including `std::time::SystemTime`, `chrono::DateTime<{Utc,Local,FixedOffset}>`
+
 # 0.8.0
 
 * Breaking change. upgrade to rusoto@0.43.0 which itself is contains a number of breaking changes, albeit very useful ones. Dynomite is now based on standard libraries futures which means that async/await style programming are supported out of the box. This also impacted the dependency of `futures` upgraded to `0.3` which included breaking changes in streams apis which impacted autopaginating interfaces. See the `examples/` directory in this repo for up to date examples of current usage

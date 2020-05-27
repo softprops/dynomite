@@ -89,10 +89,16 @@ pub use rusoto_dynamodb_default as dynamodb;
 pub use rusoto_dynamodb_rustls as dynamodb;
 
 use bytes::Bytes;
+#[cfg(feature = "chrono")]
+use chrono::{
+    offset::{FixedOffset, Local},
+    DateTime, Utc,
+};
 use dynamodb::AttributeValue;
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
+    time::SystemTime,
 };
 #[cfg(feature = "uuid")]
 use uuid::Uuid;
@@ -272,7 +278,7 @@ impl<A: Attribute> Attribute for BTreeMap<String, A> {
     }
 }
 
-// A `String` type for `Uuids`, represented by the `S` AttributeValue type
+/// A `String` type for `Uuids`, represented by the `S` AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
     fn into_attr(self: Self) -> AttributeValue {
@@ -289,27 +295,86 @@ impl Attribute for Uuid {
     }
 }
 
+/// An `rfc3339` formatted version of `DateTime<Utc>`, represented by the `S` AttributeValue type
 #[cfg(feature = "chrono")]
-impl Attribute for std::time::SystemTime {
-	fn into_attr(self: Self) -> AttributeValue {
-        let dt: chrono::DateTime<chrono::offset::Utc> = self.into();
+impl Attribute for DateTime<Utc> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.to_rfc3339()),
+            ..Default::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .s
+            .ok_or(AttributeError::InvalidType)
+            .and_then(
+                |s| match DateTime::parse_from_rfc3339(&s).map(|dt| dt.with_timezone(&Utc)) {
+                    Ok(date_time) => Ok(date_time),
+                    Err(_) => Err(AttributeError::InvalidFormat),
+                },
+            )
+    }
+}
 
-		AttributeValue {
-			s: Some(dt.to_rfc3339()),
-			..Default::default()
-		}
-	}
-	fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-		value
-			.s
-			.ok_or(AttributeError::InvalidType)
-			.and_then(|s| {
-                match chrono::DateTime::parse_from_rfc3339(&s) {
-                    Ok(date_time) => Ok(date_time.into()),
-                    Err(_) => Err(AttributeError::InvalidFormat)
+/// An `rfc3339` formatted version of `DateTime<Local>`, represented by the `S` AttributeValue type
+#[cfg(feature = "chrono")]
+impl Attribute for DateTime<Local> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.to_rfc3339()),
+            ..Default::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .s
+            .ok_or(AttributeError::InvalidType)
+            .and_then(|s| {
+                match DateTime::parse_from_rfc3339(&s).map(|dt| dt.with_timezone(&Local)) {
+                    Ok(date_time) => Ok(date_time),
+                    Err(_) => Err(AttributeError::InvalidFormat),
                 }
             })
-	}
+    }
+}
+
+/// An `rfc3339` formatted version of `DateTime<FixedOffset>`, represented by the `S` AttributeValue type
+#[cfg(feature = "chrono")]
+impl Attribute for DateTime<FixedOffset> {
+    fn into_attr(self: Self) -> AttributeValue {
+        AttributeValue {
+            s: Some(self.to_rfc3339()),
+            ..Default::default()
+        }
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .s
+            .ok_or(AttributeError::InvalidType)
+            .and_then(|s| match DateTime::parse_from_rfc3339(&s) {
+                Ok(date_time) => Ok(date_time),
+                Err(_) => Err(AttributeError::InvalidFormat),
+            })
+    }
+}
+
+/// An `rfc3339` formatted version of `SystemTime`, represented by the `S` AttributeValue type
+#[cfg(feature = "chrono")]
+impl Attribute for SystemTime {
+    fn into_attr(self: Self) -> AttributeValue {
+        let dt: DateTime<Utc> = self.into();
+        dt.into_attr()
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        value
+            .s
+            .ok_or(AttributeError::InvalidType)
+            .and_then(|s| match DateTime::parse_from_rfc3339(&s) {
+                Ok(date_time) => Ok(date_time.into()),
+                Err(_) => Err(AttributeError::InvalidFormat),
+            })
+    }
 }
 
 /// A `String` type, represented by the S AttributeValue type
@@ -633,19 +698,83 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature="chrono")]
-    fn system_time_attr() {
-		use std::time::SystemTime;
-        let value = SystemTime::now();
-        assert_eq!(Ok(value), std::time::SystemTime::from_attr(value.into_attr()));
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_utc_attr() {
+        let value = Utc::now();
+        assert_eq!(Ok(value), DateTime::<Utc>::from_attr(value.into_attr()));
     }
 
     #[test]
-    #[cfg(feature="chrono")]
-    fn system_time_invalid_attr() {
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_invalid_utc_attr() {
         assert_eq!(
             Err(AttributeError::InvalidType),
-            std::time::SystemTime::from_attr(AttributeValue {
+            DateTime::<Utc>::from_attr(AttributeValue {
+                bool: Some(true),
+                ..AttributeValue::default()
+            })
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_local_attr() {
+        let value = Local::now();
+        assert_eq!(Ok(value), DateTime::<Local>::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_invalid_local_attr() {
+        assert_eq!(
+            Err(AttributeError::InvalidType),
+            DateTime::<Local>::from_attr(AttributeValue {
+                bool: Some(true),
+                ..AttributeValue::default()
+            })
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_fixedoffset_attr() {
+        use chrono::offset::TimeZone;
+        let value = FixedOffset::east(5 * 3600)
+            .ymd(2015, 2, 18)
+            .and_hms(23, 16, 9);
+        assert_eq!(
+            Ok(value),
+            DateTime::<FixedOffset>::from_attr(value.into_attr())
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn chrono_datetime_invalid_fixedoffset_attr() {
+        assert_eq!(
+            Err(AttributeError::InvalidType),
+            DateTime::<FixedOffset>::from_attr(AttributeValue {
+                bool: Some(true),
+                ..AttributeValue::default()
+            })
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn system_time_attr() {
+        use std::time::SystemTime;
+        let value = SystemTime::now();
+        assert_eq!(Ok(value), SystemTime::from_attr(value.into_attr()));
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn system_time_invalid_attr() {
+        use std::time::SystemTime;
+        assert_eq!(
+            Err(AttributeError::InvalidType),
+            SystemTime::from_attr(AttributeValue {
                 bool: Some(true),
                 ..AttributeValue::default()
             })
