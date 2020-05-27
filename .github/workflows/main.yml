@@ -98,6 +98,9 @@ jobs:
           pushd dynomite-derive
           cargo publish --token ${{ secrets.CRATES_TOKEN }}
           popd
+          # eventual consistency dictates we wait a bit before publishing 
+          # a crate that depends on the above
+          sleep 10
           pushd dynomite
           cargo publish --token ${{ secrets.CRATES_TOKEN }}
           popd
