@@ -1027,10 +1027,6 @@
 <span id="1027">1027</span>
 <span id="1028">1028</span>
 <span id="1029">1029</span>
-<span id="1030">1030</span>
-<span id="1031">1031</span>
-<span id="1032">1032</span>
-<span id="1033">1033</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Dynomite is set of high-level interfaces built on top of</span>
 <span class="doccomment">//! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)</span>
@@ -1086,12 +1082,8 @@
 <span class="doccomment">//! ## chrono</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Enabled by default, the `chrono` feature adds an implementation of `Attribute` for</span>
-<span class="doccomment">//! the std&#39;s [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html), which</span>
-<span class="doccomment">//! internally turns the SystemTime into an [rfc3339 timestamp](https://www.ietf.org/rfc/rfc3339.txt)</span>
-<span class="doccomment">//! using an implementation in the [chrono](https://github.com/chronotope/chrono) crate.</span>
-<span class="doccomment">//! Just like the SystemTime implemented in Rust&#39;s std, this serialization format is accurate</span>
-<span class="doccomment">//! to the nanosecond.</span>
-<span class="doccomment">//! The timestamps become strings which are human readable, which makes database administration easier.</span>
+<span class="doccomment">//! the std&#39;s [SystemTime](https://doc.rust-lang.org/std/time/struct.SystemTime.html) and chrono [`DateTime`](https://docs.rs/chrono/0.4.11/chrono/struct.DateTime.html) types which</span>
+<span class="doccomment">//! internally use [rfc3339 timestamps](https://www.ietf.org/rfc/rfc3339.txt).</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## derive</span>
 <span class="doccomment">//!</span>
