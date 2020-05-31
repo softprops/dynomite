@@ -37,7 +37,7 @@ env_logger = "0.7"
 maplit = "1.0"
 serde_json = "1.0"
 tokio = { version = "0.2", features = ["macros"] }
-
+lambda = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
 [features]
 default = ["uuid", "chrono", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
 rustls = ["uuid", "chrono", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
