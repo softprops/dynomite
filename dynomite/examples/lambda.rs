@@ -3,8 +3,7 @@ use dynomite::{
     retry::Policy,
     Retries,
 };
-use lambda::handler_fn;
-use serde_json::Value;
+use lambda_http::{handler, lambda};
 
 type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
@@ -12,11 +11,15 @@ type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 async fn main() -> Result<(), Error> {
     let client = DynamoDbClient::new(Default::default()).with_retries(Policy::default());
 
-    lambda::run(handler_fn(move |event: Value| {
+    lambda::run(handler(move |_| {
         let client = client.clone();
         async move {
-            client.list_tables(Default::default()).await?;
-            Ok::<_, Error>(event)
+            let tables = client
+                .list_tables(Default::default())
+                .await?
+                .table_names
+                .unwrap_or_default();
+            Ok::<_, Error>(tables.join("\n"))
         }
     }))
     .await?;
