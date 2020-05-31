@@ -15,7 +15,7 @@ async fn main() -> Result<(), Error> {
     lambda::run(handler_fn(move |event: Value| {
         let client = client.clone();
         async move {
-            client.clone().list_tables(Default::default()).await?;
+            client.list_tables(Default::default()).await?;
             Ok::<_, Error>(event)
         }
     }))
