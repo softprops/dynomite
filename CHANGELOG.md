@@ -1,3 +1,7 @@
+# 0.8.2
+
+* Bump rusoto dependencies to version `0.4.4`
+
 # 0.8.1
 
 * Add `Attribute` support for time types including `std::time::SystemTime`, `chrono::DateTime<{Utc,Local,FixedOffset}>` [#101](https://github.com/softprops/dynomite/pull/101) [#102](https://github.com/softprops/dynomite/pull/102)
