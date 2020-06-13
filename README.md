@@ -11,19 +11,19 @@
 </p>
 
 <div align="center">
-  <a href="https://github.com/softprops/dynomite/actions">
+  <a alt="GitHub Actions" href="https://github.com/softprops/dynomite/actions">
     <img src="https://github.com/softprops/dynomite/workflows/Main/badge.svg"/>
   </a>
-  <a href="https://crates.io/crates/dynomite">
-    <img src="http://meritbadge.herokuapp.com/dynomite"/>
+  <a alt="crates.io" href="https://crates.io/crates/dynomite">
+    <img src="https://img.shields.io/crates/v/dynomite.svg?logo=rust"/>
   </a>
-  <a href="http://docs.rs/dynomite">
+  <a alt="docs.rs" href="http://docs.rs/dynomite">
     <img src="https://docs.rs/dynomite/badge.svg"/>
   </a>
-  <a href="https://softprops.github.io/dynomite">
+  <a alt="latest docs" href="https://softprops.github.io/dynomite">
    <img src="https://img.shields.io/badge/docs-master-green.svg"/>
   </a>
-  <a href="LICENSE">
+  <a alt="license" href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"/>
   </a>
 </div>
