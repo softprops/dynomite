@@ -12,7 +12,7 @@ jobs:
         with:
           components: rustfmt
           rust-version: nightly
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - run: cargo fmt --all -- --check
 
   lint:
@@ -22,7 +22,7 @@ jobs:
         uses: hecrj/setup-rust-action@v1
         with:
           components: clippy
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - run: cargo clippy --all-targets -- -D clippy::all
 
   compile:
@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Set up Rust
         uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - run: cargo check --all
 
   test:
@@ -46,7 +46,7 @@ jobs:
       with:
         rust-version: ${{ matrix.rust }}
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
     - name: Test
       run: cargo test
     - name: Coverage
@@ -68,7 +68,7 @@ jobs:
     steps:
       - name: Set up Rust
         uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Generate Docs
         shell: bash
         run: |
@@ -90,7 +90,7 @@ jobs:
     steps:
       - name: Set up Rust
         uses: hecrj/setup-rust-action@v1
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Publish
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
