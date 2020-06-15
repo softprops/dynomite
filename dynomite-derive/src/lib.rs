@@ -481,7 +481,7 @@ fn get_item_trait(
                 }
             }
         })
-        .unwrap_or(quote! {}))
+        .unwrap_or_else(proc_macro2::TokenStream::new))
 }
 
 /// Find a single `Field` from `fields` that has an attribute of the form
@@ -590,7 +590,7 @@ fn get_key_struct(
             })
         })
         .transpose()?
-        .unwrap_or(quote!());
+        .unwrap_or_else(proc_macro2::TokenStream::new);
 
     Ok(partition_key_field
         .map(|partition_key_field| {
@@ -602,7 +602,7 @@ fn get_key_struct(
                 }
             }
         })
-        .unwrap_or(quote!()))
+        .unwrap_or_else(proc_macro2::TokenStream::new))
 }
 
 /// Change `field.ident` to the value returned by `get_field_deser_name`
