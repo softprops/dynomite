@@ -1100,7 +1100,7 @@
                 }
             }
         })
-        .<span class="ident">unwrap_or</span>(<span class="macro">quote</span><span class="macro">!</span> {}))
+        .<span class="ident">unwrap_or_else</span>(<span class="ident">proc_macro2</span>::<span class="ident">TokenStream</span>::<span class="ident">new</span>))
 }
 
 <span class="doccomment">/// Find a single `Field` from `fields` that has an attribute of the form</span>
@@ -1209,7 +1209,7 @@
             })
         })
         .<span class="ident">transpose</span>()<span class="question-mark">?</span>
-        .<span class="ident">unwrap_or</span>(<span class="macro">quote</span><span class="macro">!</span>());
+        .<span class="ident">unwrap_or_else</span>(<span class="ident">proc_macro2</span>::<span class="ident">TokenStream</span>::<span class="ident">new</span>);
 
     <span class="prelude-val">Ok</span>(<span class="ident">partition_key_field</span>
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">partition_key_field</span><span class="op">|</span> {
@@ -1221,7 +1221,7 @@
                 }
             }
         })
-        .<span class="ident">unwrap_or</span>(<span class="macro">quote</span><span class="macro">!</span>()))
+        .<span class="ident">unwrap_or_else</span>(<span class="ident">proc_macro2</span>::<span class="ident">TokenStream</span>::<span class="ident">new</span>))
 }
 
 <span class="doccomment">/// Change `field.ident` to the value returned by `get_field_deser_name`</span>
