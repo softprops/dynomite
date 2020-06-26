@@ -80,7 +80,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./target/doc
-        uses: docker://peaceiris/gh-pages:v2.3.1
 
   publish-crate:
     runs-on: ubuntu-latest
