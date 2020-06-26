@@ -21,7 +21,7 @@
     <img src="https://docs.rs/dynomite/badge.svg"/>
   </a>
   <a alt="latest docs" href="https://softprops.github.io/dynomite">
-   <img src="https://img.shields.io/badge/docs-master-green.svg"/>
+   <img src="https://img.shields.io/badge/docs-latest-green.svg"/>
   </a>
   <a alt="license" href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-brightgreen.svg"/>
