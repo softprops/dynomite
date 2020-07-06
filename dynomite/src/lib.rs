@@ -1,4 +1,4 @@
-//! Dynomite is set of high-level interfaces built on top of
+//! Dynomite is the set of high-level interfaces built on top of
 //! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
 //! which make interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.
 //!
@@ -23,7 +23,7 @@
 //! ## Rusoto extensions
 //!
 //! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite
-//! adds client interfaces for creating async Stream-based auto pagination interfaces
+//! adds client interfaces for creating async Stream-based auto pagination interfaces.
 //!
 //! ## Robust retries
 //!
@@ -33,14 +33,12 @@
 //!
 //! # Errors
 //!
-//! Some operations which require coercion from AWS to Rust types may fail result in an
-//! [AttributeError](error/enum.AttributeError.html). These errors were
-//! designed to work with the [failure](https://crates.io/crates/failure)
-//! crate ecosystem.
+//! Some operations which require coercion from AWS to Rust types may fail which results in an
+//! [AttributeError](error/enum.AttributeError.html).
 //!
 //! # Cargo Features
 //!
-//! This crate as a few cargo features of note.
+//! This crate has a few cargo features of note.
 //!
 //! ## uuid
 //!
@@ -58,11 +56,11 @@
 //! ## derive
 //!
 //! Enabled by default, the `derive` feature enables the use of the dynomite derive feature which
-//! allows you simple add `#[derive(Item)]` to your structs.
+//! allows you to simply add `#[derive(Item)]` to your structs.
 //!
 //! ## rustls
 //!
-//! Disabled by default, the `rustls` feature changes overrides Rusoto's default tls
+//! Disabled by default, the `rustls` feature overrides Rusoto's default tls
 //! dependency on OpenSSL, replacing it with a [`rustls`](https://crates.io/crates/rustls) based tls implementation. When you
 //! enable this feature. It will also enable `uuid` and `derive` by default.
 //!
