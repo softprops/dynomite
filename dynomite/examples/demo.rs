@@ -160,18 +160,3 @@ async fn main() -> Result<(), Box<dyn Error>> {
     );
     Ok(())
 }
-
-/// SAMPLE OUTPUT FROM `get_item()`
-///
-/// Book {
-///    id: 4372f974-8272-4e97-bb2e-d561dc9a4f0f,
-///    title: "rust",
-///    authors: Some(
-///        [
-///            Author {
-///                id: 6b38b132-2444-4b8d-870b-aa26bc28a54c,
-///                name: "Jo Bloggs",
-///            },
-///        ],
-///    ),
-/// }
