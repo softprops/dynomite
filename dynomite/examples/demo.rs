@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let book = Book {
         id: Uuid::new_v4(),
         title: "rust".into(),
-        authors: authors,
+        authors,
     };
 
     // print the key for this book
@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "get_item() result {:#?}",
         client
             .get_item(GetItemInput {
-                table_name: table_name,
+                table_name,
                 key: book.key(), // get a book by key
                 ..GetItemInput::default()
             })
