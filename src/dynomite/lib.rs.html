@@ -1025,10 +1025,8 @@
 <span id="1025">1025</span>
 <span id="1026">1026</span>
 <span id="1027">1027</span>
-<span id="1028">1028</span>
-<span id="1029">1029</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="doccomment">//! Dynomite is set of high-level interfaces built on top of</span>
+<span class="doccomment">//! Dynomite is the set of high-level interfaces built on top of</span>
 <span class="doccomment">//! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)</span>
 <span class="doccomment">//! which make interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.</span>
 <span class="doccomment">//!</span>
@@ -1053,7 +1051,7 @@
 <span class="doccomment">//! ## Rusoto extensions</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite</span>
-<span class="doccomment">//! adds client interfaces for creating async Stream-based auto pagination interfaces</span>
+<span class="doccomment">//! adds client interfaces for creating async Stream-based auto pagination interfaces.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## Robust retries</span>
 <span class="doccomment">//!</span>
@@ -1063,14 +1061,12 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Errors</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Some operations which require coercion from AWS to Rust types may fail result in an</span>
-<span class="doccomment">//! [AttributeError](error/enum.AttributeError.html). These errors were</span>
-<span class="doccomment">//! designed to work with the [failure](https://crates.io/crates/failure)</span>
-<span class="doccomment">//! crate ecosystem.</span>
+<span class="doccomment">//! Some operations which require coercion from AWS to Rust types may fail which results in an</span>
+<span class="doccomment">//! [AttributeError](error/enum.AttributeError.html).</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Cargo Features</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! This crate as a few cargo features of note.</span>
+<span class="doccomment">//! This crate has a few cargo features of note.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## uuid</span>
 <span class="doccomment">//!</span>
@@ -1088,11 +1084,11 @@
 <span class="doccomment">//! ## derive</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Enabled by default, the `derive` feature enables the use of the dynomite derive feature which</span>
-<span class="doccomment">//! allows you simple add `#[derive(Item)]` to your structs.</span>
+<span class="doccomment">//! allows you to simply add `#[derive(Item)]` to your structs.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ## rustls</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! Disabled by default, the `rustls` feature changes overrides Rusoto&#39;s default tls</span>
+<span class="doccomment">//! Disabled by default, the `rustls` feature overrides Rusoto&#39;s default tls</span>
 <span class="doccomment">//! dependency on OpenSSL, replacing it with a [`rustls`](https://crates.io/crates/rustls) based tls implementation. When you</span>
 <span class="doccomment">//! enable this feature. It will also enable `uuid` and `derive` by default.</span>
 <span class="doccomment">//!</span>
