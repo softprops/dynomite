@@ -31,13 +31,13 @@ rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.44", defaul
 uuid = { version = "0.8", features = ["v4"], optional = true }
 chrono = { version = "0.4", optional = true }
 
-
 [dev-dependencies]
 env_logger = "0.7"
 maplit = "1.0"
 serde_json = "1.0"
 tokio = { version = "0.2", features = ["macros"] }
 lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
+
 [features]
 default = ["uuid", "chrono", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
 rustls = ["uuid", "chrono", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]

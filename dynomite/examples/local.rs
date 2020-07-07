@@ -138,7 +138,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "get_item() result {:#?}",
         client
             .get_item(GetItemInput {
-                table_name: table_name,
+                table_name,
                 key: book.key(), // get a book by key
                 ..GetItemInput::default()
             })
