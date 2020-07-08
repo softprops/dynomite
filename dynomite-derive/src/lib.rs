@@ -36,7 +36,7 @@ use proc_macro2::Span;
 use quote::{quote, ToTokens};
 use syn::{
     Data::{Enum, Struct},
-    DataStruct, DeriveInput, Field, Fields, Ident, Meta, Variant, Visibility,
+    DataStruct, DeriveInput, Field, Fields, Ident, Meta, NestedMeta, Variant, Visibility,
 };
 
 /// Derives `dynomite::Item` type for struts with named fields
@@ -146,6 +146,7 @@ fn make_dynomite_attr(
 }
 
 fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
+    use syn::spanned::Spanned as _;
     let name = &ast.ident;
     let vis = &ast.vis;
     match ast.data {
@@ -153,7 +154,10 @@ fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
             Fields::Named(named) => {
                 make_dynomite_item(vis, name, &named.named.into_iter().collect::<Vec<_>>())
             }
-            _ => panic!("Dynomite Items require named fields"),
+            fields => Err(syn::Error::new(
+                fields.span(),
+                "Dynomite Items require named fields",
+            )),
         },
         _ => panic!("Dynomite Items can only be generated for structs"),
     }
@@ -397,13 +401,32 @@ fn get_from_attributes_function(fields: &[Field]) -> syn::Result<impl ToTokens> 
             Err(e) => return Err(e),
         };
 
+        let default_when_absent = field.attrs.iter().any(|attr| {
+            attr.parse_args::<NestedMeta>().iter().any(|meta| {
+                match meta {
+                        NestedMeta::Meta(Meta::Path(path)) => path.is_ident("default"),
+                        _ => false
+                    }
+                })
+        });
+
         let field_ident = &field.ident;
-        Ok(quote! {
-            #field_ident: #from_attribute_value(
-                attrs.remove(#field_deser_name)
-                    .ok_or(::dynomite::AttributeError::MissingField { name: #field_deser_name.to_string() })?
-            )?
-        })
+        if default_when_absent {
+            Ok(quote! {
+                #field_ident: match attrs.remove(#field_deser_name) {
+                    Some(field) => #from_attribute_value(field)?,
+                    _ => ::std::default::Default::default()
+                }
+            })
+        } else {
+            Ok(quote! {
+                #field_ident: #from_attribute_value(
+                    attrs.remove(#field_deser_name)
+                        .ok_or(::dynomite::AttributeError::MissingField { name: #field_deser_name.to_string() })?
+                )?
+            })
+        }
+        
     }).collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {

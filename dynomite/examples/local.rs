@@ -25,7 +25,7 @@ use uuid::Uuid;
 pub struct Book {
     #[dynomite(partition_key)]
     id: Uuid,
-    #[dynomite(rename = "bookTitle")]
+    #[dynomite(rename = "bookTitle", default)]
     title: String,
 }
 
