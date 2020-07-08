@@ -426,7 +426,6 @@ fn get_from_attributes_function(fields: &[Field]) -> syn::Result<impl ToTokens> 
                 )?
             })
         }
-        
     }).collect::<syn::Result<Vec<_>>>()?;
 
     Ok(quote! {
