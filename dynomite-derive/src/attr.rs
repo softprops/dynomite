@@ -6,6 +6,7 @@ use syn::{
     Ident, LitStr, Token,
 };
 
+#[derive(Clone)]
 pub enum Attr {
     /// Denotes field should be replaced with Default impl when absent in ddb
     Default(Ident),
