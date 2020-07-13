@@ -46,12 +46,12 @@ use syn::{
 
 /// A Field and all its extracted dynomite derive attrs
 #[derive(Clone)]
-struct AnnotatedField<'a> {
+struct ItemField<'a> {
     field: &'a Field,
     attrs: Vec<Attr>,
 }
 
-impl<'a> AnnotatedField<'a> {
+impl<'a> ItemField<'a> {
     fn new(field: &'a Field) -> Self {
         let attrs = parse_attrs(&field.attrs);
         Self { field, attrs }
@@ -70,7 +70,7 @@ impl<'a> AnnotatedField<'a> {
     }
 
     fn deser_name(&self) -> String {
-        let AnnotatedField { field, attrs } = self;
+        let ItemField { field, attrs } = self;
         attrs
             .iter()
             .find_map(|attr| match attr {
@@ -227,16 +227,16 @@ fn make_dynomite_item(
     name: &Ident,
     fields: &[Field],
 ) -> syn::Result<impl ToTokens> {
-    let annotated_fields = fields
+    let item_fields = fields
         .into_iter()
-        .map(AnnotatedField::new)
+        .map(ItemField::new)
         .collect::<Vec<_>>();
     // impl Item for Name + NameKey struct
-    let dynamodb_traits = get_dynomite_item_traits(vis, name, &annotated_fields)?;
+    let dynamodb_traits = get_dynomite_item_traits(vis, name, &item_fields)?;
     // impl ::dynomite::FromAttributes for Name
-    let from_attribute_map = get_from_attributes_trait(name, &annotated_fields)?;
+    let from_attribute_map = get_from_attributes_trait(name, &item_fields)?;
     // impl From<Name> for ::dynomite::Attributes
-    let to_attribute_map = get_to_attribute_map_trait(name, &annotated_fields)?;
+    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
 
     Ok(quote! {
         #from_attribute_map
@@ -253,7 +253,7 @@ fn make_dynomite_item(
 //
 fn get_to_attribute_map_trait(
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from = quote!(::std::convert::From);
@@ -279,7 +279,7 @@ fn get_to_attribute_map_trait(
 // }
 fn get_to_attribute_map_function(
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
@@ -320,7 +320,7 @@ fn get_to_attribute_map_function(
 /// ```
 fn get_from_attributes_trait(
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let from_attrs = quote!(::dynomite::FromAttributes);
     let from_attribute_map = get_from_attributes_function(fields)?;
@@ -333,14 +333,14 @@ fn get_from_attributes_trait(
 }
 
 /// Field has #[dynomite(default)] attribute
-fn default_when_absent(field: &AnnotatedField) -> bool {
+fn default_when_absent(field: &ItemField) -> bool {
     field
         .attrs
         .iter()
         .any(|attr| matches!(attr, Attr::Default(_)))
 }
 
-fn get_from_attributes_function(fields: &[AnnotatedField]) -> syn::Result<impl ToTokens> {
+fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
     let err = quote!(::dynomite::AttributeError);
@@ -379,7 +379,7 @@ fn get_from_attributes_function(fields: &[AnnotatedField]) -> syn::Result<impl T
 fn get_dynomite_item_traits(
     vis: &Visibility,
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let impls = get_item_impls(vis, name, fields)?;
 
@@ -391,7 +391,7 @@ fn get_dynomite_item_traits(
 fn get_item_impls(
     vis: &Visibility,
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     // impl ::dynomite::Item for Name ...
     let item_trait = get_item_trait(name, fields)?;
@@ -415,7 +415,7 @@ fn get_item_impls(
 /// ```
 fn get_item_trait(
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let item = quote!(::dynomite::Item);
     let attribute_map = quote!(
@@ -447,7 +447,7 @@ fn get_item_trait(
 ///   "field_deser_name", to_attribute_value(field)
 /// );
 /// ```
-fn get_key_inserter(field: &AnnotatedField) -> syn::Result<impl ToTokens> {
+fn get_key_inserter(field: &ItemField) -> syn::Result<impl ToTokens> {
     let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
 
     let field_deser_name = field.deser_name();
@@ -470,7 +470,7 @@ fn get_key_inserter(field: &AnnotatedField) -> syn::Result<impl ToTokens> {
 fn get_key_struct(
     vis: &Visibility,
     name: &Ident,
-    fields: &[AnnotatedField],
+    fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let name = Ident::new(&format!("{}Key", name), Span::call_site());
 
