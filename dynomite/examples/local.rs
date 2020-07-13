@@ -1,4 +1,4 @@
-/// Assumes a you are running  the following `dynamodb-local`
+/// Assumes a you are running the following `dynamodb-local`
 /// on your host machine
 ///
 /// ```bash
