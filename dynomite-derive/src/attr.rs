@@ -29,7 +29,11 @@ impl Parse for Attr {
                 let lit: LitStr = input.parse()?;
                 match &*name_str {
                     "rename" => Ok(Rename(name, lit)),
-                    _ => unreachable!(),
+                    unsupported => abort! {
+                        name,
+                        "unsupported {} attribute",
+                        unsupported
+                    },
                 }
             } else {
                 abort! {
