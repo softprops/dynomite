@@ -1,5 +1,4 @@
-//! Dynomite-derive provides procedural macros for deriving dynomite types
-//! for your structs
+//! Provides procedural macros for deriving dynomite types for your structs and enum types
 //!
 //! # Examples
 //!
