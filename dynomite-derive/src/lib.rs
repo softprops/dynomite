@@ -227,10 +227,7 @@ fn make_dynomite_item(
     name: &Ident,
     fields: &[Field],
 ) -> syn::Result<impl ToTokens> {
-    let item_fields = fields
-        .into_iter()
-        .map(ItemField::new)
-        .collect::<Vec<_>>();
+    let item_fields = fields.into_iter().map(ItemField::new).collect::<Vec<_>>();
     // impl Item for Name + NameKey struct
     let dynamodb_traits = get_dynomite_item_traits(vis, name, &item_fields)?;
     // impl ::dynomite::FromAttributes for Name
@@ -350,7 +347,7 @@ fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToToke
         let field_deser_name = field.deser_name();
 
         let field_ident = &field.field.ident;
-        if default_when_absent(&field) {
+        if field.default_when_absent() {
             Ok(quote! {
                 #field_ident: match attrs.remove(#field_deser_name) {
                     Some(field) => #from_attribute_value(field)?,
