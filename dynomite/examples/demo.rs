@@ -23,6 +23,7 @@ use uuid::Uuid;
 pub struct Author {
     #[dynomite(partition_key)]
     id: Uuid,
+    #[dynomite(default)]
     name: String,
 }
 

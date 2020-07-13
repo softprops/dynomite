@@ -1,6 +1,6 @@
-//! Dynomite is the set of high-level interfaces built on top of
-//! [rusoto_dynamodb](https://rusoto.github.io/rusoto/rusoto_dynamodb/index.html)
-//! which make interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.
+//! Dynomite is the set of high-level interfaces making interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.
+//!
+//! 💡To learn more about DynamoDB, see [this helpful guide](https://www.dynamodbguide.com/).
 //!
 //! ## Data Modeling
 //!
@@ -11,7 +11,7 @@
 //! The [Attribute](trait.Attribute.html) type
 //! provides conversion interfaces to and from Rust's native scalar types which represent
 //! DynamoDB's notion of "attributes". The goal of this type is to make representing
-//! AWS typed values feel more natural and ergonomic in Rust. You can implement `Attribute` for your own
+//! AWS typed values feel more natural and ergonomic in Rust. Where a conversion is not available you can implement `Attribute` for your own
 //! types to leverage higher level functionality.
 //!
 //! The [Item](trait.Item.html) type
@@ -19,6 +19,21 @@
 //! DynamoDB's notion of "items".
 //!
 //! 💡 A cargo feature named "derive" makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
+//!
+//!
+//! ```rust,no_run
+//!  use dynomite::Item;
+//!  use uuid::Uuid;
+//!
+//! #[derive(Item)]
+//! struct Order {
+//!   #[dynomite(partition_key)]
+//!   user: Uuid,
+//!   #[dynomite(sort_key)]
+//!   order_id: Uuid,
+//!   color: Option<String>
+//! }
+//! ```
 //!
 //! ## Rusoto extensions
 //!
@@ -112,8 +127,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///
 /// # Examples
 ///
-/// Below is an example of doing this manually for demonstration. You can also do
-/// this automatically using `#[derive(Item)]` on your structs (the recommended approach).
+/// Below is an example of doing this manually for demonstration.
 ///
 /// ```
 /// use dynomite::{
@@ -156,8 +170,60 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// let attrs: Attributes = person.clone().into();
 /// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
 /// ```
+///
+/// You can get this all for free automatically using `#[derive(Item)]` on your structs. This is the recommended approach.
+///
+/// ```
+/// use dynomite::Item;
+/// #[derive(Item)]
+/// struct Book {
+///     #[dynomite(partition_key)]
+///     id: String,
+/// }
+/// ```
+///
+/// ## Renaming fields
+///
+/// In some cases you may be dealing with a DynamoDB table whose
+/// fields are named using conventions that do not align with Rust's conventions.
+/// You can leverage the `rename` attribute to map Rust's fields back to its source name
+/// explicitly
+///
+/// ```
+/// use dynomite::Item;
+///
+/// #[derive(Item)]
+/// struct Book {
+///     #[dynomite(partition_key)]
+///     id: String,
+///     #[dynomite(rename = "notConventional")]
+///     not_conventional: String,
+/// }
+/// ```
+///
+/// ## Accommodating sparse data
+///
+/// In some cases you may be dealing with a DynamoDB table whose
+/// fields are absent for some records. This is different than fields whose records
+/// have `NULL` attribute type values. In these cases you can use the `default` field
+/// attribute to communicate that the `std::default::Default::default()` value for the fields
+/// type will be used in the absence of data.
+///
+/// ```
+/// use dynomite::Item;
+///
+/// #[derive(Item)]
+/// struct Book {
+///     #[dynomite(partition_key)]
+///     id: String,
+///     #[dynomite(default)]
+///     maybe_absent: Option<String>,
+/// }
+/// ```
 pub trait Item: Into<Attributes> + FromAttributes {
     /// Returns the set of attributes which make up this item's primary key
+    ///
+    /// This is often used in item look ups
     fn key(&self) -> Attributes;
 }
 

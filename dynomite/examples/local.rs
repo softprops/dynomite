@@ -1,4 +1,4 @@
-/// Assumes a you are running  the following `dynamodb-local`
+/// Assumes a you are running the following `dynamodb-local`
 /// on your host machine
 ///
 /// ```bash
@@ -25,7 +25,7 @@ use uuid::Uuid;
 pub struct Book {
     #[dynomite(partition_key)]
     id: Uuid,
-    #[dynomite(rename = "bookTitle")]
+    #[dynomite(rename = "bookTitle", default)]
     title: String,
 }
 
