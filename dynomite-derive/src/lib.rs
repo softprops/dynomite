@@ -69,6 +69,12 @@ impl<'a> ItemField<'a> {
             .any(|attr| matches!(attr, Attr::SortKey(_)))
     }
 
+    fn is_default_when_absent(&self) -> bool {
+        self.attrs
+            .iter()
+            .any(|attr| matches!(attr, Attr::Default(_)))
+    }
+
     fn deser_name(&self) -> String {
         let ItemField { field, attrs } = self;
         attrs
@@ -329,14 +335,6 @@ fn get_from_attributes_trait(
     })
 }
 
-/// Field has #[dynomite(default)] attribute
-fn default_when_absent(field: &ItemField) -> bool {
-    field
-        .attrs
-        .iter()
-        .any(|attr| matches!(attr, Attr::Default(_)))
-}
-
 fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
@@ -347,7 +345,7 @@ fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToToke
         let field_deser_name = field.deser_name();
 
         let field_ident = &field.field.ident;
-        if field.default_when_absent() {
+        if field.is_default_when_absent() {
             Ok(quote! {
                 #field_ident: match attrs.remove(#field_deser_name) {
                     Some(field) => #from_attribute_value(field)?,
