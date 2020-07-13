@@ -44,6 +44,7 @@ use syn::{
     DataStruct, DeriveInput, Field, Fields, Ident, Token, Variant, Visibility,
 };
 
+/// A Field and all its extracted dynomite derive attrs
 #[derive(Clone)]
 struct AnnotatedField<'a> {
     field: &'a Field,
