@@ -46,6 +46,49 @@ Features
 * ♻️ automatic async pagination
 * 🕶️ client level retry interfaces for [robust error handling](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html)
 
+
+From this
+
+```rust
+use std::collections::HashMap;
+use rusoto_dynamodb::AttributeValue;
+use uuid::Uuid;
+
+let mut item = HashMap.new();
+item.insert(
+  "pk".to_string(), AttributeValue {
+    s: Some(Uuid::new_v4().to_hyphenated().to_string()),
+    ..AttributeValue::default()
+  }
+);
+item.insert(
+  // 🤬typos anyone?
+  "quanity".to_string(), AttributeValue {
+    n: Some("whoops".to_string()),
+    ..AttributeValue::default()
+  }
+);
+```
+
+To this
+
+```rust
+use dynomite::Item;
+use uuid::Uuid;
+
+#[derive(Item)]
+struct Order {
+  #[dynomite(partition_key)]
+  pk: Uuid,
+  quantity: u16
+}
+
+let item = Order {
+  pk: Uuid::new_v4(),
+  quantity: 4
+}.into();
+```
+
 Please see [API documentation](https://softprops.github.io/dynomite) for how
 to get started
 
