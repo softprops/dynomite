@@ -1091,6 +1091,27 @@
 <span id="1091">1091</span>
 <span id="1092">1092</span>
 <span id="1093">1093</span>
+<span id="1094">1094</span>
+<span id="1095">1095</span>
+<span id="1096">1096</span>
+<span id="1097">1097</span>
+<span id="1098">1098</span>
+<span id="1099">1099</span>
+<span id="1100">1100</span>
+<span id="1101">1101</span>
+<span id="1102">1102</span>
+<span id="1103">1103</span>
+<span id="1104">1104</span>
+<span id="1105">1105</span>
+<span id="1106">1106</span>
+<span id="1107">1107</span>
+<span id="1108">1108</span>
+<span id="1109">1109</span>
+<span id="1110">1110</span>
+<span id="1111">1111</span>
+<span id="1112">1112</span>
+<span id="1113">1113</span>
+<span id="1114">1114</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Dynomite is the set of high-level interfaces making interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.</span>
 <span class="doccomment">//!</span>
@@ -1197,7 +1218,11 @@
     <span class="ident">offset</span>::{<span class="ident">FixedOffset</span>, <span class="ident">Local</span>},
     <span class="ident">DateTime</span>, <span class="ident">Utc</span>,
 };
-<span class="kw">use</span> <span class="ident">dynamodb</span>::<span class="ident">AttributeValue</span>;
+
+<span class="comment">// we re-export this because we</span>
+<span class="comment">// refer to it with in derive macros</span>
+<span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">dynamodb</span>::<span class="ident">AttributeValue</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">borrow</span>::<span class="ident">Cow</span>,
     <span class="ident">collections</span>::{<span class="ident">BTreeMap</span>, <span class="ident">BTreeSet</span>, <span class="ident">HashMap</span>, <span class="ident">HashSet</span>},
@@ -1311,9 +1336,26 @@
 <span class="doccomment">///     #[dynomite(partition_key)]</span>
 <span class="doccomment">///     id: String,</span>
 <span class="doccomment">///     #[dynomite(default)]</span>
-<span class="doccomment">///     maybe_absent: Option&lt;String&gt;,</span>
+<span class="doccomment">///     summary: Option&lt;String&gt;,</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ## Item attribute projections</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// DynamoDB `Item`s are a set of attributes with a uniquely identifying</span>
+<span class="doccomment">/// partition key. At times, you may wish to project over these attributes into a type</span>
+<span class="doccomment">/// that does not include a partition_key. For that specific purpose, instead of</span>
+<span class="doccomment">/// deriving an `Item` type you&#39;ll want to derive `Attributes`</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use dynomite::Attributes;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// #[derive(Attributes)]</span>
+<span class="doccomment">/// struct BookProjection {</span>
+<span class="doccomment">///   author: String,</span>
+<span class="doccomment">///   #[dynomite(default)]</span>
+<span class="doccomment">///   summary: Option&lt;String&gt;</span>
+<span class="doccomment">/// }</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Item</span>: <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">Attributes</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">FromAttributes</span> {
     <span class="doccomment">/// Returns the set of attributes which make up this item&#39;s primary key</span>
     <span class="doccomment">///</span>

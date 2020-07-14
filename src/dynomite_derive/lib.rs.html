@@ -544,6 +544,52 @@
 <span id="544">544</span>
 <span id="545">545</span>
 <span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Provides procedural macros for deriving dynomite types for your structs and enum types</span>
 <span class="doccomment">//!</span>
@@ -662,6 +708,7 @@
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This proc macro will panic when applied to other types</span>
+<span class="attribute">#[<span class="ident">proc_macro_error</span>::<span class="ident">proc_macro_error</span>]</span>
 <span class="attribute">#[<span class="ident">proc_macro_derive</span>(<span class="ident">Item</span>, <span class="ident">attributes</span>(<span class="ident">partition_key</span>, <span class="ident">sort_key</span>, <span class="ident">dynomite</span>))]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">derive_item</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="ident">ast</span> <span class="op">=</span> <span class="ident">syn</span>::<span class="macro">parse_macro_input</span><span class="macro">!</span>(<span class="ident">input</span>);
@@ -674,11 +721,27 @@
     <span class="ident">gen</span>.<span class="ident">into_token_stream</span>().<span class="ident">into</span>()
 }
 
+<span class="doccomment">/// similar in spirit to #[derive(Item)] except these are except from declaring</span>
+<span class="doccomment">/// partition and sort keys</span>
+<span class="attribute">#[<span class="ident">proc_macro_error</span>::<span class="ident">proc_macro_error</span>]</span>
+<span class="attribute">#[<span class="ident">proc_macro_derive</span>(<span class="ident">Attributes</span>, <span class="ident">attributes</span>(<span class="ident">dynomite</span>))]</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">derive_attributes</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
+    <span class="kw">let</span> <span class="ident">ast</span> <span class="op">=</span> <span class="ident">syn</span>::<span class="macro">parse_macro_input</span><span class="macro">!</span>(<span class="ident">input</span>);
+
+    <span class="kw">let</span> <span class="ident">gen</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">expand_attributes</span>(<span class="ident">ast</span>) {
+        <span class="prelude-val">Ok</span>(<span class="ident">g</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">g</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="ident">e</span>.<span class="ident">to_compile_error</span>().<span class="ident">into</span>(),
+    };
+
+    <span class="ident">gen</span>.<span class="ident">into_token_stream</span>().<span class="ident">into</span>()
+}
+
 <span class="doccomment">/// Derives `dynomite::Attribute` for enum types</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This proc macro will panic when applied to other types</span>
+<span class="attribute">#[<span class="ident">proc_macro_error</span>::<span class="ident">proc_macro_error</span>]</span>
 <span class="attribute">#[<span class="ident">proc_macro_derive</span>(<span class="ident">Attribute</span>)]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">derive_attribute</span>(<span class="ident">input</span>: <span class="ident">TokenStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">TokenStream</span> {
     <span class="kw">let</span> <span class="ident">ast</span> <span class="op">=</span> <span class="ident">syn</span>::<span class="macro">parse_macro_input</span><span class="macro">!</span>(<span class="ident">input</span>);
@@ -757,6 +820,23 @@
     }
 }
 
+<span class="kw">fn</span> <span class="ident">expand_attributes</span>(<span class="ident">ast</span>: <span class="ident">DeriveInput</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">ToTokens</span><span class="op">&gt;</span> {
+    <span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">spanned</span>::<span class="ident">Spanned</span> <span class="kw">as</span> <span class="kw">_</span>;
+    <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">ast</span>.<span class="ident">ident</span>;
+    <span class="kw">match</span> <span class="ident">ast</span>.<span class="ident">data</span> {
+        <span class="ident">Struct</span>(<span class="ident">DataStruct</span> { <span class="ident">fields</span>, .. }) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">fields</span> {
+            <span class="ident">Fields</span>::<span class="ident">Named</span>(<span class="ident">named</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="ident">make_dynomite_attributes</span>(<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">named</span>.<span class="ident">named</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>())
+            }
+            <span class="ident">fields</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Err</span>(<span class="ident">syn</span>::<span class="ident">Error</span>::<span class="ident">new</span>(
+                <span class="ident">fields</span>.<span class="ident">span</span>(),
+                <span class="string">&quot;Dynomite Attributes require named fields&quot;</span>,
+            )),
+        },
+        <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">panic</span><span class="macro">!</span>(<span class="string">&quot;Dynomite Attributes can only be generated for structs&quot;</span>),
+    }
+}
+
 <span class="kw">fn</span> <span class="ident">expand_item</span>(<span class="ident">ast</span>: <span class="ident">DeriveInput</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">ToTokens</span><span class="op">&gt;</span> {
     <span class="kw">use</span> <span class="ident">syn</span>::<span class="ident">spanned</span>::<span class="ident">Spanned</span> <span class="kw">as</span> <span class="kw">_</span>;
     <span class="kw">let</span> <span class="ident">name</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">ast</span>.<span class="ident">ident</span>;
@@ -775,12 +855,59 @@
     }
 }
 
+<span class="kw">fn</span> <span class="ident">make_dynomite_attributes</span>(
+    <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Ident</span>,
+    <span class="ident">fields</span>: <span class="kw-2">&amp;</span>[<span class="ident">Field</span>],
+) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">ToTokens</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">item_fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">ItemField</span>::<span class="ident">new</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="comment">// impl ::dynomite::FromAttributes for Name</span>
+    <span class="kw">let</span> <span class="ident">from_attribute_map</span> <span class="op">=</span> <span class="ident">get_from_attributes_trait</span>(<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">item_fields</span>)<span class="question-mark">?</span>;
+    <span class="comment">// impl From&lt;Name&gt; for ::dynomite::Attributes</span>
+    <span class="kw">let</span> <span class="ident">to_attribute_map</span> <span class="op">=</span> <span class="ident">get_to_attribute_map_trait</span>(<span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">item_fields</span>)<span class="question-mark">?</span>;
+    <span class="comment">// impl Attribute for Name (these are essentially just a map)</span>
+    <span class="kw">let</span> <span class="ident">attribute</span> <span class="op">=</span> <span class="macro">quote</span><span class="macro">!</span>(::<span class="ident">dynomite</span>::<span class="ident">Attribute</span>);
+    <span class="kw">let</span> <span class="ident">impl_attribute</span> <span class="op">=</span> <span class="macro">quote</span><span class="macro">!</span> {
+        <span class="kw">impl</span> #<span class="ident">attribute</span> <span class="kw">for</span> #<span class="ident">name</span> {
+            <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> ::<span class="ident">dynomite</span>::<span class="ident">AttributeValue</span> {
+                ::<span class="ident">dynomite</span>::<span class="ident">AttributeValue</span> {
+                    <span class="ident">m</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">into</span>()),
+                    ..::<span class="ident">dynomite</span>::<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
+                }
+            }
+            <span class="kw">fn</span> <span class="ident">from_attr</span>(<span class="ident">value</span>: ::<span class="ident">dynomite</span>::<span class="ident">AttributeValue</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, ::<span class="ident">dynomite</span>::<span class="ident">AttributeError</span><span class="op">&gt;</span> {
+                <span class="kw">use</span> ::<span class="ident">dynomite</span>::<span class="ident">FromAttributes</span>;
+                <span class="ident">value</span>
+                    .<span class="ident">m</span>
+                    .<span class="ident">ok_or</span>(::<span class="ident">dynomite</span>::<span class="ident">AttributeError</span>::<span class="ident">InvalidType</span>)
+                    .<span class="ident">and_then</span>(<span class="self">Self</span>::<span class="ident">from_attrs</span>)
+            }
+        }
+    };
+
+    <span class="prelude-val">Ok</span>(<span class="macro">quote</span><span class="macro">!</span> {
+        #<span class="ident">from_attribute_map</span>
+        #<span class="ident">to_attribute_map</span>
+        #<span class="ident">impl_attribute</span>
+    })
+}
+
 <span class="kw">fn</span> <span class="ident">make_dynomite_item</span>(
     <span class="ident">vis</span>: <span class="kw-2">&amp;</span><span class="ident">Visibility</span>,
     <span class="ident">name</span>: <span class="kw-2">&amp;</span><span class="ident">Ident</span>,
     <span class="ident">fields</span>: <span class="kw-2">&amp;</span>[<span class="ident">Field</span>],
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw">impl</span> <span class="ident">ToTokens</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">item_fields</span> <span class="op">=</span> <span class="ident">fields</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="ident">ItemField</span>::<span class="ident">new</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>();
+    <span class="comment">// all items must have 1 primary_key</span>
+    <span class="kw">let</span> <span class="ident">partition_key_count</span> <span class="op">=</span> <span class="ident">item_fields</span>.<span class="ident">iter</span>().<span class="ident">filter</span>(<span class="op">|</span><span class="ident">f</span><span class="op">|</span> <span class="ident">f</span>.<span class="ident">is_partition_key</span>()).<span class="ident">count</span>();
+    <span class="kw">if</span> <span class="ident">partition_key_count</span> <span class="op">!</span><span class="op">=</span> <span class="number">1</span> {
+        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">syn</span>::<span class="ident">Error</span>::<span class="ident">new</span>(
+            <span class="ident">name</span>.<span class="ident">span</span>(),
+            <span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot;All Item&#39;s must declare one and only one partition_key. The `{}` Item declared {}&quot;</span>,
+                <span class="ident">name</span>, <span class="ident">partition_key_count</span>
+            ),
+        ));
+    }
     <span class="comment">// impl Item for Name + NameKey struct</span>
     <span class="kw">let</span> <span class="ident">dynamodb_traits</span> <span class="op">=</span> <span class="ident">get_dynomite_item_traits</span>(<span class="ident">vis</span>, <span class="ident">name</span>, <span class="kw-2">&amp;</span><span class="ident">item_fields</span>)<span class="question-mark">?</span>;
     <span class="comment">// impl ::dynomite::FromAttributes for Name</span>
@@ -1021,43 +1148,33 @@
         .<span class="ident">find</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> <span class="ident">field</span>.<span class="ident">is_partition_key</span>())
         .<span class="ident">cloned</span>()
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">field</span> <span class="op">=</span> <span class="ident">field</span>.<span class="ident">field</span>.<span class="ident">clone</span>();
-            <span class="comment">// rename the field to the de/ser name</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">rename_field_to_deser_name</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">field</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
-            }
-            <span class="comment">// remove attrs not relevant to key struct</span>
-            <span class="ident">field</span>.<span class="ident">attrs</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
-            <span class="prelude-val">Ok</span>(<span class="macro">quote</span><span class="macro">!</span> {
+            <span class="comment">// clone because this is a new struct</span>
+            <span class="comment">// note: this in inherits field attrs so that</span>
+            <span class="comment">// we retain dynomite(rename = &quot;xxx&quot;)</span>
+            <span class="kw">let</span> <span class="ident">field</span> <span class="op">=</span> <span class="ident">field</span>.<span class="ident">field</span>.<span class="ident">clone</span>();
+            <span class="macro">quote</span><span class="macro">!</span> {
                 #<span class="ident">field</span>
-            })
-        })
-        .<span class="ident">transpose</span>()<span class="question-mark">?</span>;
+            }
+        });
 
     <span class="kw">let</span> <span class="ident">sort_key_field</span> <span class="op">=</span> <span class="ident">fields</span>
         .<span class="ident">iter</span>()
         .<span class="ident">find</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> <span class="ident">field</span>.<span class="ident">is_sort_key</span>())
         .<span class="ident">cloned</span>()
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">field</span><span class="op">|</span> {
-            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">field</span> <span class="op">=</span> <span class="ident">field</span>.<span class="ident">field</span>.<span class="ident">clone</span>();
-            <span class="comment">// rename the field to the de/ser name</span>
-            <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">rename_field_to_deser_name</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">field</span>) {
-                <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>);
-            }
-
-            <span class="comment">// remove attrs not relevant to key struct</span>
-            <span class="ident">field</span>.<span class="ident">attrs</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
-            <span class="prelude-val">Ok</span>(<span class="macro">quote</span><span class="macro">!</span> {
+            <span class="comment">// clone because this is a new struct</span>
+            <span class="comment">// note: this in inherits field attrs so that</span>
+            <span class="comment">// we retain dynomite(rename = &quot;xxx&quot;)</span>
+            <span class="kw">let</span> <span class="ident">field</span> <span class="op">=</span> <span class="ident">field</span>.<span class="ident">field</span>.<span class="ident">clone</span>();
+            <span class="macro">quote</span><span class="macro">!</span> {
                 #<span class="ident">field</span>
-            })
-        })
-        .<span class="ident">transpose</span>()<span class="question-mark">?</span>
-        .<span class="ident">unwrap_or_else</span>(<span class="ident">proc_macro2</span>::<span class="ident">TokenStream</span>::<span class="ident">new</span>);
+            }
+        });
 
     <span class="prelude-val">Ok</span>(<span class="ident">partition_key_field</span>
         .<span class="ident">map</span>(<span class="op">|</span><span class="ident">partition_key_field</span><span class="op">|</span> {
             <span class="macro">quote</span><span class="macro">!</span> {
-                <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Item</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
+                <span class="attribute">#[<span class="ident">derive</span>(::<span class="ident">dynomite</span>::<span class="ident">Attributes</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">PartialEq</span>)]</span>
                 #<span class="ident">vis</span> <span class="kw">struct</span> #<span class="ident">name</span> {
                     #<span class="ident">partition_key_field</span>,
                     #<span class="ident">sort_key_field</span>
@@ -1065,31 +1182,6 @@
             }
         })
         .<span class="ident">unwrap_or_else</span>(<span class="ident">proc_macro2</span>::<span class="ident">TokenStream</span>::<span class="ident">new</span>))
-}
-
-<span class="doccomment">/// Change `field.ident` to the value returned by `get_field_deser_name`</span>
-<span class="doccomment">/// fixme: why are we doing this again??</span>
-<span class="kw">fn</span> <span class="ident">rename_field_to_deser_name</span>(<span class="ident">field</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Field</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-    <span class="kw">let</span> <span class="ident">field_deser_name</span> <span class="op">=</span> <span class="ident">parse_attrs</span>(<span class="kw-2">&amp;</span><span class="ident">field</span>.<span class="ident">attrs</span>)
-        .<span class="ident">into_iter</span>()
-        .<span class="ident">find_map</span>(<span class="op">|</span><span class="ident">attr</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">attr</span> {
-            <span class="ident">Attr</span>::<span class="ident">Rename</span>(<span class="kw">_</span>, <span class="ident">lit</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Some</span>(<span class="ident">lit</span>.<span class="ident">value</span>()),
-            <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-        })
-        .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> {
-            <span class="ident">field</span>
-                .<span class="ident">ident</span>
-                .<span class="ident">as_ref</span>()
-                .<span class="ident">expect</span>(<span class="string">&quot;field did not have ident&quot;</span>)
-                .<span class="ident">to_string</span>()
-        });
-
-    <span class="ident">field</span>.<span class="ident">ident</span> <span class="op">=</span> <span class="ident">field</span>
-        .<span class="ident">ident</span>
-        .<span class="ident">as_ref</span>()
-        .<span class="ident">map</span>(<span class="op">|</span><span class="ident">ident</span><span class="op">|</span> <span class="ident">syn</span>::<span class="ident">Ident</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">field_deser_name</span>, <span class="ident">ident</span>.<span class="ident">span</span>()));
-
-    <span class="prelude-val">Ok</span>(())
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "dynomite_derive";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>

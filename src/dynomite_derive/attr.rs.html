@@ -91,7 +91,7 @@
                     <span class="string">&quot;rename&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Rename</span>(<span class="ident">name</span>, <span class="ident">lit</span>)),
                     <span class="ident">unsupported</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span> {
                         <span class="ident">name</span>,
-                        <span class="string">&quot;unsupported {} attribute&quot;</span>,
+                        <span class="string">&quot;unsupported dynomite {} attribute&quot;</span>,
                         <span class="ident">unsupported</span>
                     },
                 }
@@ -103,14 +103,14 @@
             }
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">syn</span>::<span class="ident">token</span>::<span class="ident">Paren</span>) {
             <span class="comment">// `name(...)` attributes.</span>
-            <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected attribute: {}&quot;</span>, <span class="ident">name_str</span>);
+            <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">name_str</span>);
         } <span class="kw">else</span> {
             <span class="comment">// Attributes represented with a sole identifier.</span>
             <span class="kw">match</span> <span class="ident">name_str</span>.<span class="ident">as_ref</span>() {
                 <span class="string">&quot;default&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Default</span>(<span class="ident">name</span>)),
                 <span class="string">&quot;partition_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PartitionKey</span>(<span class="ident">name</span>)),
                 <span class="string">&quot;sort_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">SortKey</span>(<span class="ident">name</span>)),
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected attribute: {}&quot;</span>, <span class="ident">name_str</span>),
+                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">name_str</span>),
             }
         }
     }
