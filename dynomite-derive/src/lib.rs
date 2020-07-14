@@ -35,7 +35,7 @@ use attr::Attr;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use proc_macro_error::{abort, ResultExt};
+use proc_macro_error::ResultExt;
 use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated,
