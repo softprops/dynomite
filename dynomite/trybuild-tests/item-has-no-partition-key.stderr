@@ -1,0 +1,5 @@
+error: All Item's must declare one and only one partition_key. The `Foo` Item declared 0
+ --> $DIR/item-has-no-partition-key.rs:4:8
+  |
+4 | struct Foo {
+  |        ^^^

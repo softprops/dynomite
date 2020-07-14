@@ -115,6 +115,7 @@ fn parse_attrs(all_attrs: &[Attribute]) -> Vec<Attr> {
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
+#[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Item, attributes(partition_key, sort_key, dynomite))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -127,11 +128,27 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
     gen.into_token_stream().into()
 }
 
+/// similar in spirit to #[derive(Item)] except these are except from declaring
+/// partition and sort keys
+#[proc_macro_error::proc_macro_error]
+#[proc_macro_derive(Attributes, attributes(dynomite))]
+pub fn derive_attributes(input: TokenStream) -> TokenStream {
+    let ast = syn::parse_macro_input!(input);
+
+    let gen = match expand_attributes(ast) {
+        Ok(g) => g,
+        Err(e) => return e.to_compile_error().into(),
+    };
+
+    gen.into_token_stream().into()
+}
+
 /// Derives `dynomite::Attribute` for enum types
 ///
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
+#[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Attribute)]
 pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -210,6 +227,23 @@ fn make_dynomite_attr(
     }
 }
 
+fn expand_attributes(ast: DeriveInput) -> syn::Result<impl ToTokens> {
+    use syn::spanned::Spanned as _;
+    let name = &ast.ident;
+    match ast.data {
+        Struct(DataStruct { fields, .. }) => match fields {
+            Fields::Named(named) => {
+                make_dynomite_attributes(name, &named.named.into_iter().collect::<Vec<_>>())
+            }
+            fields => Err(syn::Error::new(
+                fields.span(),
+                "Dynomite Attributes require named fields",
+            )),
+        },
+        _ => panic!("Dynomite Attributes can only be generated for structs"),
+    }
+}
+
 fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
     use syn::spanned::Spanned as _;
     let name = &ast.ident;
@@ -228,12 +262,59 @@ fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
     }
 }
 
+fn make_dynomite_attributes(
+    name: &Ident,
+    fields: &[Field],
+) -> syn::Result<impl ToTokens> {
+    let item_fields = fields.iter().map(ItemField::new).collect::<Vec<_>>();
+    // impl ::dynomite::FromAttributes for Name
+    let from_attribute_map = get_from_attributes_trait(name, &item_fields)?;
+    // impl From<Name> for ::dynomite::Attributes
+    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
+    // impl Attribute for Name (these are essentially just a map)
+    let attribute = quote!(::dynomite::Attribute);
+    let impl_attribute = quote! {
+        impl #attribute for #name {
+            fn into_attr(self: Self) -> ::dynomite::AttributeValue {
+                ::dynomite::AttributeValue {
+                    m: Some(self.into()),
+                    ..::dynomite::AttributeValue::default()
+                }
+            }
+            fn from_attr(value: ::dynomite::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+                use ::dynomite::FromAttributes;
+                value
+                    .m
+                    .ok_or(::dynomite::AttributeError::InvalidType)
+                    .and_then(Self::from_attrs)
+            }
+        }
+    };
+
+    Ok(quote! {
+        #from_attribute_map
+        #to_attribute_map
+        #impl_attribute
+    })
+}
+
 fn make_dynomite_item(
     vis: &Visibility,
     name: &Ident,
     fields: &[Field],
 ) -> syn::Result<impl ToTokens> {
     let item_fields = fields.iter().map(ItemField::new).collect::<Vec<_>>();
+    // all items must have 1 primary_key
+    let partition_key_count = item_fields.iter().filter(|f| f.is_partition_key()).count();
+    if partition_key_count != 1 {
+        return Err(syn::Error::new(
+            name.span(),
+            format!(
+                "All Item's must declare one and only one partition_key. The `{}` Item declared {}",
+                name, partition_key_count
+            ),
+        ));
+    }
     // impl Item for Name + NameKey struct
     let dynamodb_traits = get_dynomite_item_traits(vis, name, &item_fields)?;
     // impl ::dynomite::FromAttributes for Name
@@ -474,43 +555,33 @@ fn get_key_struct(
         .find(|field| field.is_partition_key())
         .cloned()
         .map(|field| {
-            let mut field = field.field.clone();
-            // rename the field to the de/ser name
-            if let Err(e) = rename_field_to_deser_name(&mut field) {
-                return Err(e);
-            }
-            // remove attrs not relevant to key struct
-            field.attrs = vec![];
-            Ok(quote! {
+            // clone because this is a new struct
+            // note: this in inherits field attrs so that
+            // we retain dynomite(rename = "xxx")
+            let field = field.field.clone();
+            quote! {
                 #field
-            })
-        })
-        .transpose()?;
+            }
+        });
 
     let sort_key_field = fields
         .iter()
         .find(|field| field.is_sort_key())
         .cloned()
         .map(|field| {
-            let mut field = field.field.clone();
-            // rename the field to the de/ser name
-            if let Err(e) = rename_field_to_deser_name(&mut field) {
-                return Err(e);
-            }
-
-            // remove attrs not relevant to key struct
-            field.attrs = vec![];
-            Ok(quote! {
+            // clone because this is a new struct
+            // note: this in inherits field attrs so that
+            // we retain dynomite(rename = "xxx")
+            let field = field.field.clone();
+            quote! {
                 #field
-            })
-        })
-        .transpose()?
-        .unwrap_or_else(proc_macro2::TokenStream::new);
+            }
+        });
 
     Ok(partition_key_field
         .map(|partition_key_field| {
             quote! {
-                #[derive(Item, Debug, Clone, PartialEq)]
+                #[derive(::dynomite::Attributes, Debug, Clone, PartialEq)]
                 #vis struct #name {
                     #partition_key_field,
                     #sort_key_field
@@ -518,29 +589,4 @@ fn get_key_struct(
             }
         })
         .unwrap_or_else(proc_macro2::TokenStream::new))
-}
-
-/// Change `field.ident` to the value returned by `get_field_deser_name`
-/// fixme: why are we doing this again??
-fn rename_field_to_deser_name(field: &mut Field) -> syn::Result<()> {
-    let field_deser_name = parse_attrs(&field.attrs)
-        .into_iter()
-        .find_map(|attr| match attr {
-            Attr::Rename(_, lit) => Some(lit.value()),
-            _ => None,
-        })
-        .unwrap_or_else(|| {
-            field
-                .ident
-                .as_ref()
-                .expect("field did not have ident")
-                .to_string()
-        });
-
-    field.ident = field
-        .ident
-        .as_ref()
-        .map(|ident| syn::Ident::new(&field_deser_name, ident.span()));
-
-    Ok(())
 }

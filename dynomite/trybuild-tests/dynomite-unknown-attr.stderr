@@ -1,0 +1,5 @@
+error: unexpected dynomite attribute: typo
+ --> $DIR/dynomite-unknown-attr.rs:7:16
+  |
+7 |     #[dynomite(typo)]
+  |                ^^^^

@@ -103,7 +103,11 @@ use chrono::{
     offset::{FixedOffset, Local},
     DateTime, Utc,
 };
-use dynamodb::AttributeValue;
+
+// we re-export this because we
+// refer to it with in derive macros
+#[doc(hidden)]
+pub use dynamodb::AttributeValue;
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -217,9 +221,26 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///     #[dynomite(partition_key)]
 ///     id: String,
 ///     #[dynomite(default)]
-///     maybe_absent: Option<String>,
+///     summary: Option<String>,
 /// }
 /// ```
+///
+/// ## Item attribute projections
+///
+/// DynamoDB `Item`s are a set of attributes with a uniquely identifying
+/// partition key. At times, you may wish to project over these attributes into a type
+/// that does not include a partition_key. For that specific purpose, instead of
+/// deriving an `Item` type you'll want to derive `Attributes`
+///
+/// ```
+/// use dynomite::Attributes;
+///
+/// #[derive(Attributes)]
+/// struct BookProjection {
+///   author: String,
+///   #[dynomite(default)]
+///   summary: Option<String>
+/// }
 pub trait Item: Into<Attributes> + FromAttributes {
     /// Returns the set of attributes which make up this item's primary key
     ///

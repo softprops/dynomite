@@ -1,6 +1,25 @@
 # 0.9.0
 
-* Introduce new `#[dynomite(default)]` field attribute which permits the absence of fields values stored in ddb to be replaced with their default value when deserializing item data [#113](https://github.com/softprops/dynomite/pull/113)
+* Introduce new `#[dynomite(default)]` field attribute which permits the absence of field values in DynamoDB. These will be replaced with their default value when deserializing item data [#113](https://github.com/softprops/dynomite/pull/113)
+* Introduce new `#[derive(Attributes)]` attribute for structs for deriving a subsets of attributes for projections [#115](https://github.com/softprops/dynomite/pull/115)
+
+  > This is similar to `#[derive(Item)]` except that
+  it does not require a `#[dynomoite(partition_key)]`
+* `Items` will now fail at compile time when they don't have a single `#[dynomoite(partition_key)]` field
+  > All DynamoDB items require a uniquely identifiable attribute. This enforces that fact
+* Derive compilation errors are now more helpful! More errors will now indicate where in source in context where problems occur.
+* ItemKey structs now honor all Item field attributes.
+
+  Previously if you had declared a renamed partition key named `foo`
+
+  ```rust
+  #[dynomite(partition_key, rename = "Foo")]
+  foo: String,
+  ```
+
+  you would end out with a ItemKey struct with a field named `Foo`. This was not intended.
+  These ItemKey struct fields will now be properly
+  named `foo` but deserialized as `Foo`.
 
 # 0.8.2
 

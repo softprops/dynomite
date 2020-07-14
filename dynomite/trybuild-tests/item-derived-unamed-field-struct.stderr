@@ -1,0 +1,5 @@
+error: Dynomite Items require named fields
+ --> $DIR/item-derived-unamed-field-struct.rs:4:11
+  |
+4 | struct Foo(String);
+  |           ^^^^^^^^
