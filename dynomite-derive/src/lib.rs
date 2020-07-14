@@ -128,7 +128,7 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
     gen.into_token_stream().into()
 }
 
-/// similar in spirit to #[derive(Item)] except these are except from declaring
+/// similar in spirit to `#[derive(Item)]` except these are exempt from declaring
 /// partition and sort keys
 #[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Attributes, attributes(dynomite))]
