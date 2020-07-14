@@ -2,8 +2,7 @@
 //! See `dynomite/trybuild-tests/readme.md` for instructions on how to add more tests.
 
 #[test]
-fn try_build_test() {
-    println!("try-build");
+fn try_build_tests() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("trybuild-tests/item-not-on-struct-fail.rs");
+    t.compile_fail("trybuild-tests/*.rs");
 }
