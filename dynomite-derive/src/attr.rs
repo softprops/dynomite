@@ -32,7 +32,7 @@ impl Parse for Attr {
                     "rename" => Ok(Rename(name, lit)),
                     unsupported => abort! {
                         name,
-                        "unsupported {} attribute",
+                        "unsupported dynomite {} attribute",
                         unsupported
                     },
                 }
@@ -44,14 +44,14 @@ impl Parse for Attr {
             }
         } else if input.peek(syn::token::Paren) {
             // `name(...)` attributes.
-            abort!(name, "unexpected attribute: {}", name_str);
+            abort!(name, "unexpected dynomite attribute: {}", name_str);
         } else {
             // Attributes represented with a sole identifier.
             match name_str.as_ref() {
                 "default" => Ok(Default(name)),
                 "partition_key" => Ok(PartitionKey(name)),
                 "sort_key" => Ok(SortKey(name)),
-                _ => abort!(name, "unexpected attribute: {}", name_str),
+                _ => abort!(name, "unexpected dynomite attribute: {}", name_str),
             }
         }
     }

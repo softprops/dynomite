@@ -1,0 +1,5 @@
+error: unexpected dynomite attribute: typo
+ --> $DIR/attributes-derived-unamed-fields-struct.rs:7:16
+  |
+7 |     #[dynomite(typo)]
+  |                ^^^^
