@@ -269,12 +269,33 @@ fn make_dynomite_attributes(
     let from_attribute_map = get_from_attributes_trait(name, &item_fields)?;
     // impl From<Name> for ::dynomite::Attributes
     let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
+    // impl Attribute for Name (these are essentially just a map)
+    let attribute = quote!(::dynomite::Attribute);
+    let impl_attribute = quote! {
+        impl #attribute for #name {
+            fn into_attr(self: Self) -> ::dynomite::AttributeValue {
+                ::dynomite::AttributeValue {
+                    m: Some(self.into()),
+                    ..::dynomite::AttributeValue::default()
+                }
+            }
+            fn from_attr(value: ::dynomite::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+                use ::dynomite::FromAttributes;
+                value
+                    .m
+                    .ok_or(::dynomite::AttributeError::InvalidType)
+                    .and_then(Self::from_attrs)
+            }
+        }
+    };
 
     Ok(quote! {
         #from_attribute_map
         #to_attribute_map
+        #impl_attribute
     })
 }
+
 fn make_dynomite_item(
     vis: &Visibility,
     name: &Ident,
@@ -532,38 +553,28 @@ fn get_key_struct(
         .find(|field| field.is_partition_key())
         .cloned()
         .map(|field| {
-            let mut field = field.field.clone();
-            // rename the field to the de/ser name
-            if let Err(e) = rename_field_to_deser_name(&mut field) {
-                return Err(e);
-            }
-            // remove attrs not relevant to key struct
-            field.attrs = vec![];
-            Ok(quote! {
+            // clone because this is a new struct
+            // note: this in inherits field attrs so that
+            // we retain dynomite(rename = "xxx")
+            let field = field.field.clone();
+            quote! {
                 #field
-            })
-        })
-        .transpose()?;
+            }
+        });
 
     let sort_key_field = fields
         .iter()
         .find(|field| field.is_sort_key())
         .cloned()
         .map(|field| {
-            let mut field = field.field.clone();
-            // rename the field to the de/ser name
-            if let Err(e) = rename_field_to_deser_name(&mut field) {
-                return Err(e);
-            }
-
-            // remove attrs not relevant to key struct
-            field.attrs = vec![];
-            Ok(quote! {
+            // clone because this is a new struct
+            // note: this in inherits field attrs so that
+            // we retain dynomite(rename = "xxx")
+            let field = field.field.clone();
+            quote! {
                 #field
-            })
-        })
-        .transpose()?
-        .unwrap_or_else(proc_macro2::TokenStream::new);
+            }
+        });
 
     Ok(partition_key_field
         .map(|partition_key_field| {
@@ -576,29 +587,4 @@ fn get_key_struct(
             }
         })
         .unwrap_or_else(proc_macro2::TokenStream::new))
-}
-
-/// Change `field.ident` to the value returned by `get_field_deser_name`
-/// fixme: why are we doing this again??
-fn rename_field_to_deser_name(field: &mut Field) -> syn::Result<()> {
-    let field_deser_name = parse_attrs(&field.attrs)
-        .into_iter()
-        .find_map(|attr| match attr {
-            Attr::Rename(_, lit) => Some(lit.value()),
-            _ => None,
-        })
-        .unwrap_or_else(|| {
-            field
-                .ident
-                .as_ref()
-                .expect("field did not have ident")
-                .to_string()
-        });
-
-    field.ident = field
-        .ident
-        .as_ref()
-        .map(|ident| syn::Ident::new(&field_deser_name, ident.span()));
-
-    Ok(())
 }

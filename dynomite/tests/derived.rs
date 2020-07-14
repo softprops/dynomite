@@ -44,13 +44,7 @@ mod tests {
             id: "test".into(),
             servings: 1,
         };
-        assert_eq!(
-            value.key(),
-            RecipeKey {
-                RecipeId: "test".into()
-            }
-            .into()
-        );
+        assert_eq!(value.key(), RecipeKey { id: "test".into() }.into());
     }
 
     #[test]
@@ -80,8 +74,7 @@ mod tests {
         };
 
         let attrs: Attributes = value.clone().into();
-
-        assert!(attrs.contains_key("recipe_id"));
+        assert!(attrs.contains_key("RecipeId"));
         assert!(!attrs.contains_key("id"));
 
         assert_eq!(value, Recipe::from_attrs(attrs).unwrap());
