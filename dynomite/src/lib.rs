@@ -241,7 +241,6 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///   #[dynomite(default)]
 ///   summary: Option<String>
 /// }
-///
 pub trait Item: Into<Attributes> + FromAttributes {
     /// Returns the set of attributes which make up this item's primary key
     ///
