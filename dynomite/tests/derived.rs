@@ -27,8 +27,7 @@ pub struct Book {
 
 #[derive(Item, PartialEq, Debug, Clone)]
 struct Recipe {
-    #[dynomite(partition_key)]
-    #[dynomite(rename = "recipe_id")]
+    #[dynomite(partition_key, rename = "RecipeId")]
     id: String,
     servings: u64,
 }
@@ -36,9 +35,18 @@ struct Recipe {
 #[cfg(test)]
 mod tests {
 
-    use super::{Book, Recipe};
-    use dynomite::{Attribute, Attributes, FromAttributes};
+    use super::*;
+    use dynomite::{Item, Attribute, Attributes, FromAttributes};
 
+    #[test]
+    fn derived_key() {
+        let value = Recipe {
+            id: "test".into(),
+            servings: 1
+        };
+        //let attrs: Attributes = value.clone().into();
+        assert_eq!(value.key(), RecipeKey { RecipeId: "test".into() }.into());
+    }
     #[test]
     fn to_and_from_book() {
         let value = Book {
