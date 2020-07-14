@@ -44,11 +44,11 @@ async fn bootstrap<D>(
         .create_table(CreateTableInput {
             table_name,
             key_schema: vec![KeySchemaElement {
-                attribute_name: "id".into(),
+                attribute_name: "Id".into(),
                 key_type: "HASH".into(),
             }],
             attribute_definitions: vec![AttributeDefinition {
-                attribute_name: "id".into(),
+                attribute_name: "Id".into(),
                 attribute_type: "S".into(),
             }],
             provisioned_throughput: Some(ProvisionedThroughput {
