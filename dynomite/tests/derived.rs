@@ -36,17 +36,23 @@ struct Recipe {
 mod tests {
 
     use super::*;
-    use dynomite::{Item, Attribute, Attributes, FromAttributes};
+    use dynomite::{Attribute, Attributes, FromAttributes, Item};
 
     #[test]
     fn derived_key() {
         let value = Recipe {
             id: "test".into(),
-            servings: 1
+            servings: 1,
         };
-        //let attrs: Attributes = value.clone().into();
-        assert_eq!(value.key(), RecipeKey { RecipeId: "test".into() }.into());
+        assert_eq!(
+            value.key(),
+            RecipeKey {
+                RecipeId: "test".into()
+            }
+            .into()
+        );
     }
+
     #[test]
     fn to_and_from_book() {
         let value = Book {
