@@ -227,9 +227,9 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///
 /// ## Item attribute projections
 ///
-/// DynamoDB `Item`s are a set of attributes and with a uniquely identifying
-/// partition key. At times you may wish to project over this attributes into a type
-/// this itself does not include a partition_key. For that specific purpose instead of
+/// DynamoDB `Item`s are a set of attributes with a uniquely identifying
+/// partition key. At times, you may wish to project over these attributes into a type
+/// that does not include a partition_key. For that specific purpose, instead of
 /// deriving an `Item` type you'll want to derive `Attributes`
 ///
 /// ```

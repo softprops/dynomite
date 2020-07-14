@@ -115,7 +115,7 @@ fn parse_attrs(all_attrs: &[Attribute]) -> Vec<Attr> {
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
-//#[proc_macro_error::proc_macro_error]
+#[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Item, attributes(partition_key, sort_key, dynomite))]
 pub fn derive_item(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -130,6 +130,7 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
 
 /// similar in spirit to #[derive(Item)] except these are except from declaring
 /// partition and sort keys
+#[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Attributes, attributes(dynomite))]
 pub fn derive_attributes(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
@@ -147,6 +148,7 @@ pub fn derive_attributes(input: TokenStream) -> TokenStream {
 /// # Panics
 ///
 /// This proc macro will panic when applied to other types
+#[proc_macro_error::proc_macro_error]
 #[proc_macro_derive(Attribute)]
 pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
