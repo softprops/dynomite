@@ -1,1 +1,1 @@
-initSidebarItems({"derive":[["Attribute","Derives `dynomite::Attribute` for enum types"],["Attributes","similar in spirit to #[derive(Item)] except these are except from declaring partition and sort keys"],["Item","Derives `dynomite::Item` type for struts with named fields"]]});
+initSidebarItems({"derive":[["Attribute","Derives `dynomite::Attribute` for enum types"],["Attributes","similar in spirit to `#[derive(Item)]` except these are exempt from declaring partition and sort keys"],["Item","Derives `dynomite::Item` type for struts with named fields"]]});
