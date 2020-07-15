@@ -89,8 +89,8 @@ let item = Order {
 }.into();
 ```
 
-Please see [API documentation](https://softprops.github.io/dynomite) for how
-to get started
+Please see the [API documentation](https://softprops.github.io/dynomite) for how
+to get started. Enjoy.
 
 ## 📦 Install
 
