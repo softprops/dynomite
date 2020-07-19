@@ -726,11 +726,11 @@ numeric_set_attr!(u64 => BTreeSet<u64>);
 /// };
 macro_rules! attr_map {
     (@single $($x:tt)*) => (());
-    (@count $($rest:expr),*) => (<[()]>::len(&[$(attr_map!(@single $rest)),*]));
-    ($($key:expr => $value:expr,)+) => { attr_map!($($key => $value),+) };
+    (@count $($rest:expr),*) => (<[()]>::len(&[$($crate::attr_map!(@single $rest)),*]));
+    ($($key:expr => $value:expr,)+) => { $crate::attr_map!($($key => $value),+) };
     ($($key:expr => $value:expr),*) => {
         {
-            let _cap = attr_map!(@count $($key),*);
+            let _cap = $crate::attr_map!(@count $($key),*);
             let mut _map: ::std::collections::HashMap<String, ::dynomite::dynamodb::AttributeValue> =
               ::std::collections::HashMap::with_capacity(_cap);
               {
