@@ -1,3 +1,7 @@
+# 0.9.1
+
+* Bump rusoto dependencies to version `0.45`
+
 # 0.9.0
 
 * Introduce new `#[dynomite(default)]` field attribute which permits the absence of field values in DynamoDB. These will be replaced with their default value when deserializing item data [#113](https://github.com/softprops/dynomite/pull/113)
@@ -23,7 +27,7 @@
 
 # 0.8.2
 
-* Bump rusoto dependencies to version `0.4.4`
+* Bump rusoto dependencies to version `0.44`
 
 # 0.8.1
 
