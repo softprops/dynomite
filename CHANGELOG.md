@@ -1,4 +1,4 @@
-# 0.9.1
+# 0.10.0
 
 * Bump rusoto dependencies to version `0.45`
 
