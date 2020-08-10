@@ -15,7 +15,6 @@ categories = ["database"]
 [badges]
 coveralls = { repository = "softprops/dynomite" }
 maintenance = { status = "actively-developed" }
-travis-ci = { repository = "softprops/dynomite" }
 
 [dependencies]
 async-trait = "0.1"
