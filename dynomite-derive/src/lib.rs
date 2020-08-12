@@ -281,7 +281,7 @@ fn make_dynomite_attributes(
                     ..::dynomite::AttributeValue::default()
                 }
             }
-            fn from_attr(value: ::dynomite::AttributeValue) -> Result<Self, ::dynomite::AttributeError> {
+            fn from_attr(value: ::dynomite::AttributeValue) -> std::result::Result<Self, ::dynomite::AttributeError> {
                 use ::dynomite::FromAttributes;
                 value
                     .m
