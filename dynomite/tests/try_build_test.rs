@@ -4,5 +4,6 @@
 #[test]
 fn try_build_tests() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("trybuild-tests/*.rs");
+    t.compile_fail("trybuild-tests/fail/*.rs");
+    t.pass("trybuild-tests/pass/*.rs");
 }
