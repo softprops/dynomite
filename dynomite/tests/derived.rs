@@ -1,8 +1,12 @@
 use dynomite_derive::{Attribute, Item};
+use serde::{Serialize, Deserialize};
 
-#[derive(Item, Default, PartialEq, Debug, Clone)]
+#[derive(Item, Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct Author {
     #[dynomite(partition_key)]
+    // Test that the serde attr is not propagated to the generated key
+    // Issue: https://github.com/softprops/dynomite/issues/121
+    #[serde(rename = "Name")]
     name: String,
 }
 
