@@ -96,7 +96,7 @@ impl<'a> ItemField<'a> {
 fn parse_attrs(all_attrs: &[Attribute]) -> Vec<Attr> {
     all_attrs
         .iter()
-        .filter(|attr| attr.path.is_ident("dynomite"))
+        .filter(|attr| is_dynomite_attr(attr))
         .flat_map(|attr| {
             attr.parse_args_with(Punctuated::<Attr, Token![,]>::parse_terminated)
                 .unwrap_or_abort()
@@ -558,7 +558,9 @@ fn get_key_struct(
             // clone because this is a new struct
             // note: this in inherits field attrs so that
             // we retain dynomite(rename = "xxx")
-            let field = field.field.clone();
+            let mut field = field.field.clone();
+            field.attrs.retain(is_dynomite_attr);
+
             quote! {
                 #field
             }
@@ -572,7 +574,9 @@ fn get_key_struct(
             // clone because this is a new struct
             // note: this in inherits field attrs so that
             // we retain dynomite(rename = "xxx")
-            let field = field.field.clone();
+            let mut field = field.field.clone();
+            field.attrs.retain(is_dynomite_attr);
+
             quote! {
                 #field
             }
@@ -589,4 +593,8 @@ fn get_key_struct(
             }
         })
         .unwrap_or_else(proc_macro2::TokenStream::new))
+}
+
+fn is_dynomite_attr(suspect: &syn::Attribute) -> bool {
+    suspect.path.is_ident("dynomite")
 }
