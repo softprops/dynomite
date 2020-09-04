@@ -1,5 +1,5 @@
 use dynomite_derive::{Attribute, Item};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Item, Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub struct Author {
