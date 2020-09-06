@@ -97,7 +97,7 @@ to get started. Enjoy.
 In your Cargo.toml file, add the following under the `[dependencies]` heading
 
 ```toml
-dynomite = "0.9"
+dynomite = "0.10"
 ```
 
 ## 🤸 Examples
