@@ -1,6 +1,7 @@
 # 0.10.0
 
-* Bump rusoto dependencies to version `0.45`
+* Bump rusoto dependencies to version from `0.44` to `0.45`
+* fixed issue with dynomite renamed `partition_key` fields which copied unrelated attributes into the generated KeyStruct. These unrelated attributes are now omitted.
 
 # 0.9.0
 
