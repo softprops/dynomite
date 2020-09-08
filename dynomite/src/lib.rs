@@ -41,6 +41,11 @@
 //!     // A separate struct to store data without any id
 //!     #[dynomite(flatten)]
 //!     data: ShoppingCartData,
+//!     // Collect all other additional attributes into a map
+//!     // Beware that the order of declaration will affect the order of
+//!     // evaluation, so this "wildcard" flatten clause should be the last member
+//!     #[dynomite(flatten)]
+//!     remaining_props: Attributes,
 //! }
 //!
 //! // `Attributes` doesn't require neither of #[dynomite(partition_key/sort_key)]
@@ -153,7 +158,8 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///
 /// ```
 /// use dynomite::{
-///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes, Item,
+///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes,
+///     IntoAttributes, Item,
 /// };
 /// use std::collections::HashMap;
 ///
@@ -171,23 +177,33 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl FromAttributes for Person {
-///     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+///     fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
 ///         Ok(Self {
 ///             id: attrs
-///                 .get("id")
-///                 .and_then(|val| val.s.clone())
-///                 .ok_or(AttributeError::MissingField { name: "id".into() })?,
+///                 .remove("id")
+///                 .and_then(|val| val.s)
+///                 .ok_or_else(|| AttributeError::MissingField { name: "id".into() })?,
 ///         })
 ///     }
 /// }
 ///
-/// impl Into<Attributes> for Person {
-///     fn into(self: Self) -> Attributes {
-///         let mut attrs = HashMap::new();
+/// impl IntoAttributes for Person {
+///     fn into_attrs_sink(
+///         self,
+///         attrs: &mut Attributes,
+///     ) {
 ///         attrs.insert("id".into(), "123".to_string().into_attr());
-///         attrs
 ///     }
 /// }
+///
+/// // Unfortunately `dynomite` is not able to provide a blanket impl for this trait
+/// // due to orphan rules, but it generated via the `dynomite_derive` attributes
+/// impl From<Person> for Attributes {
+///     fn from(person: Person) -> Attributes {
+///         person.into_attrs()
+///     }
+/// }
+///
 /// let person = Person { id: "123".into() };
 /// let attrs: Attributes = person.clone().into();
 /// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
@@ -292,39 +308,94 @@ pub trait Attribute: Sized {
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError>;
 }
 
+impl Attribute for AttributeValue {
+    fn into_attr(self: Self) -> AttributeValue {
+        self
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        Ok(value)
+    }
+}
+
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
+    /// Shortcut for `FromAttributes::from_attrs_sink(&mut attrs)`.
+    /// You should generally implement only that method.
+    fn from_attrs(mut attrs: Attributes) -> Result<Self, AttributeError> {
+        Self::from_attrs_sink(&mut attrs)
+    }
+
     /// Returns an instance of of a type resolved at runtime from a collection
-    /// of a `String` keys and `AttributeValues`. If
-    /// a instance can not be resolved and `AttributeError` will be returned.
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
+    /// of a `String` keys and `AttributeValues`.
+    /// If an instance can not be resolved and `AttributeError` will be returned.
+    /// The implementations of this method should remove the relevant key-value
+    /// pairs from the map to consume them. This is needed to support
+    /// `#[dynomite(flatten)]` without creating temporary hash maps.
+    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError>;
 }
 
 /// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types
 /// that implement Attribute
 #[allow(clippy::implicit_hasher)]
 impl<A: Attribute> FromAttributes for HashMap<String, A> {
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
-            .into_iter()
-            .try_fold(HashMap::new(), |mut result, (k, v)| {
-                result.insert(k, A::from_attr(v)?);
-                Ok(result)
-            })
+            .drain()
+            .map(|(k, v)| Ok((k, A::from_attr(v)?)))
+            .collect()
     }
 }
 
 /// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
 /// that implement Attribute
 impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
-            .into_iter()
-            .try_fold(BTreeMap::new(), |mut result, (k, v)| {
-                result.insert(k, A::from_attr(v)?);
-                Ok(result)
-            })
+            .drain()
+            .map(|(k, v)| Ok((k, A::from_attr(v)?)))
+            .collect()
+    }
+}
+
+/// You should implement this trait instead of `From<T> for Attributes`
+/// for your type to support flattening, #[dynomite(Attributes/Item)] will
+/// generate both the implementation of this trait and `From<>`
+/// (there is no blanket impl for `From<>` here due to orphan rules)
+pub trait IntoAttributes: Sized {
+    /// A shortcut for `IntoAttributes::into_attrs_sink()` that creates a new hash map.
+    /// You should generally implement only that method instead.
+    fn into_attrs(self) -> Attributes {
+        let mut attrs = Attributes::new();
+        self.into_attrs_sink(&mut attrs);
+        attrs
+    }
+
+    /// Converts `self` into `Attributes` by accepting a `sink` argument and
+    /// insterting attribute key-value pairs into it.
+    /// This is needed to support `#[dynomite(flatten)]` without creating
+    /// temporary hash maps.
+    fn into_attrs_sink(
+        self,
+        sink: &mut Attributes,
+    );
+}
+
+impl<A: Attribute> IntoAttributes for HashMap<String, A> {
+    fn into_attrs_sink(
+        self,
+        sink: &mut Attributes,
+    ) {
+        sink.extend(self.into_iter().map(|(k, v)| (k, v.into_attr())));
+    }
+}
+
+impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
+    fn into_attrs_sink(
+        self,
+        sink: &mut Attributes,
+    ) {
+        sink.extend(self.into_iter().map(|(k, v)| (k, v.into_attr())));
     }
 }
 

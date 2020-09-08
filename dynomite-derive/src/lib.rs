@@ -285,7 +285,7 @@ fn make_dynomite_attributes(
 ) -> syn::Result<impl ToTokens> {
     let item_fields = fields.iter().map(ItemField::new).collect::<Vec<_>>();
     // impl ::dynomite::FromAttributes for Name
-    let from_attribute_map = get_from_attributes_trait(name, &item_fields)?;
+    let from_attribute_map = get_from_attributes_trait(name, &item_fields);
     // impl From<Name> for ::dynomite::Attributes
     let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
     // impl Attribute for Name (these are essentially just a map)
@@ -335,7 +335,7 @@ fn make_dynomite_item(
     // impl Item for Name + NameKey struct
     let dynamodb_traits = get_dynomite_item_traits(vis, name, &item_fields)?;
     // impl ::dynomite::FromAttributes for Name
-    let from_attribute_map = get_from_attributes_trait(name, &item_fields)?;
+    let from_attribute_map = get_from_attributes_trait(name, &item_fields);
     // impl From<Name> for ::dynomite::Attributes
     let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
 
@@ -346,52 +346,33 @@ fn make_dynomite_item(
     })
 }
 
-// impl From<Name> for ::dynomite::Attributes {
-//    fn from(n: Name) ->  Self {
-//      ...
-//    }
-// }
-//
 fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
-    let to_attrs = get_to_attrs_function(fields)?;
+    let into_attrs_sink = get_into_attrs_sink_fn(fields);
 
     Ok(quote! {
-        impl #name {
-            #to_attrs
+        impl ::dynomite::IntoAttributes for #name {
+            #into_attrs_sink
         }
 
         impl ::std::convert::From<#name> for ::dynomite::Attributes {
             fn from(item: #name) -> Self {
-                let mut values = Self::new();
-                item.__to_attrs(&mut values);
-                values
+                ::dynomite::IntoAttributes::into_attrs(item)
             }
         }
     })
 }
 
-// generates the `from(...)` method for attribute map From conversion
-//
-// fn from(item: Foo) -> Self {
-//   let mut values = Self::new();
-//   values.insert(
-//     "foo".to_string(),
-//     ::dynomite::Attribute::into_attr(item.field)
-//   );
-//   ...
-//   values
-// }
-fn get_to_attrs_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
+fn get_into_attrs_sink_fn(fields: &[ItemField]) -> impl ToTokens {
     let field_conversions = fields.iter().map(|field| {
         let field_deser_name = field.deser_name();
         let field_ident = &field.field.ident;
 
         if field.is_flatten() {
             quote! {
-                self.#field_ident.__to_attrs(attrs);
+                ::dynomite::IntoAttributes::into_attrs_sink(self.#field_ident, attrs);
             }
         } else {
             quote! {
@@ -403,91 +384,87 @@ fn get_to_attrs_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
         }
     });
 
-    Ok(quote! {
-        // Used to serialize into an attributes map without creating a temporary map
-        // (useful for `#[dynomite(flatten)]`)
-        #[doc(hidden)]
-        pub fn __to_attrs(self, attrs: &mut ::dynomite::Attributes) {
+    quote! {
+        fn into_attrs_sink(self, attrs: &mut ::dynomite::Attributes) {
             #(#field_conversions)*
         }
-    })
+    }
 }
 
 /// ```rust,ignore
 /// impl ::dynomite::FromAttributes for Name {
-///   fn from_attrs(mut item: ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
-///     Ok(Self {
-///        field_name: ::dynomite::Attribute::from_attr(
-///           item.remove("field_deser_name").ok_or(Error::MissingField { name: "field_deser_name".into() })?
-///        )
-///      })
-///   }
+///     fn from_attrs_sink(attrs: &mut ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
+///         let field_name = ::dynomite::Attribute::from_attr(
+///            attrs.remove("field_deser_name").ok_or_else(|| Error::MissingField { name: "field_deser_name".to_string() })?
+///         );
+///         Ok(Self {
+///            field_name,
+///         })
+///     }
 /// }
 /// ```
 fn get_from_attributes_trait(
     name: &Ident,
     fields: &[ItemField],
-) -> syn::Result<impl ToTokens> {
+) -> impl ToTokens {
     let from_attrs = quote!(::dynomite::FromAttributes);
-    let from_attrs_mut_fn = get_from_attributes_mut_function(fields)?;
+    let from_attrs_sink_fn = get_from_attrs_sink_function(fields);
 
-    Ok(quote! {
-        impl #name {
-            #from_attrs_mut_fn
-        }
-
+    quote! {
         impl #from_attrs for #name {
-            fn from_attrs(mut attrs: ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
-                Self::__from_attrs_mut(&mut attrs)
-            }
+            #from_attrs_sink_fn
         }
-    })
+    }
 }
 
-fn get_from_attributes_mut_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
-    let attributes = quote!(::dynomite::Attributes);
-    let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
-    let err = quote!(::dynomite::AttributeError);
-
-    let field_conversions = fields.iter().map(|field| {
-        // field has #[dynomite(renameField = "...")] attribute
-        let field_deser_name = field.deser_name();
-
-        let field_ident = &field.field.ident;
-        if field.is_default_when_absent() {
-            return quote! {
-                #field_ident: match attrs.remove(#field_deser_name) {
-                    Some(field) => #from_attribute_value(field)?,
-                    _ => ::std::default::Default::default()
+fn get_from_attrs_sink_function(fields: &[ItemField]) -> impl ToTokens {
+    let var_init_statements = fields
+        .iter()
+        .map(|field| {
+            // field might have #[dynomite(rename = "...")] attribute
+            let field_deser_name = field.deser_name();
+            let field_ident = &field.field.ident;
+            let expr = if field.is_default_when_absent() {
+                quote! {
+                    match attrs.remove(#field_deser_name) {
+                        Some(field) => ::dynomite::Attribute::from_attr(field)?,
+                        _ => ::std::default::Default::default()
+                    }
                 }
-            }
-        }
-
-        if field.is_flatten() {
-            let ty = &field.field.ty;
+            } else if field.is_flatten() {
+                quote! { ::dynomite::FromAttributes::from_attrs_sink(attrs)? }
+            } else {
+                quote! {
+                    ::dynomite::Attribute::from_attr(
+                        attrs.remove(#field_deser_name).ok_or_else(|| ::dynomite::AttributeError::MissingField {
+                            name: #field_deser_name.to_string()
+                        })?
+                    )?
+                }
+            };
             quote! {
-                #field_ident: #ty::__from_attrs_mut(attrs)?,
+                let #field_ident = #expr;
             }
-        } else {
-            quote! {
-                #field_ident: #from_attribute_value(
-                    attrs.remove(#field_deser_name)
-                        .ok_or(::dynomite::AttributeError::MissingField { name: #field_deser_name.to_string() })?
-                )?
-            }
-        }
+        });
 
-    });
+    let field_names = fields.iter().map(|it| &it.field.ident);
 
-    Ok(quote! {
-        // Used to deserialize from an attributes map without consuming it (useful for `#[dynomite(flatten)]`)
-        #[doc(hidden)]
-        pub fn __from_attrs_mut(attrs: &mut #attributes) -> ::std::result::Result<Self, #err> {
+    // The order of evaluation of struct literal fields seems
+    // **informally** left-to-right (as per Niko Matsakis and Steve Klabnik),
+    // https://stackoverflow.com/a/57612600/9259330
+    // This means we should not rely on this behavior yet.
+    // We explicitly make conversion expressions a separate statements.
+    // This is important, because the order of declaration and evaluation
+    // of `flatten` fields matters.
+
+    quote! {
+        fn from_attrs_sink(attrs: &mut ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+            #(#var_init_statements)*
             ::std::result::Result::Ok(Self {
-                #(#field_conversions),*
+                #(#field_names),*
             })
         }
-    })
+    }
 }
 
 fn get_dynomite_item_traits(

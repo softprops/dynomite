@@ -1,4 +1,4 @@
-use dynomite_derive::{Attribute, Attributes, Item};
+use dynomite::{Attribute, Attributes, Item};
 use serde::{Deserialize, Serialize};
 
 #[derive(Item, Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -55,6 +55,32 @@ struct Flattened {
 struct FlattenedNested {
     b: u64,
     c: bool,
+}
+
+#[derive(Attributes)]
+struct RemainingPropsInMap {
+    a: bool,
+    b: u32,
+
+    #[dynomite(flatten)]
+    original_c_collector: HasC,
+
+    #[dynomite(flatten)]
+    remainder: Attributes,
+}
+
+#[derive(Attributes)]
+struct HasC {
+    c: u32,
+}
+
+#[derive(Attributes, Clone)]
+struct AdditionalPropsVerbatim {
+    a: bool,
+    b: u32,
+    c: u32,
+    d: String,
+    e: u32,
 }
 
 #[cfg(test)]
@@ -124,5 +150,28 @@ mod tests {
         assert!(attrs.contains_key("c"));
 
         assert_eq!(value, FlattenRoot::from_attrs(attrs).unwrap());
+    }
+
+    #[test]
+    fn additional_props() {
+        let original = AdditionalPropsVerbatim {
+            a: true,
+            b: 42,
+            c: 43,
+            d: "foo".to_owned(),
+            e: 44,
+        };
+        let attrs: Attributes = original.clone().into();
+        let collected = RemainingPropsInMap::from_attrs(attrs).unwrap();
+
+        assert_eq!(collected.a, original.a);
+        assert_eq!(collected.b, original.b);
+        assert_eq!(collected.original_c_collector.c, original.c);
+        assert!(
+            !collected.remainder.contains_key("c"),
+            "prev flattened field has collected field `c` due to the order of declaration and eval"
+        );
+        assert!(collected.remainder.contains_key("d"));
+        assert!(collected.remainder.contains_key("e"));
     }
 }
