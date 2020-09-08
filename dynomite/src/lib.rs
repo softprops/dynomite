@@ -22,7 +22,7 @@
 //!
 //!
 //! ```rust,no_run
-//!  use dynomite::Item;
+//!  use dynomite::{Item, Attributes};
 //!  use uuid::Uuid;
 //!
 //! #[derive(Item)]
@@ -31,7 +31,25 @@
 //!   user: Uuid,
 //!   #[dynomite(sort_key)]
 //!   order_id: Uuid,
-//!   color: Option<String>
+//!   color: Option<String>,
+//! }
+//!
+//! #[derive(Item)]
+//! struct ShoppingCart {
+//!     #[dynomite(partition_key)]
+//!     id: Uuid,
+//!     // A separate struct to store data without any id
+//!     #[dynomite(flatten)]
+//!     data: ShoppingCartData,
+//! }
+//!
+//! // `Attributes` doesn't require neither of #[dynomite(partition_key/sort_key)]
+//! #[derive(Attributes)]
+//! struct ShoppingCartData {
+//!     // use Default value of the field if it is absent in DynamoDb
+//!     #[dynomite(default)]
+//!     orders: Vec<Order>,
+//!     name: String,
 //! }
 //! ```
 //!
