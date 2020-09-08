@@ -308,6 +308,15 @@ pub trait Attribute: Sized {
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError>;
 }
 
+impl Attribute for AttributeValue {
+    fn into_attr(self: Self) -> AttributeValue {
+        self
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        Ok(value)
+    }
+}
+
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
