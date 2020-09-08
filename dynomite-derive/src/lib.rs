@@ -33,7 +33,7 @@ use attr::{Attr, AttrKind};
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use proc_macro_error::{ResultExt, abort};
+use proc_macro_error::{abort, ResultExt};
 use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated,
@@ -54,7 +54,11 @@ impl<'a> ItemField<'a> {
         let attrs = parse_attrs(&field.attrs);
         let me = Self { field, attrs };
         if me.is_flatten() {
-            if let Some(it) = me.attrs.iter().find(|it| !matches!(it.kind, AttrKind::Flatten)) {
+            if let Some(it) = me
+                .attrs
+                .iter()
+                .find(|it| !matches!(it.kind, AttrKind::Flatten))
+            {
                 abort!(
                     it.ident,
                     "If #[dynomite(flatten)] is used, no other dynomite attributes are allowed on the field"
@@ -381,25 +385,23 @@ fn get_to_attribute_map_trait(
 //   values
 // }
 fn get_to_attrs_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
-    let field_conversions = fields
-        .iter()
-        .map(|field| {
-            let field_deser_name = field.deser_name();
-            let field_ident = &field.field.ident;
+    let field_conversions = fields.iter().map(|field| {
+        let field_deser_name = field.deser_name();
+        let field_ident = &field.field.ident;
 
-            if field.is_flatten() {
-                quote! {
-                    self.#field_ident.__to_attrs(attrs);
-                }
-            } else {
-                quote! {
-                    attrs.insert(
-                        #field_deser_name.to_string(),
-                        ::dynomite::Attribute::into_attr(self.#field_ident)
-                    );
-                }
+        if field.is_flatten() {
+            quote! {
+                self.#field_ident.__to_attrs(attrs);
             }
-        });
+        } else {
+            quote! {
+                attrs.insert(
+                    #field_deser_name.to_string(),
+                    ::dynomite::Attribute::into_attr(self.#field_ident)
+                );
+            }
+        }
+    });
 
     Ok(quote! {
         // Used to serialize into an attributes map without creating a temporary map

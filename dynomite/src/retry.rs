@@ -16,7 +16,7 @@
 //!  // appropriate
 //!  let tables = client.list_tables(Default::default());
 //! ```
-//!
+
 use crate::dynamodb::*;
 use again::{Condition, RetryPolicy};
 use log::debug;

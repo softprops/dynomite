@@ -27,7 +27,10 @@ pub(crate) enum AttrKind {
 }
 
 impl Attr {
-    fn new(ident: Ident, kind: AttrKind) -> Self {
+    fn new(
+        ident: Ident,
+        kind: AttrKind,
+    ) -> Self {
         Self { ident, kind }
     }
 }

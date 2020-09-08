@@ -57,7 +57,6 @@ struct FlattenedNested {
     c: bool,
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -112,10 +111,7 @@ mod tests {
             id: "foo".into(),
             flat: Flattened {
                 a: true,
-                flat_nested: FlattenedNested {
-                    b: 42,
-                    c: false,
-                },
+                flat_nested: FlattenedNested { b: 42, c: false },
             },
         };
 
