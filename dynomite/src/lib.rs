@@ -359,9 +359,9 @@ impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
 }
 
 /// You should implement this trait instead of `From<T> for Attributes`
-/// for your type to support flattening, #[dynomite(Attributes/Item)] will
-/// generate both the implementation of this trait and `From<>`
-/// (there is no blanket impl for `From<>` here due to orphan rules)
+/// for your type to support flattening, `#[dynomite(Attributes/Item)]` will
+/// generate both the implementation of this trait and `From<T>`
+/// (there is no blanket impl for `From<T>` here due to orphan rules)
 pub trait IntoAttributes: Sized {
     /// A shortcut for `IntoAttributes::into_mut_attrs()` that creates a new hash map.
     /// You should generally implement only that method instead.
