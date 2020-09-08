@@ -286,8 +286,9 @@ fn make_dynomite_attributes(
     let item_fields = fields.iter().map(ItemField::new).collect::<Vec<_>>();
     // impl ::dynomite::FromAttributes for Name
     let from_attribute_map = get_from_attributes_trait(name, &item_fields);
+    // impl ::dynomite::IntoAttributes for Name
     // impl From<Name> for ::dynomite::Attributes
-    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
+    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
     // impl Attribute for Name (these are essentially just a map)
     let attribute = quote!(::dynomite::Attribute);
     let impl_attribute = quote! {
@@ -336,8 +337,9 @@ fn make_dynomite_item(
     let dynamodb_traits = get_dynomite_item_traits(vis, name, &item_fields)?;
     // impl ::dynomite::FromAttributes for Name
     let from_attribute_map = get_from_attributes_trait(name, &item_fields);
+    // impl ::dynomite::IntoAttributes for Name
     // impl From<Name> for ::dynomite::Attributes
-    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields)?;
+    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
 
     Ok(quote! {
         #from_attribute_map
@@ -349,10 +351,10 @@ fn make_dynomite_item(
 fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[ItemField],
-) -> syn::Result<impl ToTokens> {
+) -> impl ToTokens {
     let into_attrs_sink = get_into_attrs_sink_fn(fields);
 
-    Ok(quote! {
+    quote! {
         impl ::dynomite::IntoAttributes for #name {
             #into_attrs_sink
         }
@@ -362,7 +364,7 @@ fn get_to_attribute_map_trait(
                 ::dynomite::IntoAttributes::into_attrs(item)
             }
         }
-    })
+    }
 }
 
 fn get_into_attrs_sink_fn(fields: &[ItemField]) -> impl ToTokens {
