@@ -352,11 +352,11 @@ fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[ItemField],
 ) -> impl ToTokens {
-    let into_attrs_sink = get_into_attrs_sink_fn(fields);
+    let into_mut_attrs = get_into_mut_attrs(fields);
 
     quote! {
         impl ::dynomite::IntoAttributes for #name {
-            #into_attrs_sink
+            #into_mut_attrs
         }
 
         impl ::std::convert::From<#name> for ::dynomite::Attributes {
@@ -367,14 +367,14 @@ fn get_to_attribute_map_trait(
     }
 }
 
-fn get_into_attrs_sink_fn(fields: &[ItemField]) -> impl ToTokens {
+fn get_into_mut_attrs(fields: &[ItemField]) -> impl ToTokens {
     let field_conversions = fields.iter().map(|field| {
         let field_deser_name = field.deser_name();
         let field_ident = &field.field.ident;
 
         if field.is_flatten() {
             quote! {
-                ::dynomite::IntoAttributes::into_attrs_sink(self.#field_ident, attrs);
+                ::dynomite::IntoAttributes::into_mut_attrs(self.#field_ident, attrs);
             }
         } else {
             quote! {
@@ -387,7 +387,7 @@ fn get_into_attrs_sink_fn(fields: &[ItemField]) -> impl ToTokens {
     });
 
     quote! {
-        fn into_attrs_sink(self, attrs: &mut ::dynomite::Attributes) {
+        fn into_mut_attrs(self, attrs: &mut ::dynomite::Attributes) {
             #(#field_conversions)*
         }
     }
@@ -395,7 +395,7 @@ fn get_into_attrs_sink_fn(fields: &[ItemField]) -> impl ToTokens {
 
 /// ```rust,ignore
 /// impl ::dynomite::FromAttributes for Name {
-///     fn from_attrs_sink(attrs: &mut ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
+///     fn from_mut_attrs(attrs: &mut ::dynomite::Attributes) -> Result<Self, ::dynomite::Error> {
 ///         let field_name = ::dynomite::Attribute::from_attr(
 ///            attrs.remove("field_deser_name").ok_or_else(|| Error::MissingField { name: "field_deser_name".to_string() })?
 ///         );
@@ -410,16 +410,16 @@ fn get_from_attributes_trait(
     fields: &[ItemField],
 ) -> impl ToTokens {
     let from_attrs = quote!(::dynomite::FromAttributes);
-    let from_attrs_sink_fn = get_from_attrs_sink_function(fields);
+    let from_mut_attrs_fn = get_from_mut_attrs_function(fields);
 
     quote! {
         impl #from_attrs for #name {
-            #from_attrs_sink_fn
+            #from_mut_attrs_fn
         }
     }
 }
 
-fn get_from_attrs_sink_function(fields: &[ItemField]) -> impl ToTokens {
+fn get_from_mut_attrs_function(fields: &[ItemField]) -> impl ToTokens {
     let var_init_statements = fields
         .iter()
         .map(|field| {
@@ -434,7 +434,7 @@ fn get_from_attrs_sink_function(fields: &[ItemField]) -> impl ToTokens {
                     }
                 }
             } else if field.is_flatten() {
-                quote! { ::dynomite::FromAttributes::from_attrs_sink(attrs)? }
+                quote! { ::dynomite::FromAttributes::from_mut_attrs(attrs)? }
             } else {
                 quote! {
                     ::dynomite::Attribute::from_attr(
@@ -460,7 +460,7 @@ fn get_from_attrs_sink_function(fields: &[ItemField]) -> impl ToTokens {
     // of `flatten` fields matters.
 
     quote! {
-        fn from_attrs_sink(attrs: &mut ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+        fn from_mut_attrs(attrs: &mut ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
             #(#var_init_statements)*
             ::std::result::Result::Ok(Self {
                 #(#field_names),*

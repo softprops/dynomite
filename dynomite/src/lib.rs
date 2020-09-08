@@ -177,7 +177,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl FromAttributes for Person {
-///     fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+///     fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
 ///         Ok(Self {
 ///             id: attrs
 ///                 .remove("id")
@@ -188,7 +188,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl IntoAttributes for Person {
-///     fn into_attrs_sink(
+///     fn into_mut_attrs(
 ///         self,
 ///         attrs: &mut Attributes,
 ///     ) {
@@ -320,10 +320,10 @@ impl Attribute for AttributeValue {
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
-    /// Shortcut for `FromAttributes::from_attrs_sink(&mut attrs)`.
+    /// Shortcut for `FromAttributes::from_mut_attrs(&mut attrs)`.
     /// You should generally implement only that method.
     fn from_attrs(mut attrs: Attributes) -> Result<Self, AttributeError> {
-        Self::from_attrs_sink(&mut attrs)
+        Self::from_mut_attrs(&mut attrs)
     }
 
     /// Returns an instance of of a type resolved at runtime from a collection
@@ -332,14 +332,14 @@ pub trait FromAttributes: Sized {
     /// The implementations of this method should remove the relevant key-value
     /// pairs from the map to consume them. This is needed to support
     /// `#[dynomite(flatten)]` without creating temporary hash maps.
-    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError>;
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError>;
 }
 
 /// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types
 /// that implement Attribute
 #[allow(clippy::implicit_hasher)]
 impl<A: Attribute> FromAttributes for HashMap<String, A> {
-    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
             .drain()
             .map(|(k, v)| Ok((k, A::from_attr(v)?)))
@@ -350,7 +350,7 @@ impl<A: Attribute> FromAttributes for HashMap<String, A> {
 /// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
 /// that implement Attribute
 impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
-    fn from_attrs_sink(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
             .drain()
             .map(|(k, v)| Ok((k, A::from_attr(v)?)))
@@ -363,11 +363,11 @@ impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
 /// generate both the implementation of this trait and `From<>`
 /// (there is no blanket impl for `From<>` here due to orphan rules)
 pub trait IntoAttributes: Sized {
-    /// A shortcut for `IntoAttributes::into_attrs_sink()` that creates a new hash map.
+    /// A shortcut for `IntoAttributes::into_mut_attrs()` that creates a new hash map.
     /// You should generally implement only that method instead.
     fn into_attrs(self) -> Attributes {
         let mut attrs = Attributes::new();
-        self.into_attrs_sink(&mut attrs);
+        self.into_mut_attrs(&mut attrs);
         attrs
     }
 
@@ -375,14 +375,14 @@ pub trait IntoAttributes: Sized {
     /// insterting attribute key-value pairs into it.
     /// This is needed to support `#[dynomite(flatten)]` without creating
     /// temporary hash maps.
-    fn into_attrs_sink(
+    fn into_mut_attrs(
         self,
         sink: &mut Attributes,
     );
 }
 
 impl<A: Attribute> IntoAttributes for HashMap<String, A> {
-    fn into_attrs_sink(
+    fn into_mut_attrs(
         self,
         sink: &mut Attributes,
     ) {
@@ -391,7 +391,7 @@ impl<A: Attribute> IntoAttributes for HashMap<String, A> {
 }
 
 impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
-    fn into_attrs_sink(
+    fn into_mut_attrs(
         self,
         sink: &mut Attributes,
     ) {
