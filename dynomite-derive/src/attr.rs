@@ -7,20 +7,33 @@ use syn::{
 };
 
 #[derive(Clone)]
-pub enum Attr {
+pub(crate) struct Attr {
+    pub(crate) ident: Ident,
+    pub(crate) kind: AttrKind,
+}
+
+#[derive(Clone)]
+pub(crate) enum AttrKind {
     /// Denotes field should be replaced with Default impl when absent in ddb
-    Default(Ident),
+    Default,
     /// Denotes field should be renamed to value of ListStr
-    Rename(Ident, LitStr),
+    Rename(LitStr),
     /// Denotes Item partition (primary) key
-    PartitionKey(Ident),
+    PartitionKey,
     /// Denotes Item sort key
-    SortKey(Ident),
+    SortKey,
+    /// Denotes a field that should be replaced with all of its subfields
+    Flatten,
+}
+
+impl Attr {
+    fn new(ident: Ident, kind: AttrKind) -> Self {
+        Self { ident, kind }
+    }
 }
 
 impl Parse for Attr {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        use self::Attr::*;
         let name: Ident = input.parse()?;
         let name_str = name.to_string();
         if input.peek(Token![=]) {
@@ -29,7 +42,7 @@ impl Parse for Attr {
             if input.peek(LitStr) {
                 let lit: LitStr = input.parse()?;
                 match &*name_str {
-                    "rename" => Ok(Rename(name, lit)),
+                    "rename" => Ok(Attr::new(name, AttrKind::Rename(lit))),
                     unsupported => abort! {
                         name,
                         "unsupported dynomite {} attribute",
@@ -47,12 +60,14 @@ impl Parse for Attr {
             abort!(name, "unexpected dynomite attribute: {}", name_str);
         } else {
             // Attributes represented with a sole identifier.
-            match name_str.as_ref() {
-                "default" => Ok(Default(name)),
-                "partition_key" => Ok(PartitionKey(name)),
-                "sort_key" => Ok(SortKey(name)),
+            let kind = match name_str.as_ref() {
+                "default" => AttrKind::Default,
+                "partition_key" => AttrKind::PartitionKey,
+                "sort_key" => AttrKind::SortKey,
+                "flatten" => AttrKind::Flatten,
                 _ => abort!(name, "unexpected dynomite attribute: {}", name_str),
-            }
+            };
+            Ok(Attr::new(name, kind))
         }
     }
 }

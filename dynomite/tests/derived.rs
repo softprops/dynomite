@@ -1,4 +1,4 @@
-use dynomite_derive::{Attribute, Item};
+use dynomite_derive::{Attribute, Attributes, Item};
 use serde::{Deserialize, Serialize};
 
 #[derive(Item, Default, PartialEq, Debug, Clone, Serialize, Deserialize)]
@@ -35,6 +35,28 @@ struct Recipe {
     id: String,
     servings: u64,
 }
+
+#[derive(Item, PartialEq, Debug, Clone)]
+struct FlattenRoot {
+    #[dynomite(partition_key)]
+    id: String,
+    #[dynomite(flatten)]
+    flat: Flattened,
+}
+
+#[derive(Attributes, PartialEq, Debug, Clone)]
+struct Flattened {
+    a: bool,
+    #[dynomite(flatten)]
+    flat_nested: FlattenedNested,
+}
+
+#[derive(Attributes, PartialEq, Debug, Clone)]
+struct FlattenedNested {
+    b: u64,
+    c: bool,
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -82,5 +104,29 @@ mod tests {
         assert!(!attrs.contains_key("id"));
 
         assert_eq!(value, Recipe::from_attrs(attrs).unwrap());
+    }
+
+    #[test]
+    fn flatten() {
+        let value = FlattenRoot {
+            id: "foo".into(),
+            flat: Flattened {
+                a: true,
+                flat_nested: FlattenedNested {
+                    b: 42,
+                    c: false,
+                },
+            },
+        };
+
+        let attrs: Attributes = value.clone().into();
+        assert!(!attrs.contains_key("flat"));
+        assert!(!attrs.contains_key("flat_nested"));
+        assert!(attrs.contains_key("id"));
+        assert!(attrs.contains_key("a"));
+        assert!(attrs.contains_key("b"));
+        assert!(attrs.contains_key("c"));
+
+        assert_eq!(value, FlattenRoot::from_attrs(attrs).unwrap());
     }
 }

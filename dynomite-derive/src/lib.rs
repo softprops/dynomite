@@ -12,30 +12,28 @@
 //!   #[dynomite(partition_key)] id: String
 //! }
 //!
-//!   let person = Person { id: "123".into() };
-//!   // convert person to string keys and attribute values
-//!   let attributes: Attributes = person.clone().into();
-//!   // convert attributes into person type
-//!   assert_eq!(person, Person::from_attrs(attributes).unwrap());
+//! let person = Person { id: "123".into() };
+//! // convert person to string keys and attribute values
+//! let attributes: Attributes = person.clone().into();
+//! // convert attributes into person type
+//! assert_eq!(person, Person::from_attrs(attributes).unwrap());
 //!
-//!   // dynamodb types require only primary key attributes and may contain
-//!   // other fields. when looking up items only those key attributes are required
-//!   // dynomite derives a new {Name}Key struct for your which contains
-//!   // only those and also implements Item
-//!   let key = PersonKey { id: "123".into() };
-//!   let key_attributes: Attributes = key.clone().into();
-//!   // convert attributes into person type
-//!   assert_eq!(key, PersonKey::from_attrs(key_attributes).unwrap());
+//! // dynamodb types require only primary key attributes and may contain
+//! // other fields; when looking up items only those key attributes are required
+//! // dynomite derives a new {Name}Key struct for your which contains
+//! // only those and also implements Item
+//! let key = PersonKey { id: "123".into() };
+//! let key_attributes: Attributes = key.clone().into();
+//! // convert attributes into person type
+//! assert_eq!(key, PersonKey::from_attrs(key_attributes).unwrap());
 //! ```
 
-extern crate proc_macro;
-
 mod attr;
-use attr::Attr;
+use attr::{Attr, AttrKind};
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use proc_macro_error::ResultExt;
+use proc_macro_error::{ResultExt, abort};
 use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated,
@@ -54,33 +52,48 @@ struct ItemField<'a> {
 impl<'a> ItemField<'a> {
     fn new(field: &'a Field) -> Self {
         let attrs = parse_attrs(&field.attrs);
-        Self { field, attrs }
+        let me = Self { field, attrs };
+        if me.is_flatten() {
+            if let Some(it) = me.attrs.iter().find(|it| !matches!(it.kind, AttrKind::Flatten)) {
+                abort!(
+                    it.ident,
+                    "If #[dynomite(flatten)] is used, no other dynomite attributes are allowed on the field"
+                );
+            }
+        }
+        me
     }
 
     fn is_partition_key(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr, Attr::PartitionKey(_)))
+            .any(|attr| matches!(attr.kind, AttrKind::PartitionKey))
     }
 
     fn is_sort_key(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr, Attr::SortKey(_)))
+            .any(|attr| matches!(attr.kind, AttrKind::SortKey))
     }
 
     fn is_default_when_absent(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr, Attr::Default(_)))
+            .any(|attr| matches!(attr.kind, AttrKind::Default))
+    }
+
+    fn is_flatten(&self) -> bool {
+        self.attrs
+            .iter()
+            .any(|attr| matches!(attr.kind, AttrKind::Flatten))
     }
 
     fn deser_name(&self) -> String {
         let ItemField { field, attrs } = self;
         attrs
             .iter()
-            .find_map(|attr| match attr {
-                Attr::Rename(_, lit) => Some(lit.value()),
+            .find_map(|attr| match &attr.kind {
+                AttrKind::Rename(lit) => Some(lit.value()),
                 _ => None,
             })
             .unwrap_or_else(|| {
@@ -339,13 +352,19 @@ fn get_to_attribute_map_trait(
     name: &Ident,
     fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
-    let attributes = quote!(::dynomite::Attributes);
-    let from = quote!(::std::convert::From);
-    let to_attribute_map = get_to_attribute_map_function(name, fields)?;
+    let to_attrs = get_to_attrs_function(fields)?;
 
     Ok(quote! {
-        impl #from<#name> for #attributes {
-            #to_attribute_map
+        impl #name {
+            #to_attrs
+        }
+
+        impl ::std::convert::From<#name> for ::dynomite::Attributes {
+            fn from(item: #name) -> Self {
+                let mut values = Self::new();
+                item.__to_attrs(&mut values);
+                values
+            }
         }
     })
 }
@@ -361,32 +380,33 @@ fn get_to_attribute_map_trait(
 //   ...
 //   values
 // }
-fn get_to_attribute_map_function(
-    name: &Ident,
-    fields: &[ItemField],
-) -> syn::Result<impl ToTokens> {
-    let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
-
+fn get_to_attrs_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
     let field_conversions = fields
         .iter()
         .map(|field| {
             let field_deser_name = field.deser_name();
-
             let field_ident = &field.field.ident;
-            Ok(quote! {
-                values.insert(
-                    #field_deser_name.to_string(),
-                    #to_attribute_value(item.#field_ident)
-                );
-            })
-        })
-        .collect::<syn::Result<Vec<_>>>()?;
+
+            if field.is_flatten() {
+                quote! {
+                    self.#field_ident.__to_attrs(attrs);
+                }
+            } else {
+                quote! {
+                    attrs.insert(
+                        #field_deser_name.to_string(),
+                        ::dynomite::Attribute::into_attr(self.#field_ident)
+                    );
+                }
+            }
+        });
 
     Ok(quote! {
-        fn from(item: #name) -> Self {
-            let mut values = Self::new();
+        // Used to serialize into an attributes map without creating a temporary map
+        // (useful for `#[dynomite(flatten)]`)
+        #[doc(hidden)]
+        pub fn __to_attrs(self, attrs: &mut ::dynomite::Attributes) {
             #(#field_conversions)*
-            values
         }
     })
 }
@@ -407,16 +427,22 @@ fn get_from_attributes_trait(
     fields: &[ItemField],
 ) -> syn::Result<impl ToTokens> {
     let from_attrs = quote!(::dynomite::FromAttributes);
-    let from_attribute_map = get_from_attributes_function(fields)?;
+    let from_attrs_mut_fn = get_from_attributes_mut_function(fields)?;
 
     Ok(quote! {
+        impl #name {
+            #from_attrs_mut_fn
+        }
+
         impl #from_attrs for #name {
-            #from_attribute_map
+            fn from_attrs(mut attrs: ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+                Self::__from_attrs_mut(&mut attrs)
+            }
         }
     })
 }
 
-fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
+fn get_from_attributes_mut_function(fields: &[ItemField]) -> syn::Result<impl ToTokens> {
     let attributes = quote!(::dynomite::Attributes);
     let from_attribute_value = quote!(::dynomite::Attribute::from_attr);
     let err = quote!(::dynomite::AttributeError);
@@ -427,24 +453,34 @@ fn get_from_attributes_function(fields: &[ItemField]) -> syn::Result<impl ToToke
 
         let field_ident = &field.field.ident;
         if field.is_default_when_absent() {
-            Ok(quote! {
+            return quote! {
                 #field_ident: match attrs.remove(#field_deser_name) {
                     Some(field) => #from_attribute_value(field)?,
                     _ => ::std::default::Default::default()
                 }
-            })
+            }
+        }
+
+        if field.is_flatten() {
+            let ty = &field.field.ty;
+            quote! {
+                #field_ident: #ty::__from_attrs_mut(attrs)?,
+            }
         } else {
-            Ok(quote! {
+            quote! {
                 #field_ident: #from_attribute_value(
                     attrs.remove(#field_deser_name)
                         .ok_or(::dynomite::AttributeError::MissingField { name: #field_deser_name.to_string() })?
                 )?
-            })
+            }
         }
-    }).collect::<syn::Result<Vec<_>>>()?;
+
+    });
 
     Ok(quote! {
-        fn from_attrs(mut attrs: #attributes) -> ::std::result::Result<Self, #err> {
+        // Used to deserialize from an attributes map without consuming it (useful for `#[dynomite(flatten)]`)
+        #[doc(hidden)]
+        pub fn __from_attrs_mut(attrs: &mut #attributes) -> ::std::result::Result<Self, #err> {
             ::std::result::Result::Ok(Self {
                 #(#field_conversions),*
             })
