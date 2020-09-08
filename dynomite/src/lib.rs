@@ -197,7 +197,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// // Unfortunately `dynomite` is not able to provide a blanket impl for this trait
-/// // due to orphan rules, but it generated via the `dynomite_derive` attributes
+/// // due to orphan rules, but it is generated via the `dynomite_derive` attributes
 /// impl From<Person> for Attributes {
 ///     fn from(person: Person) -> Attributes {
 ///         person.into_attrs()
