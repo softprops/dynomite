@@ -14,11 +14,11 @@
 //! AWS typed values feel more natural and ergonomic in Rust. Where a conversion is not available you can implement `Attribute` for your own
 //! types to leverage higher level functionality.
 //!
-//! The [Item](trait.Item.html) type
+//! The [Item](trait.Item.html) trait
 //! provides conversion interfaces for complex types which represent
 //! DynamoDB's notion of "items".
 //!
-//! 💡 A cargo feature named "derive" makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
+//! 💡 A cargo feature named `"derive"` makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
 //!
 //!
 //! ```rust,no_run
@@ -33,30 +33,135 @@
 //!   order_id: Uuid,
 //!   color: Option<String>,
 //! }
+//! ```
 //!
-//! #[derive(Item)]
-//! struct ShoppingCart {
-//!     #[dynomite(partition_key)]
-//!     id: Uuid,
-//!     // A separate struct to store data without any id
-//!     #[dynomite(flatten)]
-//!     data: ShoppingCartData,
-//!     // Collect all other additional attributes into a map
-//!     // Beware that the order of declaration will affect the order of
-//!     // evaluation, so this "wildcard" flatten clause should be the last member
-//!     #[dynomite(flatten)]
-//!     remaining_props: Attributes,
-//! }
+//! ## Attributes
 //!
-//! // `Attributes` doesn't require neither of #[dynomite(partition_key/sort_key)]
+//! ### `#[derive(Item)]`
+//! Used to define a top-level DynamoDB item.
+//! Generates a `<ItemName>Key` struct with only `partition_key/sort_key`
+//! fields to be used for type-safe primary key construction.
+//! This automatically derives [`Attributes`](#deriveattributes) too.
+//!
+//! For the `Order` struct from the example higher this will generate an `OrderKey`
+//! struct like this:
+//!
+//! ```rust
+//! # use uuid::Uuid;
+//! # use dynomite::Attributes;
 //! #[derive(Attributes)]
-//! struct ShoppingCartData {
-//!     // use Default value of the field if it is absent in DynamoDb
-//!     #[dynomite(default)]
-//!     orders: Vec<Order>,
-//!     name: String,
+//! struct OrderKey {
+//!     user: Uuid,
+//!     order_id: Uuid,
 //! }
 //! ```
+//!
+//! Use it to safely and conveniently construct the primary key:
+//!
+//! ```rust
+//! # #[derive(dynomite::Attributes)]
+//! # struct Order {}
+//! # #[derive(Attributes)]
+//! # struct OrderKey {
+//! #     user: Uuid,
+//! #     order_id: Uuid,
+//! # }
+//! use dynomite::{Attributes, FromAttributes, dynamodb::{GetItemInput, DynamoDb}};
+//! use std::error::Error;
+//! use uuid::Uuid;
+//!
+//! async fn get_order(
+//!     client: impl DynamoDb,
+//!     user: Uuid,
+//!     order_id: Uuid,
+//! ) -> Result<Option<Order>, Box<dyn Error>> {
+//!     // Use the generated `OrderKey` struct to create a primary key
+//!     let key = OrderKey { user, order_id };
+//!     // Convert stronly-typed `OrderKey` to a map of `rusoto_dynamodb::AttributeValue`
+//!     let key: Attributes = key.into();
+//!
+//!     let result = client.get_item(GetItemInput {
+//!         table_name: "orders".into(),
+//!         key,
+//!         ..Default::default()
+//!     }).await?;
+//!
+//!     Ok(result.item.map(|item| {
+//!         Order::from_attrs(item).expect("Invalid order, db corruption?")
+//!     }))
+//! }
+//! ```
+//!
+//! - `#[dynomite(partition_key)]` - required attribute, expected to be applied the target
+//!  [partition attribute][partition-key] field with a derivable DynamoDB attribute value
+//!  of String, Number or Binary
+//!
+//! - `#[dynomite(sort_key)]` - optional attribute, may be applied to one target
+//!  [sort attribute](sort-key) field with an derivable DynamoDB attribute value
+//!  of String, Number or Binary
+//!
+//! - All other attributes are the same as for [`#[derive(Attributes)]`](#deriveattributes)
+//!
+//! ### `#[derive(Attributes)]`
+//!
+//! Used to derive an implementation of `From/IntoAttributes` trait to allow for
+//! serializing/deserializing map-like types into [`AttributeValue`]
+//!
+//! - `#[dynomite(rename = "actualName")]` - optional attribute, may be applied to any item
+//!   attribute field, useful when the DynamoDB table you're interfacing with has
+//!   attributes whose names don't following Rust's naming conventions
+//!
+//! - `#[dynomite(default)]` - use [`Default::default`] implementation of the field type
+//!   if the attribute is absent when deserializing from `Attributes`
+//!
+//!   ```
+//!   use dynomite::Attributes;
+//!
+//!   #[derive(Attributes)]
+//!   struct Todos {
+//!       // use Default value of the field if it is absent in DynamoDb (empty vector)
+//!       #[dynomite(default)]
+//!       items: Vec<String>,
+//!       list_name: String,
+//!   }
+//!   ```
+//!
+//! - `#[dynomite(flatten)]` - flattens the fields of other struct that also derives `Attributes`
+//!   into the current struct.
+//!
+//!   💡 If this attribute is placed onto a field, no other `dynomite` attributes
+//!   are alowed on this field (this restriction may be relaxed in future).
+//!
+//!   This is reminiscent of [`#[serde(flatten)]`](serde-flatten). The order of
+//!   declaration of `flatten`ed fields matters, if the struct has to fields with
+//!   `#[dynomite(flatten)]` attribute the one that appears higher in code will
+//!   be evaluated before the other one. This is crucial when you want to collect
+//!   additional properties into a map:
+//!
+//!   ```
+//!   use dynomite::{Attributes, Item};
+//!
+//!   #[derive(Item)]
+//!   struct ShoppingCart {
+//!       #[dynomite(partition_key)]
+//!       id: String,
+//!       // A separate struct to store data without any id
+//!       #[dynomite(flatten)]
+//!       data: ShoppingCartData,
+//!       // Collect all other additional attributes into a map
+//!       // Beware that the order of declaration will affect the order of
+//!       // evaluation, so this "wildcard" flatten clause should be the last member
+//!       #[dynomite(flatten)]
+//!       remaining_props: Attributes,
+//!   }
+//!
+//!   // `Attributes` doesn't require neither of #[dynomite(partition_key/sort_key)]
+//!   #[derive(Attributes)]
+//!   struct ShoppingCartData {
+//!       name: String,
+//!       total_price: u32,
+//!   }
+//!   ```
 //!
 //! ## Rusoto extensions
 //!
@@ -110,6 +215,11 @@
 //! default-features = false
 //! features = ["feature-you-want"]
 //! ```
+//!
+//! [partition-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey
+//! [sort-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes
+//! [`Default::default`]: https://doc.rust-lang.org/stable/std/default/trait.Default.html#tymethod.default
+//! [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
 
 #![deny(missing_docs)]
 // reexported
