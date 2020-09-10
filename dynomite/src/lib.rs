@@ -66,7 +66,10 @@
 //! #     user: Uuid,
 //! #     order_id: Uuid,
 //! # }
-//! use dynomite::{Attributes, FromAttributes, dynamodb::{GetItemInput, DynamoDb}};
+//! use dynomite::{
+//!     dynamodb::{DynamoDb, GetItemInput},
+//!     Attributes, FromAttributes,
+//! };
 //! use std::error::Error;
 //! use uuid::Uuid;
 //!
@@ -80,15 +83,17 @@
 //!     // Convert stronly-typed `OrderKey` to a map of `rusoto_dynamodb::AttributeValue`
 //!     let key: Attributes = key.into();
 //!
-//!     let result = client.get_item(GetItemInput {
-//!         table_name: "orders".into(),
-//!         key,
-//!         ..Default::default()
-//!     }).await?;
+//!     let result = client
+//!         .get_item(GetItemInput {
+//!             table_name: "orders".into(),
+//!             key,
+//!             ..Default::default()
+//!         })
+//!         .await?;
 //!
-//!     Ok(result.item.map(|item| {
-//!         Order::from_attrs(item).expect("Invalid order, db corruption?")
-//!     }))
+//!     Ok(result
+//!         .item
+//!         .map(|item| Order::from_attrs(item).expect("Invalid order, db corruption?")))
 //! }
 //! ```
 //!
