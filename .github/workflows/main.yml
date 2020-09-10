@@ -46,6 +46,8 @@ jobs:
         rust: [stable, beta, nightly]
     runs-on: ubuntu-latest
 
+    continue-on-error: ${{ matrix.rust != 'stable' }}
+
     steps:
     - name: Setup Rust
       uses: hecrj/setup-rust-action@v1
@@ -82,12 +84,12 @@ jobs:
       - name: Set up Rust
         uses: hecrj/setup-rust-action@v1
       - uses: actions/checkout@v2
-      - name: Publish        
+      - name: Publish
         run: |
           pushd dynomite-derive
           cargo publish --token ${{ secrets.CRATES_TOKEN }}
           popd
-          # eventual consistency dictates we wait a bit before publishing 
+          # eventual consistency dictates we wait a bit before publishing
           # a crate that depends on the above
           sleep 20
           pushd dynomite
