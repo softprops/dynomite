@@ -1,0 +1,8 @@
+error: #[derive(Attributes)] for fat enums must have a sibling #[dynomite(tag = "key")] attribute to specify the descriptor field name.
+
+  = note: Only internally tagged enums are supported in this version of dynomite.
+
+ --> $DIR/fat-enum-without-tag.rs:4:10
+  |
+4 | pub enum MyEnum {
+  |          ^^^^^^

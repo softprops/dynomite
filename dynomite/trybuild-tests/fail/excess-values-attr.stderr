@@ -1,0 +1,5 @@
+error: expected no value for dynomite attribute `partition_key`
+ --> $DIR/excess-values-attr.rs:5:16
+  |
+5 |     #[dynomite(partition_key = "bar")]
+  |                ^^^^^^^^^^^^^

@@ -1,0 +1,5 @@
+error: expected a value for dynomite attribute: `rename = "foo"`
+ --> $DIR/no-attr-value.rs:5:16
+  |
+5 |     #[dynomite(rename)]
+  |                ^^^^^^
