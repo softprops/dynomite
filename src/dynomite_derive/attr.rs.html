@@ -56,6 +56,24 @@
 <span id="56">56</span>
 <span id="57">57</span>
 <span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! dynomite field attributes</span>
 
@@ -66,20 +84,36 @@
 };
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">Attr</span> {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct</span> <span class="ident">Attr</span> {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">ident</span>: <span class="ident">Ident</span>,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="ident">kind</span>: <span class="ident">AttrKind</span>,
+}
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">AttrKind</span> {
     <span class="doccomment">/// Denotes field should be replaced with Default impl when absent in ddb</span>
-    <span class="ident">Default</span>(<span class="ident">Ident</span>),
+    <span class="ident">Default</span>,
     <span class="doccomment">/// Denotes field should be renamed to value of ListStr</span>
-    <span class="ident">Rename</span>(<span class="ident">Ident</span>, <span class="ident">LitStr</span>),
+    <span class="ident">Rename</span>(<span class="ident">LitStr</span>),
     <span class="doccomment">/// Denotes Item partition (primary) key</span>
-    <span class="ident">PartitionKey</span>(<span class="ident">Ident</span>),
+    <span class="ident">PartitionKey</span>,
     <span class="doccomment">/// Denotes Item sort key</span>
-    <span class="ident">SortKey</span>(<span class="ident">Ident</span>),
+    <span class="ident">SortKey</span>,
+    <span class="doccomment">/// Denotes a field that should be replaced with all of its subfields</span>
+    <span class="ident">Flatten</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">Attr</span> {
+    <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">ident</span>: <span class="ident">Ident</span>,
+        <span class="ident">kind</span>: <span class="ident">AttrKind</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+        <span class="self">Self</span> { <span class="ident">ident</span>, <span class="ident">kind</span> }
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">Attr</span> {
     <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
-        <span class="kw">use</span> <span class="self">self</span>::<span class="ident">Attr</span>::<span class="kw-2">*</span>;
         <span class="kw">let</span> <span class="ident">name</span>: <span class="ident">Ident</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">name_str</span> <span class="op">=</span> <span class="ident">name</span>.<span class="ident">to_string</span>();
         <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="macro">Token</span><span class="macro">!</span>[<span class="op">=</span>]) {
@@ -88,7 +122,7 @@
             <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">LitStr</span>) {
                 <span class="kw">let</span> <span class="ident">lit</span>: <span class="ident">LitStr</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
                 <span class="kw">match</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">name_str</span> {
-                    <span class="string">&quot;rename&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Rename</span>(<span class="ident">name</span>, <span class="ident">lit</span>)),
+                    <span class="string">&quot;rename&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Attr</span>::<span class="ident">new</span>(<span class="ident">name</span>, <span class="ident">AttrKind</span>::<span class="ident">Rename</span>(<span class="ident">lit</span>))),
                     <span class="ident">unsupported</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span> {
                         <span class="ident">name</span>,
                         <span class="string">&quot;unsupported dynomite {} attribute&quot;</span>,
@@ -106,12 +140,14 @@
             <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">name_str</span>);
         } <span class="kw">else</span> {
             <span class="comment">// Attributes represented with a sole identifier.</span>
-            <span class="kw">match</span> <span class="ident">name_str</span>.<span class="ident">as_ref</span>() {
-                <span class="string">&quot;default&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">Default</span>(<span class="ident">name</span>)),
-                <span class="string">&quot;partition_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">PartitionKey</span>(<span class="ident">name</span>)),
-                <span class="string">&quot;sort_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">SortKey</span>(<span class="ident">name</span>)),
+            <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">name_str</span>.<span class="ident">as_ref</span>() {
+                <span class="string">&quot;default&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">AttrKind</span>::<span class="ident">Default</span>,
+                <span class="string">&quot;partition_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">AttrKind</span>::<span class="ident">PartitionKey</span>,
+                <span class="string">&quot;sort_key&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">AttrKind</span>::<span class="ident">SortKey</span>,
+                <span class="string">&quot;flatten&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">AttrKind</span>::<span class="ident">Flatten</span>,
                 <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">name</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">name_str</span>),
-            }
+            };
+            <span class="prelude-val">Ok</span>(<span class="ident">Attr</span>::<span class="ident">new</span>(<span class="ident">name</span>, <span class="ident">kind</span>))
         }
     }
 }
