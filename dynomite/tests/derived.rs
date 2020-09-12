@@ -118,8 +118,10 @@ struct NestedVariant {
 #[cfg(test)]
 mod tests {
 
+    use std::convert::TryFrom;
+
     use super::*;
-    use dynomite::{Attribute, Attributes, FromAttributes, Item};
+    use dynomite::{Attribute, Attributes, Item};
 
     #[test]
     fn derived_key() {
@@ -137,7 +139,7 @@ mod tests {
             ..Default::default()
         };
         let attrs: Attributes = value.clone().into();
-        assert_eq!(value, Book::from_attrs(attrs).unwrap())
+        assert_eq!(value, Book::try_from(attrs).unwrap())
     }
 
     #[test]
@@ -160,7 +162,7 @@ mod tests {
         assert!(attrs.contains_key("RecipeId"));
         assert!(!attrs.contains_key("id"));
 
-        assert_eq!(value, Recipe::from_attrs(attrs).unwrap());
+        assert_eq!(value, Recipe::try_from(attrs).unwrap());
     }
 
     #[test]
@@ -181,7 +183,7 @@ mod tests {
         assert!(attrs.contains_key("b"));
         assert!(attrs.contains_key("c"));
 
-        assert_eq!(value, FlattenRoot::from_attrs(attrs).unwrap());
+        assert_eq!(value, FlattenRoot::try_from(attrs).unwrap());
     }
 
     #[test]
@@ -194,7 +196,7 @@ mod tests {
             e: 44,
         };
         let attrs: Attributes = original.clone().into();
-        let collected = RemainingPropsInMap::from_attrs(attrs).unwrap();
+        let collected = RemainingPropsInMap::try_from(attrs).unwrap();
 
         assert_eq!(collected.a, original.a);
         assert_eq!(collected.b, original.b);
@@ -221,7 +223,7 @@ mod tests {
         assert!(attrs.contains_key("b"));
         assert!(!attrs.contains_key("c"));
 
-        assert_eq!(MyEnum::from_attrs(attrs).unwrap(), original);
+        assert_eq!(MyEnum::try_from(attrs).unwrap(), original);
     }
 
     #[test]

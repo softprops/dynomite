@@ -5,14 +5,14 @@ use dynomite::{
         KeySchemaElement, ProvisionedThroughput, PutItemInput, ScanInput,
     },
     retry::Policy,
-    Attributes, DynamoDbExt, FromAttributes, Item, Retries,
+    Attributes, DynamoDbExt, Item, Retries,
 };
 use futures::{future, TryStreamExt};
 #[cfg(feature = "default")]
 use rusoto_core_default::Region;
 #[cfg(feature = "rustls")]
 use rusoto_core_rustls::Region;
-use std::error::Error;
+use std::{convert::TryFrom, error::Error};
 use uuid::Uuid;
 
 #[derive(Attributes, Debug, Clone)]
@@ -135,7 +135,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 ..ScanInput::default()
             })
             .try_for_each(|item| {
-                println!("stream_scan() item {:#?}", Book::from_attrs(item));
+                println!("stream_scan() item {:#?}", Book::try_from(item));
                 future::ready(Ok(()))
             })
             .await? // attempt to convert a attribute map to a book type
@@ -152,7 +152,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             })
             .await?
             .item
-            .map(Book::from_attrs) // attempt to convert a attribute map to a book type
+            .map(Book::try_from) // attempt to convert a attribute map to a book type
     );
     Ok(())
 }

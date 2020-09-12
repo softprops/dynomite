@@ -70,7 +70,7 @@
 //!     dynamodb::{DynamoDb, GetItemInput},
 //!     Attributes, FromAttributes,
 //! };
-//! use std::error::Error;
+//! use std::{convert::TryFrom, error::Error};
 //! use uuid::Uuid;
 //!
 //! async fn get_order(
@@ -93,7 +93,7 @@
 //!
 //!     Ok(result
 //!         .item
-//!         .map(|item| Order::from_attrs(item).expect("Invalid order, db corruption?")))
+//!         .map(|item| Order::try_from(item).expect("Invalid order, db corruption?")))
 //! }
 //! ```
 //!
@@ -110,7 +110,8 @@
 //! ### `#[derive(Attributes)]`
 //!
 //! Used to derive an implementation of `From/IntoAttributes` trait to allow for
-//! serializing/deserializing map-like types into [`AttributeValue`]
+//! serializing/deserializing map-like types into [`AttributeValue`].
+//! This also generates `TryFrom<Attributes>` and `Into<Attributes>` implementations.
 //!
 //! - `#[dynomite(rename = "actualName")]` - optional attribute, may be applied to any item
 //!   attribute field, useful when the DynamoDB table you're interfacing with has
@@ -386,7 +387,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes,
 ///     IntoAttributes, Item,
 /// };
-/// use std::collections::HashMap;
+/// use std::{collections::HashMap, convert::TryFrom};
 ///
 /// #[derive(PartialEq, Debug, Clone)]
 /// struct Person {
@@ -402,7 +403,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl FromAttributes for Person {
-///     fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+///     fn from_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
 ///         Ok(Self {
 ///             id: attrs
 ///                 .remove("id")
@@ -413,7 +414,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl IntoAttributes for Person {
-///     fn into_mut_attrs(
+///     fn into_attrs(
 ///         self,
 ///         attrs: &mut Attributes,
 ///     ) {
@@ -421,17 +422,28 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///     }
 /// }
 ///
-/// // Unfortunately `dynomite` is not able to provide a blanket impl for this trait
-/// // due to orphan rules, but it is generated via the `dynomite_derive` attributes
+/// // Unfortunately `dynomite` is not able to provide a blanket impl for std::convert traits
+/// // due to orphan rules, but they are generated via the `dynomite_derive` attributes
+///
+/// impl TryFrom<Attributes> for Person {
+///     type Error = AttributeError;
+///
+///     fn try_from(mut attrs: Attributes) -> Result<Person, AttributeError> {
+///         Person::from_attrs(&mut attrs)
+///     }
+/// }
+///
 /// impl From<Person> for Attributes {
 ///     fn from(person: Person) -> Attributes {
-///         person.into_attrs()
+///         let mut map = HashMap::new();
+///         person.into_attrs(&mut map);
+///         map
 ///     }
 /// }
 ///
 /// let person = Person { id: "123".into() };
 /// let attrs: Attributes = person.clone().into();
-/// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
+/// assert_eq!(Ok(person), Person::try_from(attrs))
 /// ```
 ///
 /// You can get this all for free automatically using `#[derive(Item)]` on your structs. This is the recommended approach.
@@ -542,29 +554,29 @@ impl Attribute for AttributeValue {
     }
 }
 
-/// A type capable of being produced from
-/// a set of string keys and `AttributeValues`
+/// A type capable of being produced from a set of string keys and [`AttributeValue`]s.
+/// Generally, you should not implement this trait manually.
+/// Use `#[derive(Attributes/Item)]` to generate the proper implementation instead.
+///
+/// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
 pub trait FromAttributes: Sized {
-    /// Shortcut for `FromAttributes::from_mut_attrs(&mut attrs)`.
-    /// You should generally implement only that method.
-    fn from_attrs(mut attrs: Attributes) -> Result<Self, AttributeError> {
-        Self::from_mut_attrs(&mut attrs)
-    }
-
     /// Returns an instance of of a type resolved at runtime from a collection
-    /// of a `String` keys and `AttributeValues`.
+    /// of a `String` keys and [`AttributeValue`]s.
     /// If an instance can not be resolved and `AttributeError` will be returned.
     /// The implementations of this method should remove the relevant key-value
-    /// pairs from the map to consume them. This is needed to support
-    /// `#[dynomite(flatten)]` without creating temporary hash maps.
-    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError>;
+    /// pairs from the map to consume them.
+    ///
+    /// This is needed to support `#[dynomite(flatten)]` without creating temporary hash maps.
+    ///
+    /// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
+    fn from_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError>;
 }
 
-/// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types
-/// that implement Attribute
+/// Coerces a homogeneous HashMap of attribute values into a homogeneous Map of types
+/// that implement `Attribute`
 #[allow(clippy::implicit_hasher)]
 impl<A: Attribute> FromAttributes for HashMap<String, A> {
-    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+    fn from_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
             .drain()
             .map(|(k, v)| Ok((k, A::from_attr(v)?)))
@@ -575,7 +587,7 @@ impl<A: Attribute> FromAttributes for HashMap<String, A> {
 /// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
 /// that implement Attribute
 impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
-    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
+    fn from_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
             .drain()
             .map(|(k, v)| Ok((k, A::from_attr(v)?)))
@@ -583,31 +595,27 @@ impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
     }
 }
 
-/// You should implement this trait instead of `From<T> for Attributes`
-/// for your type to support flattening, `#[dynomite(Attributes/Item)]` will
-/// generate both the implementation of this trait and `From<T>`
+/// A type capable of being serialized into a set of string keys and [`AttributeValue`]s
+/// Generally, you should not implement this trait manually.
+/// Use `#[derive(Attributes/Item)]` to generate the proper implementation instead.
+///
+/// It also generates `From<T> for Attributes` for your type
 /// (there is no blanket impl for `From<T>` here due to orphan rules)
+///
+/// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
 pub trait IntoAttributes: Sized {
-    /// A shortcut for `IntoAttributes::into_mut_attrs()` that creates a new hash map.
-    /// You should generally implement only that method instead.
-    fn into_attrs(self) -> Attributes {
-        let mut attrs = Attributes::new();
-        self.into_mut_attrs(&mut attrs);
-        attrs
-    }
-
     /// Converts `self` into `Attributes` by accepting a `sink` argument and
     /// insterting attribute key-value pairs into it.
     /// This is needed to support `#[dynomite(flatten)]` without creating
     /// temporary hash maps.
-    fn into_mut_attrs(
+    fn into_attrs(
         self,
         sink: &mut Attributes,
     );
 }
 
 impl<A: Attribute> IntoAttributes for HashMap<String, A> {
-    fn into_mut_attrs(
+    fn into_attrs(
         self,
         sink: &mut Attributes,
     ) {
@@ -616,7 +624,7 @@ impl<A: Attribute> IntoAttributes for HashMap<String, A> {
 }
 
 impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
-    fn into_mut_attrs(
+    fn into_attrs(
         self,
         sink: &mut Attributes,
     ) {
@@ -627,16 +635,15 @@ impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
 /// A Map type for all hash-map-like values, represented as the `M` AttributeValue type
 impl<T: IntoAttributes + FromAttributes> Attribute for T {
     fn into_attr(self: Self) -> AttributeValue {
+        let mut map = HashMap::new();
+        self.into_attrs(&mut map);
         AttributeValue {
-            m: Some(self.into_attrs()),
+            m: Some(map),
             ..AttributeValue::default()
         }
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-        value
-            .m
-            .ok_or(AttributeError::InvalidType)
-            .and_then(T::from_attrs)
+        T::from_attrs(&mut value.m.ok_or(AttributeError::InvalidType)?)
     }
 }
 
