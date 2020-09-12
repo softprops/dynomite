@@ -83,6 +83,38 @@ struct AdditionalPropsVerbatim {
     e: u32,
 }
 
+#[derive(Attributes, Clone, Debug, PartialEq)]
+#[dynomite(tag = "kind")]
+enum MyEnum {
+    Foo(Foo),
+    Bar(Bar),
+    Nested(Nested),
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct Foo {
+    a: String,
+    b: u32,
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct Bar {
+    a: String,
+    c: bool,
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+#[dynomite(tag = "nested_kind")]
+enum Nested {
+    #[dynomite(rename = "renamed_nested_variant")]
+    NestedVariant(NestedVariant),
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct NestedVariant {
+    a: String,
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -173,5 +205,37 @@ mod tests {
         );
         assert!(collected.remainder.contains_key("d"));
         assert!(collected.remainder.contains_key("e"));
+    }
+
+    #[test]
+    fn flat_single_item_tuple_enum() {
+        let original = MyEnum::Foo(Foo {
+            a: "Hello".to_owned(),
+            b: 42,
+        });
+        let attrs: Attributes = original.clone().into();
+        assert_eq!(attrs.len(), 3);
+        assert!(attrs.contains_key("kind"));
+        assert!(!attrs.contains_key("nested_kind"));
+        assert!(attrs.contains_key("a"));
+        assert!(attrs.contains_key("b"));
+        assert!(!attrs.contains_key("c"));
+
+        assert_eq!(MyEnum::from_attrs(attrs).unwrap(), original);
+    }
+
+    #[test]
+    fn nested_single_item_tuple_enum() {
+        let original = MyEnum::Nested(Nested::NestedVariant(NestedVariant { a: "hello".into() }));
+
+        let attrs: Attributes = original.into();
+
+        assert_eq!(attrs.len(), 3);
+
+        let kind = String::from_attr(attrs.get("nested_kind").unwrap().clone()).unwrap();
+        assert_eq!(kind, "renamed_nested_variant");
+
+        assert!(attrs.contains_key("kind"));
+        assert!(attrs.contains_key("a"));
     }
 }

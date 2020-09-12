@@ -168,6 +168,114 @@
 //!   }
 //!   ```
 //!
+//! #### Fat enums
+//!
+//! Fat enums are naturally supported by `#[derive(Attribute)]`.
+//! As for now, there is a limitation that the members of the enum must be
+//! either unit or one-element tuple variants. This restriction will be relaxed
+//! in future versions of `dynomite`.
+//!
+//! Deriving `Attributes` on fat enums currently uses
+//! [internally tagged enum pattern][internally-tagged-enum] (inspired by serde).
+//! Thus, you have to explicitly specify the **field name** of enum tag
+//! via the `tag` attribute on an enum.
+//!
+//! For example, the following definition:
+//!
+//! ```
+//! use dynomite::Attributes;
+//!
+//! #[derive(Attributes)]
+//! // Name of the field where to store the discriminant in DynamoDB
+//! #[dynomite(tag = "kind")]
+//! enum Shape {
+//!     Rectangle(Rectangle),
+//!     // Use `rename` to change the **value** of the tag for a particular variant
+//!     // by default the tag for a particular variant is the name of the variant verbatim
+//!     #[dynomite(rename = "my_circle")]
+//!     Circle(Circle),
+//!     Unknown,
+//! }
+//!
+//! #[derive(Attributes)]
+//! struct Circle {
+//!     radius: u32,
+//! }
+//!
+//! #[derive(Attributes)]
+//! struct Rectangle {
+//!     width: u32,
+//!     height: u32,
+//! }
+//! ```
+//!
+//! corresponds to the following representation in DynamoDB for each enum variant:
+//!
+//! - `Rectangle`:
+//!   ```json
+//!   {
+//!       "kind": "Rectangle",
+//!       "width": 42,
+//!       "height": 64
+//!   }
+//!   ```
+//! - `Circle`:
+//!   ```json
+//!   {
+//!       "kind": "my_circle",
+//!       "radius": 54
+//!   }
+//!   ```
+//! - `Unknown`:
+//!   ```json
+//!   {
+//!       "kind": "Unknown"
+//!   }
+//!   ```
+//!
+//! If you have a plain old enum (without any data fields), you should use
+//! [`#[derive(Attribute)]`](#deriveattribute) instead.
+//!
+//! ### `#[derive(Attribute)]`
+//!
+//! Derives an implementation of [`Attribute`] for the plain enum.
+//! If you want to use a fat enum see [this paragraph](#fat-enums) instead.
+//!
+//! The enum istelf will be represented as a string with the name of the variant
+//! it represents.
+//! In contrast, having [`#[derive(Attributes)]`](deriveattributes) on an enum
+//! makes it to be represented as an object with a tag field,
+//! which implies an additional layer of indirection.
+//!
+//! ```
+//! use dynomite::{Attribute, Item};
+//!
+//! #[derive(Attribute)]
+//! enum UserRole {
+//!     Admin,
+//!     Moderator,
+//!     Regular,
+//! }
+//!
+//! #[derive(Item)]
+//! struct User {
+//!     #[dynomite(partition_key)]
+//!     id: String,
+//!     role: UserRole,
+//! }
+//! ```
+//!
+//! This data model will have the following representation in DynamoDB:
+//!
+//! ```json
+//! {
+//!     "id": "d97de525-c81d-46d4-b945-d01b3a0f9165",
+//!     "role": "Admin"
+//! }
+//! ```
+//!
+//! `role` field here may be any of `Admin`, `Moderator`, or `Regular` strings.
+//!
 //! ## Rusoto extensions
 //!
 //! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite
@@ -223,8 +331,10 @@
 //!
 //! [partition-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey
 //! [sort-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes
+//! [internally-tagged-enum]: https://serde.rs/enum-representations.html#internally-tagged
 //! [`Default::default`]: https://doc.rust-lang.org/stable/std/default/trait.Default.html#tymethod.default
 //! [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
+//! [`Attribute`]: trait.Attribute.html
 
 #![deny(missing_docs)]
 // reexported

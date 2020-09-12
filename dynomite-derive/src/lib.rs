@@ -29,24 +29,200 @@
 //! ```
 
 mod attr;
-use attr::{Attr, AttrKind};
+use std::collections::HashSet;
+
+use attr::{EnumAttr, EnumAttrKind, FieldAttr, FieldAttrKind, VariantAttr};
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use proc_macro_error::{abort, ResultExt};
 use quote::{quote, ToTokens};
 use syn::{
-    punctuated::Punctuated,
-    Attribute,
-    Data::{Enum, Struct},
-    DataStruct, DeriveInput, Field, Fields, Ident, Token, Variant, Visibility,
+    parse::Parse, punctuated::Punctuated, Attribute, DataStruct, DeriveInput, Field, Fields, Ident,
+    Token, Visibility,
 };
+
+struct Variant {
+    inner: syn::Variant,
+    attrs: Vec<VariantAttr>,
+}
+
+impl Variant {
+    fn deser_name(&self) -> String {
+        self.attrs
+            .iter()
+            .find_map(|it| match &it.kind {
+                attr::VariantAttrKind::Rename(it) => Some(it.value()),
+            })
+            .unwrap_or_else(|| self.inner.ident.to_string())
+    }
+}
+
+struct DataEnum {
+    attrs: Vec<EnumAttr>,
+    ident: syn::Ident,
+    variants: Vec<Variant>,
+}
+
+impl DataEnum {
+    fn new(
+        ident: Ident,
+        inner: syn::DataEnum,
+        attrs: &[Attribute],
+    ) -> Self {
+        let me = Self {
+            attrs: parse_attrs(&attrs),
+            ident,
+            variants: inner
+                .variants
+                .into_iter()
+                .map(|inner| {
+                    let attrs = parse_attrs(&inner.attrs);
+                    Variant { inner, attrs }
+                })
+                .collect(),
+        };
+
+        // Validate that all enum tag values are unique
+        let mut unique_names = HashSet::new();
+        for variant in &me.variants {
+            if let Some(existing) = unique_names.replace(variant.deser_name()) {
+                abort!(
+                    variant.inner.ident.span(),
+                    "Duplicate tag name detected: `{}`", existing;
+                    help = "Please ensure that no `rename = \"tag_value\"` \
+                    clauses conflict with each other and remaining enum variants' names"
+                );
+            }
+        }
+        me
+    }
+
+    fn tag_key(&self) -> String {
+        self.attrs
+            .iter()
+            .find_map(|attr| match &attr.kind {
+                EnumAttrKind::Tag(lit) => Some(lit.value()),
+            })
+            .unwrap_or_else(|| {
+                abort!(
+                    self.ident,
+                    "#[derive(Attributes)] for fat enums must have a sibling \
+                    #[dynomite(tag = \"key\")] attribute to specify the descriptor field name.";
+                    note = "Only internally tagged enums are supported in this version of dynomite."
+                )
+            })
+    }
+
+    fn impl_from_attributes(&self) -> impl ToTokens {
+        let match_arms = self.variants.iter().map(|variant| {
+            let variant_ident = &variant.inner.ident;
+            let expr = match &variant.inner.fields {
+                Fields::Named(_record) => Self::unimplemented_record_variants(&variant),
+                Fields::Unnamed(tuple) => {
+                    Self::expect_single_item_tuple(&tuple, variant_ident);
+                    quote! { Self::#variant_ident(::dynomite::FromAttributes::from_mut_attrs(attrs)?) }
+                }
+                Fields::Unit => quote! { Self::#variant_ident }
+            };
+            let variant_deser_name = variant.deser_name();
+            quote! { #variant_deser_name => #expr, }
+        });
+
+        let enum_ident = &self.ident;
+        let tag_key = self.tag_key();
+        quote! {
+            impl ::dynomite::FromAttributes for #enum_ident {
+                fn from_mut_attrs(attrs: &mut ::dynomite::Attributes) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+                    use ::std::{string::String, result::Result::{Ok, Err}};
+                    use ::dynomite::{Attribute, AttributeError};
+
+                    let tag = attrs.remove(#tag_key).ok_or_else(|| {
+                        AttributeError::MissingField {
+                            name: #tag_key.to_owned(),
+                        }
+                    })?;
+                    let tag: String = Attribute::from_attr(tag)?;
+                    Ok(match tag.as_str() {
+                        #(#match_arms)*
+                        _ => return Err(AttributeError::InvalidFormat)
+                    })
+                }
+            }
+        }
+    }
+
+    fn impl_into_attributes(&self) -> impl ToTokens {
+        let enum_ident = &self.ident;
+
+        let match_arms = self.variants.iter().map(|variant| {
+            let variant_ident = &variant.inner.ident;
+            let variant_deser_name = variant.deser_name();
+            match &variant.inner.fields {
+                Fields::Named(_record) => Self::unimplemented_record_variants(&variant),
+                Fields::Unnamed(tuple) => {
+                    Self::expect_single_item_tuple(&tuple, variant_ident);
+
+                    quote! {
+                        Self::#variant_ident(variant) => {
+                            ::dynomite::IntoAttributes::into_mut_attrs(variant, attrs);
+                            #variant_deser_name
+                        }
+                    }
+                }
+                Fields::Unit => quote! { Self::#variant_ident => #variant_deser_name, },
+            }
+        });
+
+        let tag_key = self.tag_key();
+
+        quote! {
+            impl ::dynomite::IntoAttributes for #enum_ident {
+                fn into_mut_attrs(self, attrs: &mut ::dynomite::Attributes) {
+                    let tag = match self {
+                        #(#match_arms)*
+                    };
+                    let tag = ::dynomite::Attribute::into_attr(tag.to_owned());
+                    attrs.insert(#tag_key.to_owned(), tag);
+                }
+            }
+
+            impl ::std::convert::From<#enum_ident> for ::dynomite::Attributes {
+                fn from(item: #enum_ident) -> Self {
+                    ::dynomite::IntoAttributes::into_attrs(item)
+                }
+            }
+        }
+    }
+
+    fn unimplemented_record_variants(variant: &Variant) -> ! {
+        abort!(
+            variant.inner.ident.span(),
+            "Record enum variants are not implemented yet."
+        )
+    }
+
+    fn expect_single_item_tuple(
+        tuple: &syn::FieldsUnnamed,
+        variant_ident: &Ident,
+    ) {
+        if tuple.unnamed.len() != 1 {
+            abort!(
+                variant_ident,
+                "Tuple variants with {} elements are not supported yet in dynomite, use \
+                single-element tuples for now. \
+                This restriction may be relaxed in future (follow the updates).",
+                tuple.unnamed.len(),
+            )
+        }
+    }
+}
 
 /// A Field and all its extracted dynomite derive attrs
 #[derive(Clone)]
 struct ItemField<'a> {
     field: &'a Field,
-    attrs: Vec<Attr>,
+    attrs: Vec<FieldAttr>,
 }
 
 impl<'a> ItemField<'a> {
@@ -57,7 +233,7 @@ impl<'a> ItemField<'a> {
             if let Some(it) = me
                 .attrs
                 .iter()
-                .find(|it| !matches!(it.kind, AttrKind::Flatten))
+                .find(|it| !matches!(it.kind, FieldAttrKind::Flatten))
             {
                 abort!(
                     it.ident,
@@ -71,25 +247,25 @@ impl<'a> ItemField<'a> {
     fn is_partition_key(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr.kind, AttrKind::PartitionKey))
+            .any(|attr| matches!(attr.kind, FieldAttrKind::PartitionKey))
     }
 
     fn is_sort_key(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr.kind, AttrKind::SortKey))
+            .any(|attr| matches!(attr.kind, FieldAttrKind::SortKey))
     }
 
     fn is_default_when_absent(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr.kind, AttrKind::Default))
+            .any(|attr| matches!(attr.kind, FieldAttrKind::Default))
     }
 
     fn is_flatten(&self) -> bool {
         self.attrs
             .iter()
-            .any(|attr| matches!(attr.kind, AttrKind::Flatten))
+            .any(|attr| matches!(attr.kind, FieldAttrKind::Flatten))
     }
 
     fn deser_name(&self) -> String {
@@ -97,7 +273,7 @@ impl<'a> ItemField<'a> {
         attrs
             .iter()
             .find_map(|attr| match &attr.kind {
-                AttrKind::Rename(lit) => Some(lit.value()),
+                FieldAttrKind::Rename(lit) => Some(lit.value()),
                 _ => None,
             })
             .unwrap_or_else(|| {
@@ -110,12 +286,12 @@ impl<'a> ItemField<'a> {
     }
 }
 
-fn parse_attrs(all_attrs: &[Attribute]) -> Vec<Attr> {
+fn parse_attrs<A: Parse>(all_attrs: &[Attribute]) -> Vec<A> {
     all_attrs
         .iter()
         .filter(|attr| is_dynomite_attr(attr))
         .flat_map(|attr| {
-            attr.parse_args_with(Punctuated::<Attr, Token![,]>::parse_terminated)
+            attr.parse_args_with(Punctuated::<A, Token![,]>::parse_terminated)
                 .unwrap_or_abort()
         })
         .collect()
@@ -151,13 +327,7 @@ pub fn derive_item(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(Attributes, attributes(dynomite))]
 pub fn derive_attributes(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
-
-    let gen = match expand_attributes(ast) {
-        Ok(g) => g,
-        Err(e) => return e.to_compile_error().into(),
-    };
-
-    gen.into_token_stream().into()
+    expand_attributes(ast).unwrap_or_else(|e| e.to_compile_error().into())
 }
 
 /// Derives `dynomite::Attribute` for enum types
@@ -176,7 +346,7 @@ pub fn derive_attribute(input: TokenStream) -> TokenStream {
 fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
     let name = &ast.ident;
     match ast.data {
-        Enum(variants) => {
+        syn::Data::Enum(variants) => {
             make_dynomite_attr(name, &variants.variants.into_iter().collect::<Vec<_>>())
         }
         _ => panic!("Dynomite Attributes can only be generated for enum types"),
@@ -205,7 +375,7 @@ fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
 /// ```
 fn make_dynomite_attr(
     name: &Ident,
-    variants: &[Variant],
+    variants: &[syn::Variant],
 ) -> impl ToTokens {
     let attr = quote!(::dynomite::Attribute);
     let err = quote!(::dynomite::AttributeError);
@@ -244,21 +414,29 @@ fn make_dynomite_attr(
     }
 }
 
-fn expand_attributes(ast: DeriveInput) -> syn::Result<impl ToTokens> {
+fn expand_attributes(ast: DeriveInput) -> syn::Result<TokenStream> {
     use syn::spanned::Spanned as _;
-    let name = &ast.ident;
-    match ast.data {
-        Struct(DataStruct { fields, .. }) => match fields {
+    let name = ast.ident;
+    let tokens = match ast.data {
+        syn::Data::Struct(DataStruct { fields, .. }) => match fields {
             Fields::Named(named) => {
-                make_dynomite_attributes(name, &named.named.into_iter().collect::<Vec<_>>())
+                make_dynomite_attrs_for_struct(&name, &named.named.into_iter().collect::<Vec<_>>())
+                    .into_token_stream()
             }
-            fields => Err(syn::Error::new(
-                fields.span(),
-                "Dynomite Attributes require named fields",
-            )),
+            fields => {
+                return Err(syn::Error::new(
+                    fields.span(),
+                    "Dynomite Attributes require named fields",
+                ))
+            }
         },
+        syn::Data::Enum(data_enum) => {
+            make_dynomite_attrs_for_enum(&DataEnum::new(name, data_enum, &ast.attrs))
+                .into_token_stream()
+        }
         _ => panic!("Dynomite Attributes can only be generated for structs"),
-    }
+    };
+    Ok(tokens.into())
 }
 
 fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
@@ -266,7 +444,7 @@ fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
     let name = &ast.ident;
     let vis = &ast.vis;
     match ast.data {
-        Struct(DataStruct { fields, .. }) => match fields {
+        syn::Data::Struct(DataStruct { fields, .. }) => match fields {
             Fields::Named(named) => {
                 make_dynomite_item(vis, name, &named.named.into_iter().collect::<Vec<_>>())
             }
@@ -279,10 +457,20 @@ fn expand_item(ast: DeriveInput) -> syn::Result<impl ToTokens> {
     }
 }
 
-fn make_dynomite_attributes(
+fn make_dynomite_attrs_for_enum(enum_item: &DataEnum) -> impl ToTokens {
+    let from_attributes = enum_item.impl_from_attributes();
+    let into_attributes = enum_item.impl_into_attributes();
+
+    quote! {
+        #from_attributes
+        #into_attributes
+    }
+}
+
+fn make_dynomite_attrs_for_struct(
     name: &Ident,
     fields: &[Field],
-) -> syn::Result<impl ToTokens> {
+) -> impl ToTokens {
     let item_fields = fields.iter().map(ItemField::new).collect::<Vec<_>>();
     // impl ::dynomite::FromAttributes for Name
     let from_attribute_map = get_from_attributes_trait(name, &item_fields);
@@ -290,10 +478,10 @@ fn make_dynomite_attributes(
     // impl From<Name> for ::dynomite::Attributes
     let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
 
-    Ok(quote! {
+    quote! {
         #from_attribute_map
         #to_attribute_map
-    })
+    }
 }
 
 fn make_dynomite_item(
