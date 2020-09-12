@@ -14,15 +14,15 @@
 //! AWS typed values feel more natural and ergonomic in Rust. Where a conversion is not available you can implement `Attribute` for your own
 //! types to leverage higher level functionality.
 //!
-//! The [Item](trait.Item.html) type
+//! The [Item](trait.Item.html) trait
 //! provides conversion interfaces for complex types which represent
 //! DynamoDB's notion of "items".
 //!
-//! 💡 A cargo feature named "derive" makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
+//! 💡 A cargo feature named `"derive"` makes it easy to derive `Item` instances for your custom types. This feature is enabled by default.
 //!
 //!
 //! ```rust,no_run
-//!  use dynomite::Item;
+//!  use dynomite::{Item, Attributes};
 //!  use uuid::Uuid;
 //!
 //! #[derive(Item)]
@@ -31,9 +31,142 @@
 //!   user: Uuid,
 //!   #[dynomite(sort_key)]
 //!   order_id: Uuid,
-//!   color: Option<String>
+//!   color: Option<String>,
 //! }
 //! ```
+//!
+//! ## Attributes
+//!
+//! ### `#[derive(Item)]`
+//! Used to define a top-level DynamoDB item.
+//! Generates a `<ItemName>Key` struct with only `partition_key/sort_key`
+//! fields to be used for type-safe primary key construction.
+//! This automatically derives [`Attributes`](#deriveattributes) too.
+//!
+//! For the `Order` struct from the example higher this will generate an `OrderKey`
+//! struct like this:
+//!
+//! ```rust
+//! # use uuid::Uuid;
+//! # use dynomite::Attributes;
+//! #[derive(Attributes)]
+//! struct OrderKey {
+//!     user: Uuid,
+//!     order_id: Uuid,
+//! }
+//! ```
+//!
+//! Use it to safely and conveniently construct the primary key:
+//!
+//! ```rust
+//! # #[derive(dynomite::Attributes)]
+//! # struct Order {}
+//! # #[derive(Attributes)]
+//! # struct OrderKey {
+//! #     user: Uuid,
+//! #     order_id: Uuid,
+//! # }
+//! use dynomite::{
+//!     dynamodb::{DynamoDb, GetItemInput},
+//!     Attributes, FromAttributes,
+//! };
+//! use std::error::Error;
+//! use uuid::Uuid;
+//!
+//! async fn get_order(
+//!     client: impl DynamoDb,
+//!     user: Uuid,
+//!     order_id: Uuid,
+//! ) -> Result<Option<Order>, Box<dyn Error>> {
+//!     // Use the generated `OrderKey` struct to create a primary key
+//!     let key = OrderKey { user, order_id };
+//!     // Convert stronly-typed `OrderKey` to a map of `rusoto_dynamodb::AttributeValue`
+//!     let key: Attributes = key.into();
+//!
+//!     let result = client
+//!         .get_item(GetItemInput {
+//!             table_name: "orders".into(),
+//!             key,
+//!             ..Default::default()
+//!         })
+//!         .await?;
+//!
+//!     Ok(result
+//!         .item
+//!         .map(|item| Order::from_attrs(item).expect("Invalid order, db corruption?")))
+//! }
+//! ```
+//!
+//! - `#[dynomite(partition_key)]` - required attribute, expected to be applied the target
+//!  [partition attribute][partition-key] field with a derivable DynamoDB attribute value
+//!  of String, Number or Binary
+//!
+//! - `#[dynomite(sort_key)]` - optional attribute, may be applied to one target
+//!  [sort attribute](sort-key) field with an derivable DynamoDB attribute value
+//!  of String, Number or Binary
+//!
+//! - All other attributes are the same as for [`#[derive(Attributes)]`](#deriveattributes)
+//!
+//! ### `#[derive(Attributes)]`
+//!
+//! Used to derive an implementation of `From/IntoAttributes` trait to allow for
+//! serializing/deserializing map-like types into [`AttributeValue`]
+//!
+//! - `#[dynomite(rename = "actualName")]` - optional attribute, may be applied to any item
+//!   attribute field, useful when the DynamoDB table you're interfacing with has
+//!   attributes whose names don't following Rust's naming conventions
+//!
+//! - `#[dynomite(default)]` - use [`Default::default`] implementation of the field type
+//!   if the attribute is absent when deserializing from `Attributes`
+//!
+//!   ```
+//!   use dynomite::Attributes;
+//!
+//!   #[derive(Attributes)]
+//!   struct Todos {
+//!       // use Default value of the field if it is absent in DynamoDb (empty vector)
+//!       #[dynomite(default)]
+//!       items: Vec<String>,
+//!       list_name: String,
+//!   }
+//!   ```
+//!
+//! - `#[dynomite(flatten)]` - flattens the fields of other struct that also derives `Attributes`
+//!   into the current struct.
+//!
+//!   💡 If this attribute is placed onto a field, no other `dynomite` attributes
+//!   are alowed on this field (this restriction may be relaxed in future).
+//!
+//!   This is reminiscent of [`#[serde(flatten)]`](serde-flatten). The order of
+//!   declaration of `flatten`ed fields matters, if the struct has to fields with
+//!   `#[dynomite(flatten)]` attribute the one that appears higher in code will
+//!   be evaluated before the other one. This is crucial when you want to collect
+//!   additional properties into a map:
+//!
+//!   ```
+//!   use dynomite::{Attributes, Item};
+//!
+//!   #[derive(Item)]
+//!   struct ShoppingCart {
+//!       #[dynomite(partition_key)]
+//!       id: String,
+//!       // A separate struct to store data without any id
+//!       #[dynomite(flatten)]
+//!       data: ShoppingCartData,
+//!       // Collect all other additional attributes into a map
+//!       // Beware that the order of declaration will affect the order of
+//!       // evaluation, so this "wildcard" flatten clause should be the last member
+//!       #[dynomite(flatten)]
+//!       remaining_props: Attributes,
+//!   }
+//!
+//!   // `Attributes` doesn't require neither of #[dynomite(partition_key/sort_key)]
+//!   #[derive(Attributes)]
+//!   struct ShoppingCartData {
+//!       name: String,
+//!       total_price: u32,
+//!   }
+//!   ```
 //!
 //! ## Rusoto extensions
 //!
@@ -87,6 +220,11 @@
 //! default-features = false
 //! features = ["feature-you-want"]
 //! ```
+//!
+//! [partition-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey
+//! [sort-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes
+//! [`Default::default`]: https://doc.rust-lang.org/stable/std/default/trait.Default.html#tymethod.default
+//! [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html
 
 #![deny(missing_docs)]
 // reexported
@@ -135,7 +273,8 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///
 /// ```
 /// use dynomite::{
-///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes, Item,
+///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes,
+///     IntoAttributes, Item,
 /// };
 /// use std::collections::HashMap;
 ///
@@ -153,23 +292,33 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// }
 ///
 /// impl FromAttributes for Person {
-///     fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+///     fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
 ///         Ok(Self {
 ///             id: attrs
-///                 .get("id")
-///                 .and_then(|val| val.s.clone())
-///                 .ok_or(AttributeError::MissingField { name: "id".into() })?,
+///                 .remove("id")
+///                 .and_then(|val| val.s)
+///                 .ok_or_else(|| AttributeError::MissingField { name: "id".into() })?,
 ///         })
 ///     }
 /// }
 ///
-/// impl Into<Attributes> for Person {
-///     fn into(self: Self) -> Attributes {
-///         let mut attrs = HashMap::new();
+/// impl IntoAttributes for Person {
+///     fn into_mut_attrs(
+///         self,
+///         attrs: &mut Attributes,
+///     ) {
 ///         attrs.insert("id".into(), "123".to_string().into_attr());
-///         attrs
 ///     }
 /// }
+///
+/// // Unfortunately `dynomite` is not able to provide a blanket impl for this trait
+/// // due to orphan rules, but it is generated via the `dynomite_derive` attributes
+/// impl From<Person> for Attributes {
+///     fn from(person: Person) -> Attributes {
+///         person.into_attrs()
+///     }
+/// }
+///
 /// let person = Person { id: "123".into() };
 /// let attrs: Attributes = person.clone().into();
 /// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))
@@ -274,39 +423,94 @@ pub trait Attribute: Sized {
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError>;
 }
 
+impl Attribute for AttributeValue {
+    fn into_attr(self: Self) -> AttributeValue {
+        self
+    }
+    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
+        Ok(value)
+    }
+}
+
 /// A type capable of being produced from
 /// a set of string keys and `AttributeValues`
 pub trait FromAttributes: Sized {
+    /// Shortcut for `FromAttributes::from_mut_attrs(&mut attrs)`.
+    /// You should generally implement only that method.
+    fn from_attrs(mut attrs: Attributes) -> Result<Self, AttributeError> {
+        Self::from_mut_attrs(&mut attrs)
+    }
+
     /// Returns an instance of of a type resolved at runtime from a collection
-    /// of a `String` keys and `AttributeValues`. If
-    /// a instance can not be resolved and `AttributeError` will be returned.
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError>;
+    /// of a `String` keys and `AttributeValues`.
+    /// If an instance can not be resolved and `AttributeError` will be returned.
+    /// The implementations of this method should remove the relevant key-value
+    /// pairs from the map to consume them. This is needed to support
+    /// `#[dynomite(flatten)]` without creating temporary hash maps.
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError>;
 }
 
 /// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types
 /// that implement Attribute
 #[allow(clippy::implicit_hasher)]
 impl<A: Attribute> FromAttributes for HashMap<String, A> {
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
-            .into_iter()
-            .try_fold(HashMap::new(), |mut result, (k, v)| {
-                result.insert(k, A::from_attr(v)?);
-                Ok(result)
-            })
+            .drain()
+            .map(|(k, v)| Ok((k, A::from_attr(v)?)))
+            .collect()
     }
 }
 
 /// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types
 /// that implement Attribute
 impl<A: Attribute> FromAttributes for BTreeMap<String, A> {
-    fn from_attrs(attrs: Attributes) -> Result<Self, AttributeError> {
+    fn from_mut_attrs(attrs: &mut Attributes) -> Result<Self, AttributeError> {
         attrs
-            .into_iter()
-            .try_fold(BTreeMap::new(), |mut result, (k, v)| {
-                result.insert(k, A::from_attr(v)?);
-                Ok(result)
-            })
+            .drain()
+            .map(|(k, v)| Ok((k, A::from_attr(v)?)))
+            .collect()
+    }
+}
+
+/// You should implement this trait instead of `From<T> for Attributes`
+/// for your type to support flattening, `#[dynomite(Attributes/Item)]` will
+/// generate both the implementation of this trait and `From<T>`
+/// (there is no blanket impl for `From<T>` here due to orphan rules)
+pub trait IntoAttributes: Sized {
+    /// A shortcut for `IntoAttributes::into_mut_attrs()` that creates a new hash map.
+    /// You should generally implement only that method instead.
+    fn into_attrs(self) -> Attributes {
+        let mut attrs = Attributes::new();
+        self.into_mut_attrs(&mut attrs);
+        attrs
+    }
+
+    /// Converts `self` into `Attributes` by accepting a `sink` argument and
+    /// insterting attribute key-value pairs into it.
+    /// This is needed to support `#[dynomite(flatten)]` without creating
+    /// temporary hash maps.
+    fn into_mut_attrs(
+        self,
+        sink: &mut Attributes,
+    );
+}
+
+impl<A: Attribute> IntoAttributes for HashMap<String, A> {
+    fn into_mut_attrs(
+        self,
+        sink: &mut Attributes,
+    ) {
+        sink.extend(self.into_iter().map(|(k, v)| (k, v.into_attr())));
+    }
+}
+
+impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
+    fn into_mut_attrs(
+        self,
+        sink: &mut Attributes,
+    ) {
+        sink.extend(self.into_iter().map(|(k, v)| (k, v.into_attr())));
     }
 }
 

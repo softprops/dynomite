@@ -1,11 +1,6 @@
-use dynomite_derive::Item;
+use dynomite_derive::Attributes;
 
-#[derive(Item)]
-struct Foo {
-    #[dynomite(partition_key)]
-    key1: String,
-    #[dynomite(typo)]
-    key2: String
-}
+#[derive(Attributes)]
+struct Foo(String);
 
 fn main() {}

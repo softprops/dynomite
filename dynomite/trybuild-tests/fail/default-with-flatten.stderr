@@ -1,0 +1,5 @@
+error: If #[dynomite(flatten)] is used, no other dynomite attributes are allowed on the field
+ --> $DIR/default-with-flatten.rs:5:16
+  |
+5 |     #[dynomite(default, flatten)]
+  |                ^^^^^^^
