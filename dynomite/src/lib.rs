@@ -390,7 +390,7 @@ pub type Attributes = HashMap<String, AttributeValue>;
 ///   #[dynomite(default)]
 ///   summary: Option<String>
 /// }
-pub trait Item: Into<Attributes> + FromAttributes {
+pub trait Item: IntoAttributes + FromAttributes {
     /// Returns the set of attributes which make up this item's primary key
     ///
     /// This is often used in item look ups
@@ -514,11 +514,11 @@ impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
     }
 }
 
-/// A Map type for Items, represented as the `M` AttributeValue type
-impl<T: Item> Attribute for T {
+/// A Map type for all hash-map-like values, represented as the `M` AttributeValue type
+impl<T: IntoAttributes + FromAttributes> Attribute for T {
     fn into_attr(self: Self) -> AttributeValue {
         AttributeValue {
-            m: Some(self.into()),
+            m: Some(self.into_attrs()),
             ..AttributeValue::default()
         }
     }
@@ -527,39 +527,6 @@ impl<T: Item> Attribute for T {
             .m
             .ok_or(AttributeError::InvalidType)
             .and_then(T::from_attrs)
-    }
-}
-
-/// A Map type for Items for HashMaps, represented as the `M` AttributeValue type
-#[allow(clippy::implicit_hasher)]
-impl<A: Attribute> Attribute for HashMap<String, A> {
-    fn into_attr(self: Self) -> AttributeValue {
-        AttributeValue {
-            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
-            ..AttributeValue::default()
-        }
-    }
-    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-        value
-            .m
-            .ok_or(AttributeError::InvalidType)
-            .and_then(Self::from_attrs) // because FromAttributes is impl by all HashMap<String, A>
-    }
-}
-
-/// A Map type for `Items` for `BTreeMaps`, represented as the `M` AttributeValue type
-impl<A: Attribute> Attribute for BTreeMap<String, A> {
-    fn into_attr(self: Self) -> AttributeValue {
-        AttributeValue {
-            m: Some(self.into_iter().map(|(k, v)| (k, v.into_attr())).collect()),
-            ..AttributeValue::default()
-        }
-    }
-    fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
-        value
-            .m
-            .ok_or(AttributeError::InvalidType)
-            .and_then(Self::from_attrs) // because FromAttributes is impl by all BTreeMap<String, A>
     }
 }
 

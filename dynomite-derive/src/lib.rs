@@ -289,30 +289,10 @@ fn make_dynomite_attributes(
     // impl ::dynomite::IntoAttributes for Name
     // impl From<Name> for ::dynomite::Attributes
     let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
-    // impl Attribute for Name (these are essentially just a map)
-    let attribute = quote!(::dynomite::Attribute);
-    let impl_attribute = quote! {
-        impl #attribute for #name {
-            fn into_attr(self: Self) -> ::dynomite::AttributeValue {
-                ::dynomite::AttributeValue {
-                    m: Some(self.into()),
-                    ..::dynomite::AttributeValue::default()
-                }
-            }
-            fn from_attr(value: ::dynomite::AttributeValue) -> std::result::Result<Self, ::dynomite::AttributeError> {
-                use ::dynomite::FromAttributes;
-                value
-                    .m
-                    .ok_or(::dynomite::AttributeError::InvalidType)
-                    .and_then(Self::from_attrs)
-            }
-        }
-    };
 
     Ok(quote! {
         #from_attribute_map
         #to_attribute_map
-        #impl_attribute
     })
 }
 
