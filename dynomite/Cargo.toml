@@ -35,7 +35,7 @@ env_logger = "0.7"
 maplit = "1.0"
 serde = "1.0"
 serde_json = "1.0"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "0.3", features = ["macros"] }
 lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
 trybuild = "1.0"
 rustversion = "1.0"
