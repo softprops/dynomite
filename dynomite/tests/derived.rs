@@ -83,11 +83,45 @@ struct AdditionalPropsVerbatim {
     e: u32,
 }
 
+#[derive(Attributes, Clone, Debug, PartialEq)]
+#[dynomite(tag = "kind")]
+enum MyEnum {
+    Foo(Foo),
+    Bar(Bar),
+    Nested(Nested),
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct Foo {
+    a: String,
+    b: u32,
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct Bar {
+    a: String,
+    c: bool,
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+#[dynomite(tag = "nested_kind")]
+enum Nested {
+    #[dynomite(rename = "renamed_nested_variant")]
+    NestedVariant(NestedVariant),
+}
+
+#[derive(Attributes, Clone, Debug, PartialEq)]
+struct NestedVariant {
+    a: String,
+}
+
 #[cfg(test)]
 mod tests {
 
+    use std::convert::TryFrom;
+
     use super::*;
-    use dynomite::{Attribute, Attributes, FromAttributes, Item};
+    use dynomite::{Attribute, Attributes, Item};
 
     #[test]
     fn derived_key() {
@@ -105,7 +139,7 @@ mod tests {
             ..Default::default()
         };
         let attrs: Attributes = value.clone().into();
-        assert_eq!(value, Book::from_attrs(attrs).unwrap())
+        assert_eq!(value, Book::try_from(attrs).unwrap())
     }
 
     #[test]
@@ -128,7 +162,7 @@ mod tests {
         assert!(attrs.contains_key("RecipeId"));
         assert!(!attrs.contains_key("id"));
 
-        assert_eq!(value, Recipe::from_attrs(attrs).unwrap());
+        assert_eq!(value, Recipe::try_from(attrs).unwrap());
     }
 
     #[test]
@@ -149,7 +183,7 @@ mod tests {
         assert!(attrs.contains_key("b"));
         assert!(attrs.contains_key("c"));
 
-        assert_eq!(value, FlattenRoot::from_attrs(attrs).unwrap());
+        assert_eq!(value, FlattenRoot::try_from(attrs).unwrap());
     }
 
     #[test]
@@ -162,7 +196,7 @@ mod tests {
             e: 44,
         };
         let attrs: Attributes = original.clone().into();
-        let collected = RemainingPropsInMap::from_attrs(attrs).unwrap();
+        let collected = RemainingPropsInMap::try_from(attrs).unwrap();
 
         assert_eq!(collected.a, original.a);
         assert_eq!(collected.b, original.b);
@@ -173,5 +207,37 @@ mod tests {
         );
         assert!(collected.remainder.contains_key("d"));
         assert!(collected.remainder.contains_key("e"));
+    }
+
+    #[test]
+    fn flat_single_item_tuple_enum() {
+        let original = MyEnum::Foo(Foo {
+            a: "Hello".to_owned(),
+            b: 42,
+        });
+        let attrs: Attributes = original.clone().into();
+        assert_eq!(attrs.len(), 3);
+        assert!(attrs.contains_key("kind"));
+        assert!(!attrs.contains_key("nested_kind"));
+        assert!(attrs.contains_key("a"));
+        assert!(attrs.contains_key("b"));
+        assert!(!attrs.contains_key("c"));
+
+        assert_eq!(MyEnum::try_from(attrs).unwrap(), original);
+    }
+
+    #[test]
+    fn nested_single_item_tuple_enum() {
+        let original = MyEnum::Nested(Nested::NestedVariant(NestedVariant { a: "hello".into() }));
+
+        let attrs: Attributes = original.into();
+
+        assert_eq!(attrs.len(), 3);
+
+        let kind = String::from_attr(attrs.get("nested_kind").unwrap().clone()).unwrap();
+        assert_eq!(kind, "renamed_nested_variant");
+
+        assert!(attrs.contains_key("kind"));
+        assert!(attrs.contains_key("a"));
     }
 }
