@@ -19,7 +19,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 async-trait = "0.1"
 again = "0.1"
-bytes = "0.5"
+bytes = "0.6"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive", optional = true }
 futures = "0.3"
 log = "0.4"
