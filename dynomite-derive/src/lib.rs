@@ -38,8 +38,8 @@ use proc_macro2::Span;
 use proc_macro_error::{abort, ResultExt};
 use quote::{quote, ToTokens};
 use syn::{
-    parse::Parse, punctuated::Punctuated, Attribute, DataStruct, DeriveInput, Field, Fields, Ident,
-    Token, Visibility,
+    parse::Parse, punctuated::Punctuated, Attribute, DataStruct, DeriveInput, Field, Fields,
+    FieldsUnnamed, Ident, Token, Visibility,
 };
 
 struct Variant {
@@ -324,7 +324,8 @@ pub fn derive_attributes(input: TokenStream) -> TokenStream {
     expand_attributes(ast).unwrap_or_else(|e| e.to_compile_error().into())
 }
 
-/// Derives `dynomite::Attribute` for enum types
+/// Derives `dynomite::Attribute` for enum and single-field tuple struct (newtype) types that wrap
+/// other `dynomite::Attribute` types.
 ///
 /// # Panics
 ///
@@ -333,17 +334,33 @@ pub fn derive_attributes(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(Attribute)]
 pub fn derive_attribute(input: TokenStream) -> TokenStream {
     let ast = syn::parse_macro_input!(input);
-    let gen = expand_attribute(ast);
-    gen.into_token_stream().into()
+    expand_attribute(ast).unwrap_or_else(|e| e.to_compile_error().into())
 }
 
-fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
+fn expand_attribute(ast: DeriveInput) -> syn::Result<TokenStream> {
     let name = &ast.ident;
+
     match ast.data {
-        syn::Data::Enum(variants) => {
-            make_dynomite_attr(name, &variants.variants.into_iter().collect::<Vec<_>>())
-        }
-        _ => panic!("Dynomite Attributes can only be generated for enum types"),
+        syn::Data::Enum(variants) => Ok(make_dynomite_attr_for_enum(
+            name,
+            &variants.variants.into_iter().collect::<Vec<_>>(),
+        )
+        .to_token_stream()
+        .into()),
+        syn::Data::Struct(DataStruct {
+            fields: Fields::Unnamed(FieldsUnnamed { unnamed, .. }),
+            ..
+        }) if unnamed.len() == 1 => Ok(make_dynomite_attr_for_newtype_struct(
+            name,
+            unnamed.first().expect("first field should exist"),
+        )
+        .to_token_stream()
+        .into()),
+        _ => Err(syn::Error::new(
+            ast.ident.span(),
+            "Dynomite Attributes can only be generated for enum and single-field tuple struct \
+             (newtype) types",
+        )),
     }
 }
 
@@ -367,7 +384,7 @@ fn expand_attribute(ast: DeriveInput) -> impl ToTokens {
 ///   }
 /// }
 /// ```
-fn make_dynomite_attr(
+fn make_dynomite_attr_for_enum(
     name: &Ident,
     variants: &[syn::Variant],
 ) -> impl ToTokens {
@@ -403,6 +420,37 @@ fn make_dynomite_attr(
                         #(#from_match_arms)*
                         _ => ::std::result::Result::Err(::dynomite::AttributeError::InvalidFormat)
                     })
+            }
+        }
+    }
+}
+
+/// ```rust,ignore
+/// impl ::dynomite::Attribute for Name {
+///     fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
+///         self.0.into_attr()
+///     }
+///     fn from_attr(
+///         value: ::dynomite::dynamodb::AttributeValue,
+///     ) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+///         FieldType::from_attr(value).map(Self)
+///     }
+/// }
+/// ```
+fn make_dynomite_attr_for_newtype_struct(
+    name: &Ident,
+    field: &Field,
+) -> impl ToTokens {
+    let ty = field.ty.to_token_stream();
+    quote! {
+        impl ::dynomite::Attribute for #name {
+            fn into_attr(self) -> ::dynomite::dynamodb::AttributeValue {
+                self.0.into_attr()
+            }
+            fn from_attr(
+                value: ::dynomite::dynamodb::AttributeValue,
+            ) -> ::std::result::Result<Self, ::dynomite::AttributeError> {
+                #ty::from_attr(value).map(Self)
             }
         }
     }
