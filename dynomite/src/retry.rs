@@ -869,6 +869,7 @@ where
         RusotoError<DisableKinesisStreamingDestinationError>,
     > {
         self.inner
+            .client
             .disable_kinesis_streaming_destination(input)
             .await
     }
