@@ -5,10 +5,7 @@ use crate::dynamodb::{
     ListTablesInput, QueryError, QueryInput, ScanError, ScanInput,
 };
 use futures::{stream, Stream, TryStreamExt};
-#[cfg(feature = "default")]
-use rusoto_core_default::RusotoError;
-#[cfg(feature = "rustls")]
-use rusoto_core_rustls::RusotoError;
+use rusoto_core::RusotoError;
 use std::{collections::HashMap, pin::Pin};
 
 type DynomiteStream<I, E> = Pin<Box<dyn Stream<Item = Result<I, RusotoError<E>>> + Send>>;
