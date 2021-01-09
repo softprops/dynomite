@@ -358,11 +358,11 @@
 #![deny(missing_docs)]
 // reexported
 // note: this is used inside the attr_map! macro
-#[cfg(feature = "default")]
-pub use rusoto_dynamodb_default as dynamodb;
-
-#[cfg(feature = "rustls")]
-pub use rusoto_dynamodb_rustls as dynamodb;
+// #[cfg(feature = "default")]
+// pub use rusoto_dynamodb_default as dynamodb;
+//
+// #[cfg(feature = "rustls")]
+// pub use rusoto_dynamodb_rustls as dynamodb;
 
 use bytes::Bytes;
 #[cfg(feature = "chrono")]
@@ -370,6 +370,7 @@ use chrono::{
     offset::{FixedOffset, Local},
     DateTime, Utc,
 };
+pub use rusoto_dynamodb as dynamodb;
 
 // we re-export this because we
 // refer to it with in derive macros
