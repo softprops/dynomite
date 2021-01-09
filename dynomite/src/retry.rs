@@ -20,10 +20,7 @@
 use crate::dynamodb::*;
 use again::{Condition, RetryPolicy};
 use log::debug;
-#[cfg(feature = "default")]
-use rusoto_core_default::RusotoError;
-#[cfg(feature = "rustls")]
-use rusoto_core_rustls::RusotoError;
+use rusoto_core::RusotoError;
 use std::{sync::Arc, time::Duration};
 
 /// Pre-configured retry policies for fallible operations
@@ -304,6 +301,13 @@ where
             .await
     }
 
+    async fn describe_export(
+        &self,
+        input: DescribeExportInput,
+    ) -> Result<DescribeExportOutput, RusotoError<DescribeExportError>> {
+        self.inner.client.describe_export(input).await
+    }
+
     async fn describe_continuous_backups(
         &self,
         input: DescribeContinuousBackupsInput,
@@ -458,6 +462,13 @@ where
                 Counter(0),
             )
             .await
+    }
+
+    async fn list_exports(
+        &self,
+        input: ListExportsInput,
+    ) -> Result<ListExportsOutput, RusotoError<ListExportsError>> {
+        self.inner.client.list_exports(input).await
     }
 
     async fn list_contributor_insights(
@@ -801,6 +812,73 @@ where
                 Counter(0),
             )
             .await
+    }
+
+    async fn batch_execute_statement(
+        &self,
+        input: BatchExecuteStatementInput,
+    ) -> Result<BatchExecuteStatementOutput, RusotoError<BatchExecuteStatementError>> {
+        self.inner.client.batch_execute_statement(input).await
+    }
+
+    async fn execute_statement(
+        &self,
+        input: ExecuteStatementInput,
+    ) -> Result<ExecuteStatementOutput, RusotoError<ExecuteStatementError>> {
+        self.inner.client.execute_statement(input).await
+    }
+
+    async fn execute_transaction(
+        &self,
+        input: ExecuteTransactionInput,
+    ) -> Result<ExecuteTransactionOutput, RusotoError<ExecuteTransactionError>> {
+        self.inner.client.execute_transaction(input).await
+    }
+
+    async fn describe_kinesis_streaming_destination(
+        &self,
+        input: DescribeKinesisStreamingDestinationInput,
+    ) -> Result<
+        DescribeKinesisStreamingDestinationOutput,
+        RusotoError<DescribeKinesisStreamingDestinationError>,
+    > {
+        self.inner
+            .client
+            .describe_kinesis_streaming_destination(input)
+            .await
+    }
+
+    async fn enable_kinesis_streaming_destination(
+        &self,
+        input: KinesisStreamingDestinationInput,
+    ) -> Result<
+        KinesisStreamingDestinationOutput,
+        RusotoError<EnableKinesisStreamingDestinationError>,
+    > {
+        self.inner
+            .client
+            .enable_kinesis_streaming_destination(input)
+            .await
+    }
+
+    async fn disable_kinesis_streaming_destination(
+        &self,
+        input: KinesisStreamingDestinationInput,
+    ) -> Result<
+        KinesisStreamingDestinationOutput,
+        RusotoError<DisableKinesisStreamingDestinationError>,
+    > {
+        self.inner
+            .client
+            .disable_kinesis_streaming_destination(input)
+            .await
+    }
+
+    async fn export_table_to_point_in_time(
+        &self,
+        input: ExportTableToPointInTimeInput,
+    ) -> Result<ExportTableToPointInTimeOutput, RusotoError<ExportTableToPointInTimeError>> {
+        self.inner.client.export_table_to_point_in_time(input).await
     }
 }
 
