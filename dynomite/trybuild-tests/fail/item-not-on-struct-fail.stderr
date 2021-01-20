@@ -1,4 +1,4 @@
-error: `derive` may only be applied to structs, enums and unions
+error[E0774]: `derive` may only be applied to structs, enums and unions
  --> $DIR/item-not-on-struct-fail.rs:9:1
   |
 9 | #[derive(Item)]
