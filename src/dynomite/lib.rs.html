@@ -1,4 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `dynomite/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../dynomite/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `dynomite/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../dynomite/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1283,6 +1286,124 @@
 <span id="1283">1283</span>
 <span id="1284">1284</span>
 <span id="1285">1285</span>
+<span id="1286">1286</span>
+<span id="1287">1287</span>
+<span id="1288">1288</span>
+<span id="1289">1289</span>
+<span id="1290">1290</span>
+<span id="1291">1291</span>
+<span id="1292">1292</span>
+<span id="1293">1293</span>
+<span id="1294">1294</span>
+<span id="1295">1295</span>
+<span id="1296">1296</span>
+<span id="1297">1297</span>
+<span id="1298">1298</span>
+<span id="1299">1299</span>
+<span id="1300">1300</span>
+<span id="1301">1301</span>
+<span id="1302">1302</span>
+<span id="1303">1303</span>
+<span id="1304">1304</span>
+<span id="1305">1305</span>
+<span id="1306">1306</span>
+<span id="1307">1307</span>
+<span id="1308">1308</span>
+<span id="1309">1309</span>
+<span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
+<span id="1339">1339</span>
+<span id="1340">1340</span>
+<span id="1341">1341</span>
+<span id="1342">1342</span>
+<span id="1343">1343</span>
+<span id="1344">1344</span>
+<span id="1345">1345</span>
+<span id="1346">1346</span>
+<span id="1347">1347</span>
+<span id="1348">1348</span>
+<span id="1349">1349</span>
+<span id="1350">1350</span>
+<span id="1351">1351</span>
+<span id="1352">1352</span>
+<span id="1353">1353</span>
+<span id="1354">1354</span>
+<span id="1355">1355</span>
+<span id="1356">1356</span>
+<span id="1357">1357</span>
+<span id="1358">1358</span>
+<span id="1359">1359</span>
+<span id="1360">1360</span>
+<span id="1361">1361</span>
+<span id="1362">1362</span>
+<span id="1363">1363</span>
+<span id="1364">1364</span>
+<span id="1365">1365</span>
+<span id="1366">1366</span>
+<span id="1367">1367</span>
+<span id="1368">1368</span>
+<span id="1369">1369</span>
+<span id="1370">1370</span>
+<span id="1371">1371</span>
+<span id="1372">1372</span>
+<span id="1373">1373</span>
+<span id="1374">1374</span>
+<span id="1375">1375</span>
+<span id="1376">1376</span>
+<span id="1377">1377</span>
+<span id="1378">1378</span>
+<span id="1379">1379</span>
+<span id="1380">1380</span>
+<span id="1381">1381</span>
+<span id="1382">1382</span>
+<span id="1383">1383</span>
+<span id="1384">1384</span>
+<span id="1385">1385</span>
+<span id="1386">1386</span>
+<span id="1387">1387</span>
+<span id="1388">1388</span>
+<span id="1389">1389</span>
+<span id="1390">1390</span>
+<span id="1391">1391</span>
+<span id="1392">1392</span>
+<span id="1393">1393</span>
+<span id="1394">1394</span>
+<span id="1395">1395</span>
+<span id="1396">1396</span>
+<span id="1397">1397</span>
+<span id="1398">1398</span>
+<span id="1399">1399</span>
+<span id="1400">1400</span>
+<span id="1401">1401</span>
+<span id="1402">1402</span>
+<span id="1403">1403</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Dynomite is the set of high-level interfaces making interacting with [AWS DynamoDB](https://aws.amazon.com/dynamodb/) more productive.</span>
 <span class="doccomment">//!</span>
@@ -1356,7 +1477,7 @@
 <span class="doccomment">//!     dynamodb::{DynamoDb, GetItemInput},</span>
 <span class="doccomment">//!     Attributes, FromAttributes,</span>
 <span class="doccomment">//! };</span>
-<span class="doccomment">//! use std::error::Error;</span>
+<span class="doccomment">//! use std::{convert::TryFrom, error::Error};</span>
 <span class="doccomment">//! use uuid::Uuid;</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! async fn get_order(</span>
@@ -1379,7 +1500,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//!     Ok(result</span>
 <span class="doccomment">//!         .item</span>
-<span class="doccomment">//!         .map(|item| Order::from_attrs(item).expect(&quot;Invalid order, db corruption?&quot;)))</span>
+<span class="doccomment">//!         .map(|item| Order::try_from(item).expect(&quot;Invalid order, db corruption?&quot;)))</span>
 <span class="doccomment">//! }</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
@@ -1396,7 +1517,8 @@
 <span class="doccomment">//! ### `#[derive(Attributes)]`</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Used to derive an implementation of `From/IntoAttributes` trait to allow for</span>
-<span class="doccomment">//! serializing/deserializing map-like types into [`AttributeValue`]</span>
+<span class="doccomment">//! serializing/deserializing map-like types into [`AttributeValue`].</span>
+<span class="doccomment">//! This also generates `TryFrom&lt;Attributes&gt;` and `Into&lt;Attributes&gt;` implementations.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! - `#[dynomite(rename = &quot;actualName&quot;)]` - optional attribute, may be applied to any item</span>
 <span class="doccomment">//!   attribute field, useful when the DynamoDB table you&#39;re interfacing with has</span>
@@ -1454,6 +1576,114 @@
 <span class="doccomment">//!   }</span>
 <span class="doccomment">//!   ```</span>
 <span class="doccomment">//!</span>
+<span class="doccomment">//! #### Fat enums</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Fat enums are naturally supported by `#[derive(Attribute)]`.</span>
+<span class="doccomment">//! As for now, there is a limitation that the members of the enum must be</span>
+<span class="doccomment">//! either unit or one-element tuple variants. This restriction will be relaxed</span>
+<span class="doccomment">//! in future versions of `dynomite`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Deriving `Attributes` on fat enums currently uses</span>
+<span class="doccomment">//! [internally tagged enum pattern][internally-tagged-enum] (inspired by serde).</span>
+<span class="doccomment">//! Thus, you have to explicitly specify the **field name** of enum tag</span>
+<span class="doccomment">//! via the `tag` attribute on an enum.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! For example, the following definition:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use dynomite::Attributes;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Attributes)]</span>
+<span class="doccomment">//! // Name of the field where to store the discriminant in DynamoDB</span>
+<span class="doccomment">//! #[dynomite(tag = &quot;kind&quot;)]</span>
+<span class="doccomment">//! enum Shape {</span>
+<span class="doccomment">//!     Rectangle(Rectangle),</span>
+<span class="doccomment">//!     // Use `rename` to change the **value** of the tag for a particular variant</span>
+<span class="doccomment">//!     // by default the tag for a particular variant is the name of the variant verbatim</span>
+<span class="doccomment">//!     #[dynomite(rename = &quot;my_circle&quot;)]</span>
+<span class="doccomment">//!     Circle(Circle),</span>
+<span class="doccomment">//!     Unknown,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Attributes)]</span>
+<span class="doccomment">//! struct Circle {</span>
+<span class="doccomment">//!     radius: u32,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Attributes)]</span>
+<span class="doccomment">//! struct Rectangle {</span>
+<span class="doccomment">//!     width: u32,</span>
+<span class="doccomment">//!     height: u32,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! corresponds to the following representation in DynamoDB for each enum variant:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - `Rectangle`:</span>
+<span class="doccomment">//!   ```json</span>
+<span class="doccomment">//!   {</span>
+<span class="doccomment">//!       &quot;kind&quot;: &quot;Rectangle&quot;,</span>
+<span class="doccomment">//!       &quot;width&quot;: 42,</span>
+<span class="doccomment">//!       &quot;height&quot;: 64</span>
+<span class="doccomment">//!   }</span>
+<span class="doccomment">//!   ```</span>
+<span class="doccomment">//! - `Circle`:</span>
+<span class="doccomment">//!   ```json</span>
+<span class="doccomment">//!   {</span>
+<span class="doccomment">//!       &quot;kind&quot;: &quot;my_circle&quot;,</span>
+<span class="doccomment">//!       &quot;radius&quot;: 54</span>
+<span class="doccomment">//!   }</span>
+<span class="doccomment">//!   ```</span>
+<span class="doccomment">//! - `Unknown`:</span>
+<span class="doccomment">//!   ```json</span>
+<span class="doccomment">//!   {</span>
+<span class="doccomment">//!       &quot;kind&quot;: &quot;Unknown&quot;</span>
+<span class="doccomment">//!   }</span>
+<span class="doccomment">//!   ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! If you have a plain old enum (without any data fields), you should use</span>
+<span class="doccomment">//! [`#[derive(Attribute)]`](#deriveattribute) instead.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ### `#[derive(Attribute)]`</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Derives an implementation of [`Attribute`] for the plain enum.</span>
+<span class="doccomment">//! If you want to use a fat enum see [this paragraph](#fat-enums) instead.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The enum istelf will be represented as a string with the name of the variant</span>
+<span class="doccomment">//! it represents.</span>
+<span class="doccomment">//! In contrast, having [`#[derive(Attributes)]`](deriveattributes) on an enum</span>
+<span class="doccomment">//! makes it to be represented as an object with a tag field,</span>
+<span class="doccomment">//! which implies an additional layer of indirection.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//! use dynomite::{Attribute, Item};</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Attribute)]</span>
+<span class="doccomment">//! enum UserRole {</span>
+<span class="doccomment">//!     Admin,</span>
+<span class="doccomment">//!     Moderator,</span>
+<span class="doccomment">//!     Regular,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! #[derive(Item)]</span>
+<span class="doccomment">//! struct User {</span>
+<span class="doccomment">//!     #[dynomite(partition_key)]</span>
+<span class="doccomment">//!     id: String,</span>
+<span class="doccomment">//!     role: UserRole,</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This data model will have the following representation in DynamoDB:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```json</span>
+<span class="doccomment">//! {</span>
+<span class="doccomment">//!     &quot;id&quot;: &quot;d97de525-c81d-46d4-b945-d01b3a0f9165&quot;,</span>
+<span class="doccomment">//!     &quot;role&quot;: &quot;Admin&quot;</span>
+<span class="doccomment">//! }</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! `role` field here may be any of `Admin`, `Moderator`, or `Regular` strings.</span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! ## Rusoto extensions</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite</span>
@@ -1509,17 +1739,19 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [partition-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.PrimaryKey</span>
 <span class="doccomment">//! [sort-key]: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.CoreComponents.html#HowItWorks.CoreComponents.SecondaryIndexes</span>
+<span class="doccomment">//! [internally-tagged-enum]: https://serde.rs/enum-representations.html#internally-tagged</span>
 <span class="doccomment">//! [`Default::default`]: https://doc.rust-lang.org/stable/std/default/trait.Default.html#tymethod.default</span>
 <span class="doccomment">//! [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html</span>
+<span class="doccomment">//! [`Attribute`]: trait.Attribute.html</span>
 
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 <span class="comment">// reexported</span>
 <span class="comment">// note: this is used inside the attr_map! macro</span>
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;default&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rusoto_dynamodb_default</span> <span class="kw">as</span> <span class="ident">dynamodb</span>;
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rustls&quot;</span>)]</span>
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rusoto_dynamodb_rustls</span> <span class="kw">as</span> <span class="ident">dynamodb</span>;
+<span class="comment">// #[cfg(feature = &quot;default&quot;)]</span>
+<span class="comment">// pub use rusoto_dynamodb_default as dynamodb;</span>
+<span class="comment">//</span>
+<span class="comment">// #[cfg(feature = &quot;rustls&quot;)]</span>
+<span class="comment">// pub use rusoto_dynamodb_rustls as dynamodb;</span>
 
 <span class="kw">use</span> <span class="ident">bytes</span>::<span class="ident">Bytes</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
@@ -1527,6 +1759,7 @@
     <span class="ident">offset</span>::{<span class="ident">FixedOffset</span>, <span class="ident">Local</span>},
     <span class="ident">DateTime</span>, <span class="ident">Utc</span>,
 };
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">rusoto_dynamodb</span> <span class="kw">as</span> <span class="ident">dynamodb</span>;
 
 <span class="comment">// we re-export this because we</span>
 <span class="comment">// refer to it with in derive macros</span>
@@ -1562,7 +1795,7 @@
 <span class="doccomment">///     dynamodb::AttributeValue, Attribute, AttributeError, Attributes, FromAttributes,</span>
 <span class="doccomment">///     IntoAttributes, Item,</span>
 <span class="doccomment">/// };</span>
-<span class="doccomment">/// use std::collections::HashMap;</span>
+<span class="doccomment">/// use std::{collections::HashMap, convert::TryFrom};</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// #[derive(PartialEq, Debug, Clone)]</span>
 <span class="doccomment">/// struct Person {</span>
@@ -1578,7 +1811,7 @@
 <span class="doccomment">/// }</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// impl FromAttributes for Person {</span>
-<span class="doccomment">///     fn from_mut_attrs(attrs: &amp;mut Attributes) -&gt; Result&lt;Self, AttributeError&gt; {</span>
+<span class="doccomment">///     fn from_attrs(attrs: &amp;mut Attributes) -&gt; Result&lt;Self, AttributeError&gt; {</span>
 <span class="doccomment">///         Ok(Self {</span>
 <span class="doccomment">///             id: attrs</span>
 <span class="doccomment">///                 .remove(&quot;id&quot;)</span>
@@ -1589,7 +1822,7 @@
 <span class="doccomment">/// }</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// impl IntoAttributes for Person {</span>
-<span class="doccomment">///     fn into_mut_attrs(</span>
+<span class="doccomment">///     fn into_attrs(</span>
 <span class="doccomment">///         self,</span>
 <span class="doccomment">///         attrs: &amp;mut Attributes,</span>
 <span class="doccomment">///     ) {</span>
@@ -1597,17 +1830,28 @@
 <span class="doccomment">///     }</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// // Unfortunately `dynomite` is not able to provide a blanket impl for this trait</span>
-<span class="doccomment">/// // due to orphan rules, but it is generated via the `dynomite_derive` attributes</span>
+<span class="doccomment">/// // Unfortunately `dynomite` is not able to provide a blanket impl for std::convert traits</span>
+<span class="doccomment">/// // due to orphan rules, but they are generated via the `dynomite_derive` attributes</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// impl TryFrom&lt;Attributes&gt; for Person {</span>
+<span class="doccomment">///     type Error = AttributeError;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">///     fn try_from(mut attrs: Attributes) -&gt; Result&lt;Person, AttributeError&gt; {</span>
+<span class="doccomment">///         Person::from_attrs(&amp;mut attrs)</span>
+<span class="doccomment">///     }</span>
+<span class="doccomment">/// }</span>
+<span class="doccomment">///</span>
 <span class="doccomment">/// impl From&lt;Person&gt; for Attributes {</span>
 <span class="doccomment">///     fn from(person: Person) -&gt; Attributes {</span>
-<span class="doccomment">///         person.into_attrs()</span>
+<span class="doccomment">///         let mut map = HashMap::new();</span>
+<span class="doccomment">///         person.into_attrs(&amp;mut map);</span>
+<span class="doccomment">///         map</span>
 <span class="doccomment">///     }</span>
 <span class="doccomment">/// }</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// let person = Person { id: &quot;123&quot;.into() };</span>
 <span class="doccomment">/// let attrs: Attributes = person.clone().into();</span>
-<span class="doccomment">/// assert_eq!(Ok(person), FromAttributes::from_attrs(attrs))</span>
+<span class="doccomment">/// assert_eq!(Ok(person), Person::try_from(attrs))</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// You can get this all for free automatically using `#[derive(Item)]` on your structs. This is the recommended approach.</span>
@@ -1704,13 +1948,13 @@
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Attribute</span>: <span class="ident">Sized</span> {
     <span class="doccomment">/// Returns a conversion into an `AttributeValue`</span>
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span>;
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span>;
     <span class="doccomment">/// Returns a fallible conversion from an `AttributeValue`</span>
     <span class="kw">fn</span> <span class="ident">from_attr</span>(<span class="ident">value</span>: <span class="ident">AttributeValue</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">AttributeValue</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="self">self</span>
     }
     <span class="kw">fn</span> <span class="ident">from_attr</span>(<span class="ident">value</span>: <span class="ident">AttributeValue</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
@@ -1718,29 +1962,29 @@
     }
 }
 
-<span class="doccomment">/// A type capable of being produced from</span>
-<span class="doccomment">/// a set of string keys and `AttributeValues`</span>
+<span class="doccomment">/// A type capable of being produced from a set of string keys and [`AttributeValue`]s.</span>
+<span class="doccomment">/// Generally, you should not implement this trait manually.</span>
+<span class="doccomment">/// Use `#[derive(Attributes/Item)]` to generate the proper implementation instead.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FromAttributes</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// Shortcut for `FromAttributes::from_mut_attrs(&amp;mut attrs)`.</span>
-    <span class="doccomment">/// You should generally implement only that method.</span>
-    <span class="kw">fn</span> <span class="ident">from_attrs</span>(<span class="kw-2">mut</span> <span class="ident">attrs</span>: <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
-        <span class="self">Self</span>::<span class="ident">from_mut_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">attrs</span>)
-    }
-
     <span class="doccomment">/// Returns an instance of of a type resolved at runtime from a collection</span>
-    <span class="doccomment">/// of a `String` keys and `AttributeValues`.</span>
+    <span class="doccomment">/// of a `String` keys and [`AttributeValue`]s.</span>
     <span class="doccomment">/// If an instance can not be resolved and `AttributeError` will be returned.</span>
     <span class="doccomment">/// The implementations of this method should remove the relevant key-value</span>
-    <span class="doccomment">/// pairs from the map to consume them. This is needed to support</span>
-    <span class="doccomment">/// `#[dynomite(flatten)]` without creating temporary hash maps.</span>
-    <span class="kw">fn</span> <span class="ident">from_mut_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span>;
+    <span class="doccomment">/// pairs from the map to consume them.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is needed to support `#[dynomite(flatten)]` without creating temporary hash maps.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html</span>
+    <span class="kw">fn</span> <span class="ident">from_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span>;
 }
 
-<span class="doccomment">/// Coerces a homogenious HashMap of attribute values into a homogeneous Map of types</span>
-<span class="doccomment">/// that implement Attribute</span>
+<span class="doccomment">/// Coerces a homogeneous HashMap of attribute values into a homogeneous Map of types</span>
+<span class="doccomment">/// that implement `Attribute`</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">implicit_hasher</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">FromAttributes</span> <span class="kw">for</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from_mut_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
         <span class="ident">attrs</span>
             .<span class="ident">drain</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> <span class="prelude-val">Ok</span>((<span class="ident">k</span>, <span class="ident">A</span>::<span class="ident">from_attr</span>(<span class="ident">v</span>)<span class="question-mark">?</span>)))
@@ -1751,7 +1995,7 @@
 <span class="doccomment">/// Coerces a homogenious Map of attribute values into a homogeneous BTreeMap of types</span>
 <span class="doccomment">/// that implement Attribute</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">FromAttributes</span> <span class="kw">for</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">from_mut_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">from_attrs</span>(<span class="ident">attrs</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
         <span class="ident">attrs</span>
             .<span class="ident">drain</span>()
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="ident">k</span>, <span class="ident">v</span>)<span class="op">|</span> <span class="prelude-val">Ok</span>((<span class="ident">k</span>, <span class="ident">A</span>::<span class="ident">from_attr</span>(<span class="ident">v</span>)<span class="question-mark">?</span>)))
@@ -1759,31 +2003,27 @@
     }
 }
 
-<span class="doccomment">/// You should implement this trait instead of `From&lt;T&gt; for Attributes`</span>
-<span class="doccomment">/// for your type to support flattening, `#[dynomite(Attributes/Item)]` will</span>
-<span class="doccomment">/// generate both the implementation of this trait and `From&lt;T&gt;`</span>
+<span class="doccomment">/// A type capable of being serialized into a set of string keys and [`AttributeValue`]s</span>
+<span class="doccomment">/// Generally, you should not implement this trait manually.</span>
+<span class="doccomment">/// Use `#[derive(Attributes/Item)]` to generate the proper implementation instead.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// It also generates `From&lt;T&gt; for Attributes` for your type</span>
 <span class="doccomment">/// (there is no blanket impl for `From&lt;T&gt;` here due to orphan rules)</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`AttributeValue`]: https://docs.rs/rusoto_dynamodb/*/rusoto_dynamodb/struct.AttributeValue.html</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">IntoAttributes</span>: <span class="ident">Sized</span> {
-    <span class="doccomment">/// A shortcut for `IntoAttributes::into_mut_attrs()` that creates a new hash map.</span>
-    <span class="doccomment">/// You should generally implement only that method instead.</span>
-    <span class="kw">fn</span> <span class="ident">into_attrs</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Attributes</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attrs</span> <span class="op">=</span> <span class="ident">Attributes</span>::<span class="ident">new</span>();
-        <span class="self">self</span>.<span class="ident">into_mut_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">attrs</span>);
-        <span class="ident">attrs</span>
-    }
-
     <span class="doccomment">/// Converts `self` into `Attributes` by accepting a `sink` argument and</span>
     <span class="doccomment">/// insterting attribute key-value pairs into it.</span>
     <span class="doccomment">/// This is needed to support `#[dynomite(flatten)]` without creating</span>
     <span class="doccomment">/// temporary hash maps.</span>
-    <span class="kw">fn</span> <span class="ident">into_mut_attrs</span>(
+    <span class="kw">fn</span> <span class="ident">into_attrs</span>(
         <span class="self">self</span>,
         <span class="ident">sink</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>,
     );
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">IntoAttributes</span> <span class="kw">for</span> <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_mut_attrs</span>(
+    <span class="kw">fn</span> <span class="ident">into_attrs</span>(
         <span class="self">self</span>,
         <span class="ident">sink</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>,
     ) {
@@ -1792,7 +2032,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">IntoAttributes</span> <span class="kw">for</span> <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_mut_attrs</span>(
+    <span class="kw">fn</span> <span class="ident">into_attrs</span>(
         <span class="self">self</span>,
         <span class="ident">sink</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Attributes</span>,
     ) {
@@ -1802,24 +2042,23 @@
 
 <span class="doccomment">/// A Map type for all hash-map-like values, represented as the `M` AttributeValue type</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">IntoAttributes</span> <span class="op">+</span> <span class="ident">FromAttributes</span><span class="op">&gt;</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">T</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="self">self</span>.<span class="ident">into_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">map</span>);
         <span class="ident">AttributeValue</span> {
-            <span class="ident">m</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">into_attrs</span>()),
+            <span class="ident">m</span>: <span class="prelude-val">Some</span>(<span class="ident">map</span>),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
         }
     }
     <span class="kw">fn</span> <span class="ident">from_attr</span>(<span class="ident">value</span>: <span class="ident">AttributeValue</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
-        <span class="ident">value</span>
-            .<span class="ident">m</span>
-            .<span class="ident">ok_or</span>(<span class="ident">AttributeError</span>::<span class="ident">InvalidType</span>)
-            .<span class="ident">and_then</span>(<span class="ident">T</span>::<span class="ident">from_attrs</span>)
+        <span class="ident">T</span>::<span class="ident">from_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">value</span>.<span class="ident">m</span>.<span class="ident">ok_or</span>(<span class="ident">AttributeError</span>::<span class="ident">InvalidType</span>)<span class="question-mark">?</span>)
     }
 }
 
 <span class="doccomment">/// A `String` type for `Uuids`, represented by the `S` AttributeValue type</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;uuid&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">Uuid</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">to_hyphenated</span>().<span class="ident">to_string</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -1836,7 +2075,7 @@
 <span class="doccomment">/// An `rfc3339` formatted version of `DateTime&lt;Utc&gt;`, represented by the `S` AttributeValue type</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">to_rfc3339</span>()),
             ..<span class="ident">Default</span>::<span class="ident">default</span>()
@@ -1858,7 +2097,7 @@
 <span class="doccomment">/// An `rfc3339` formatted version of `DateTime&lt;Local&gt;`, represented by the `S` AttributeValue type</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Local</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">to_rfc3339</span>()),
             ..<span class="ident">Default</span>::<span class="ident">default</span>()
@@ -1880,7 +2119,7 @@
 <span class="doccomment">/// An `rfc3339` formatted version of `DateTime&lt;FixedOffset&gt;`, represented by the `S` AttributeValue type</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">FixedOffset</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">to_rfc3339</span>()),
             ..<span class="ident">Default</span>::<span class="ident">default</span>()
@@ -1900,7 +2139,7 @@
 <span class="doccomment">/// An `rfc3339` formatted version of `SystemTime`, represented by the `S` AttributeValue type</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;chrono&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">SystemTime</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="kw">let</span> <span class="ident">dt</span>: <span class="ident">DateTime</span><span class="op">&lt;</span><span class="ident">Utc</span><span class="op">&gt;</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">into</span>();
         <span class="ident">dt</span>.<span class="ident">into_attr</span>()
     }
@@ -1917,7 +2156,7 @@
 
 <span class="doccomment">/// A `String` type, represented by the S AttributeValue type</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -1929,7 +2168,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">Cow</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">s</span>: <span class="prelude-val">Some</span>(<span class="kw">match</span> <span class="self">self</span> {
                 <span class="ident">Cow</span>::<span class="ident">Owned</span>(<span class="ident">o</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">o</span>,
@@ -1946,7 +2185,7 @@
 <span class="doccomment">/// A String Set type, represented by the SS AttributeValue type</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">implicit_hasher</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">ss</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">drain</span>().<span class="ident">collect</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -1961,7 +2200,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">BTreeSet</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">ss</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">into_iter</span>().<span class="ident">collect</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -1978,7 +2217,7 @@
 <span class="doccomment">/// A Binary Set type, represented by the BS AttributeValue type</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">implicit_hasher</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">HashSet</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">bs</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">drain</span>().<span class="ident">map</span>(<span class="ident">Bytes</span>::<span class="ident">from</span>).<span class="ident">collect</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -1994,7 +2233,7 @@
 
 <span class="comment">// a Boolean type, represented by the BOOL AttributeValue type</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">bool</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">bool</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -2007,7 +2246,7 @@
 
 <span class="comment">// a Binary type, represented by the B AttributeValue type</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">bytes</span>::<span class="ident">Bytes</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">b</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -2020,7 +2259,7 @@
 
 <span class="comment">// a Binary type, represented by the B AttributeValue type</span>
 <span class="kw">impl</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">b</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">into</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -2043,7 +2282,7 @@
 <span class="doccomment">/// and implement `Attribute` for `YourType`. An `Vec&lt;YourType&gt;` implementation</span>
 <span class="doccomment">/// will already be provided</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="ident">AttributeValue</span> {
             <span class="ident">l</span>: <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">drain</span>(..).<span class="ident">map</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> <span class="ident">s</span>.<span class="ident">into_attr</span>()).<span class="ident">collect</span>()),
             ..<span class="ident">AttributeValue</span>::<span class="ident">default</span>()
@@ -2060,7 +2299,7 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Attribute</span><span class="op">&gt;</span> <span class="ident">Attribute</span> <span class="kw">for</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>: <span class="self">Self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
+    <span class="kw">fn</span> <span class="ident">into_attr</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">value</span>.<span class="ident">into_attr</span>(),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">AttributeValue</span> {
@@ -2183,11 +2422,11 @@
 <span class="doccomment">/// };</span>
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">attr_map</span> {
     (@<span class="ident">single</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">x</span>:<span class="ident">tt</span>)<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (());
-    (@<span class="ident">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="op">&lt;</span>[()]<span class="op">&gt;</span>::<span class="ident">len</span>(<span class="kw-2">&amp;</span>[$(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">attr_map</span><span class="op">!</span>(@<span class="ident">single</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)),<span class="kw-2">*</span>]));
-    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>,)<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">attr_map</span><span class="op">!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>),<span class="op">+</span>) };
+    (@<span class="ident">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> (<span class="op">&lt;</span>[()]<span class="op">&gt;</span>::<span class="ident">len</span>(<span class="kw-2">&amp;</span>[$(<span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">attr_map</span><span class="macro">!</span>(@<span class="macro-nonterminal">single</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">rest</span>)),<span class="kw-2">*</span>]));
+    ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>,)<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> { <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">attr_map</span><span class="macro">!</span>($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>),<span class="op">+</span>) };
     ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>:<span class="ident">expr</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>),<span class="kw-2">*</span>) <span class="op">=</span><span class="op">&gt;</span> {
         {
-            <span class="kw">let</span> <span class="ident">_cap</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro-nonterminal">attr_map</span><span class="op">!</span>(@<span class="ident">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>),<span class="kw-2">*</span>);
+            <span class="kw">let</span> <span class="ident">_cap</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="kw">crate</span>::<span class="macro">attr_map</span><span class="macro">!</span>(@<span class="macro-nonterminal">count</span> $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">key</span>),<span class="kw-2">*</span>);
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">_map</span>: ::<span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, ::<span class="ident">dynomite</span>::<span class="ident">dynamodb</span>::<span class="ident">AttributeValue</span><span class="op">&gt;</span> <span class="op">=</span>
               ::<span class="ident">std</span>::<span class="ident">collections</span>::<span class="ident">HashMap</span>::<span class="ident">with_capacity</span>(<span class="ident">_cap</span>);
               {
