@@ -19,29 +19,47 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 async-trait = "0.1"
 again = "0.1"
-bytes = "0.5"
+bytes = "1"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive", optional = true }
 futures = "0.3"
 log = "0.4"
-rusoto_core_default = { package = "rusoto_core", version = "0.45", optional = true }
-rusoto_core_rustls = { package = "rusoto_core", version = "0.45", default_features = false, features=["rustls"], optional = true }
-rusoto_dynamodb_default = { package = "rusoto_dynamodb", version = "0.45", optional = true }
-rusoto_dynamodb_rustls = { package = "rusoto_dynamodb", version = "0.45", default_features = false, features=["rustls"], optional = true }
+# Disable default features since the `rustls` variant requires it. We re-enable `default` in our
+# `default` build configuration - see the [features] below.
+rusoto_core = { version = "0.46", optional = true, default_features = false }
+rusoto_dynamodb = { version = "0.46", optional = true, default_features = false }
 uuid = { version = "0.8", features = ["v4"], optional = true }
 chrono = { version = "0.4", optional = true }
 
 [dev-dependencies]
-env_logger = "0.7"
+env_logger = "0.8"
 maplit = "1.0"
 serde = "1.0"
 serde_json = "1.0"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1", features = ["macros"] }
 lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
 trybuild = "1.0"
 rustversion = "1.0"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive" } # required by trybuild
 
 [features]
-default = ["uuid", "chrono", "derive", "rusoto_core_default", "rusoto_dynamodb_default"]
-rustls = ["uuid", "chrono", "derive", "rusoto_core_rustls", "rusoto_dynamodb_rustls"]
+default = [
+  "uuid",
+  "chrono",
+  "derive",
+  "rusoto_core",
+  "rusoto_dynamodb",
+  # Enable the `default` features of these crates.
+  "rusoto_core/default",
+  "rusoto_dynamodb/default"
+]
+
+rustls = [
+  "uuid",
+  "chrono",
+  "derive",
+  "rusoto_core",
+  "rusoto_dynamodb",
+  "rusoto_core/rustls",
+  "rusoto_dynamodb/rustls"
+]
 derive = ["dynomite-derive"]
