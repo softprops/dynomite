@@ -3,11 +3,20 @@ name: Main
 
 on:
   push:
+    paths-ignore:
+      - '*.md'
     branches:
       - master
     tags:
       - '**'
   pull_request:
+    paths-ignore:
+      - '*.md'
+    branches:
+      - master
+
+#env:
+#  CARGO_TERM_COLOR:  always
 
 jobs:
   codestyle:

@@ -8,10 +8,7 @@ use dynomite::{
     Attributes, DynamoDbExt, Item, Retries,
 };
 use futures::{future, TryStreamExt};
-#[cfg(feature = "default")]
-use rusoto_core_default::Region;
-#[cfg(feature = "rustls")]
-use rusoto_core_rustls::Region;
+use rusoto_core::Region;
 use std::{convert::TryFrom, error::Error};
 use uuid::Uuid;
 

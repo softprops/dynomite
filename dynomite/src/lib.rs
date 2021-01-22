@@ -559,13 +559,13 @@ pub trait Item: IntoAttributes + FromAttributes {
 /// ```
 pub trait Attribute: Sized {
     /// Returns a conversion into an `AttributeValue`
-    fn into_attr(self: Self) -> AttributeValue;
+    fn into_attr(self) -> AttributeValue;
     /// Returns a fallible conversion from an `AttributeValue`
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError>;
 }
 
 impl Attribute for AttributeValue {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         self
     }
     fn from_attr(value: AttributeValue) -> Result<Self, AttributeError> {
@@ -653,7 +653,7 @@ impl<A: Attribute> IntoAttributes for BTreeMap<String, A> {
 
 /// A Map type for all hash-map-like values, represented as the `M` AttributeValue type
 impl<T: IntoAttributes + FromAttributes> Attribute for T {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         let mut map = HashMap::new();
         self.into_attrs(&mut map);
         AttributeValue {
@@ -669,7 +669,7 @@ impl<T: IntoAttributes + FromAttributes> Attribute for T {
 /// A `String` type for `Uuids`, represented by the `S` AttributeValue type
 #[cfg(feature = "uuid")]
 impl Attribute for Uuid {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_hyphenated().to_string()),
             ..AttributeValue::default()
@@ -686,7 +686,7 @@ impl Attribute for Uuid {
 /// An `rfc3339` formatted version of `DateTime<Utc>`, represented by the `S` AttributeValue type
 #[cfg(feature = "chrono")]
 impl Attribute for DateTime<Utc> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_rfc3339()),
             ..Default::default()
@@ -708,7 +708,7 @@ impl Attribute for DateTime<Utc> {
 /// An `rfc3339` formatted version of `DateTime<Local>`, represented by the `S` AttributeValue type
 #[cfg(feature = "chrono")]
 impl Attribute for DateTime<Local> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_rfc3339()),
             ..Default::default()
@@ -730,7 +730,7 @@ impl Attribute for DateTime<Local> {
 /// An `rfc3339` formatted version of `DateTime<FixedOffset>`, represented by the `S` AttributeValue type
 #[cfg(feature = "chrono")]
 impl Attribute for DateTime<FixedOffset> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(self.to_rfc3339()),
             ..Default::default()
@@ -750,7 +750,7 @@ impl Attribute for DateTime<FixedOffset> {
 /// An `rfc3339` formatted version of `SystemTime`, represented by the `S` AttributeValue type
 #[cfg(feature = "chrono")]
 impl Attribute for SystemTime {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         let dt: DateTime<Utc> = self.into();
         dt.into_attr()
     }
@@ -767,7 +767,7 @@ impl Attribute for SystemTime {
 
 /// A `String` type, represented by the S AttributeValue type
 impl Attribute for String {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(self),
             ..AttributeValue::default()
@@ -779,7 +779,7 @@ impl Attribute for String {
 }
 
 impl<'a> Attribute for Cow<'a, str> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             s: Some(match self {
                 Cow::Owned(o) => o,
@@ -796,7 +796,7 @@ impl<'a> Attribute for Cow<'a, str> {
 /// A String Set type, represented by the SS AttributeValue type
 #[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<String> {
-    fn into_attr(mut self: Self) -> AttributeValue {
+    fn into_attr(mut self) -> AttributeValue {
         AttributeValue {
             ss: Some(self.drain().collect()),
             ..AttributeValue::default()
@@ -811,7 +811,7 @@ impl Attribute for HashSet<String> {
 }
 
 impl Attribute for BTreeSet<String> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             ss: Some(self.into_iter().collect()),
             ..AttributeValue::default()
@@ -828,7 +828,7 @@ impl Attribute for BTreeSet<String> {
 /// A Binary Set type, represented by the BS AttributeValue type
 #[allow(clippy::implicit_hasher)]
 impl Attribute for HashSet<Vec<u8>> {
-    fn into_attr(mut self: Self) -> AttributeValue {
+    fn into_attr(mut self) -> AttributeValue {
         AttributeValue {
             bs: Some(self.drain().map(Bytes::from).collect()),
             ..AttributeValue::default()
@@ -844,7 +844,7 @@ impl Attribute for HashSet<Vec<u8>> {
 
 // a Boolean type, represented by the BOOL AttributeValue type
 impl Attribute for bool {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             bool: Some(self),
             ..AttributeValue::default()
@@ -857,7 +857,7 @@ impl Attribute for bool {
 
 // a Binary type, represented by the B AttributeValue type
 impl Attribute for bytes::Bytes {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             b: Some(self),
             ..AttributeValue::default()
@@ -870,7 +870,7 @@ impl Attribute for bytes::Bytes {
 
 // a Binary type, represented by the B AttributeValue type
 impl Attribute for Vec<u8> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         AttributeValue {
             b: Some(self.into()),
             ..AttributeValue::default()
@@ -893,7 +893,7 @@ impl Attribute for Vec<u8> {
 /// and implement `Attribute` for `YourType`. An `Vec<YourType>` implementation
 /// will already be provided
 impl<A: Attribute> Attribute for Vec<A> {
-    fn into_attr(mut self: Self) -> AttributeValue {
+    fn into_attr(mut self) -> AttributeValue {
         AttributeValue {
             l: Some(self.drain(..).map(|s| s.into_attr()).collect()),
             ..AttributeValue::default()
@@ -910,7 +910,7 @@ impl<A: Attribute> Attribute for Vec<A> {
 }
 
 impl<T: Attribute> Attribute for Option<T> {
-    fn into_attr(self: Self) -> AttributeValue {
+    fn into_attr(self) -> AttributeValue {
         match self {
             Some(value) => value.into_attr(),
             _ => AttributeValue {
