@@ -398,8 +398,16 @@ pub type Attributes = HashMap<String, AttributeValue>;
 /// impl Item for Person {
 ///     fn key(&self) -> Attributes {
 ///         let mut attrs = HashMap::new();
-///         attrs.insert("id".into(), "123".to_string().into_attr());
+///         attrs.insert("id".into(), self.id.clone().into_attr());
 ///         attrs
+///     }
+///
+///     fn partition_key(&self) -> (String, AttributeValue) {
+///         ("id".into(), self.id.clone().into_attr())
+///     }
+///
+///     fn sort_key(&self) -> Option<(String, AttributeValue)> {
+///         None
 ///     }
 /// }
 ///
@@ -518,6 +526,12 @@ pub trait Item: IntoAttributes + FromAttributes {
     ///
     /// This is often used in item look ups
     fn key(&self) -> Attributes;
+
+    /// Returns a tuple containing the name and value of the partition key
+    fn partition_key(&self) -> (String, AttributeValue);
+
+    /// Returns a tuple containing the name and value of the sort key, if this item has one
+    fn sort_key(&self) -> Option<(String, AttributeValue)>;
 }
 
 /// A type capable of being converted into an or from and AWS `AttributeValue`

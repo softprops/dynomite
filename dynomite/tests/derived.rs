@@ -25,6 +25,7 @@ impl Default for Category {
 pub struct Book {
     #[dynomite(partition_key)]
     title: String,
+    #[dynomite(sort_key)]
     category: Category,
     authors: Option<Vec<Author>>,
 }
@@ -130,6 +131,32 @@ mod tests {
             servings: 1,
         };
         assert_eq!(value.key(), RecipeKey { id: "test".into() }.into());
+        assert_eq!(
+            value.partition_key(),
+            ("RecipeId".to_string(), "test".to_string().into_attr())
+        );
+        assert!(value.sort_key().is_none());
+
+        let value = Book {
+            title: "rust".into(),
+            ..Default::default()
+        };
+        assert_eq!(
+            value.key(),
+            BookKey {
+                title: "rust".into(),
+                category: Category::Foo,
+            }
+            .into()
+        );
+        assert_eq!(
+            value.partition_key(),
+            ("title".to_string(), "rust".to_string().into_attr())
+        );
+        assert_eq!(
+            value.sort_key(),
+            Some(("category".to_string(), "Foo".to_string().into_attr()))
+        )
     }
 
     #[test]

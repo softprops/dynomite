@@ -704,6 +704,12 @@ fn get_item_trait(
     let partition_key_insert = partition_key_field.map(get_key_inserter).transpose()?;
     let sort_key_insert = sort_key_field.map(get_key_inserter).transpose()?;
 
+    let partition_key_tuple = partition_key_field.map(get_key_tuple);
+    let sort_key_tuple = sort_key_field
+        .map(get_key_tuple)
+        .map(|tuple| quote! { Some(#tuple) })
+        .unwrap_or_else(|| quote! { None });
+
     Ok(partition_key_field
         .map(|_| {
             quote! {
@@ -713,6 +719,14 @@ fn get_item_trait(
                         #partition_key_insert
                         #sort_key_insert
                         keys
+                    }
+
+                    fn partition_key(&self) -> (String, ::dynomite::dynamodb::AttributeValue) {
+                        #partition_key_tuple
+                    }
+
+                    fn sort_key(&self) -> Option<(String, ::dynomite::dynamodb::AttributeValue)> {
+                        #sort_key_tuple
                     }
                 }
             }
@@ -736,6 +750,19 @@ fn get_key_inserter(field: &ItemField) -> syn::Result<impl ToTokens> {
             #to_attribute_value(self.#field_ident.clone())
         );
     })
+}
+
+/// ```rust,ignore
+/// ("field_deser_name", to_attribute_value(field))
+/// ```
+fn get_key_tuple(field: &ItemField) -> impl ToTokens {
+    let to_attribute_value = quote!(::dynomite::Attribute::into_attr);
+
+    let field_deser_name = field.deser_name();
+    let field_ident = &field.field.ident;
+    quote! {
+        (#field_deser_name.to_string(), #to_attribute_value(self.#field_ident.clone()))
+    }
 }
 
 /// ```rust,ignore
