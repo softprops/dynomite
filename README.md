@@ -54,7 +54,7 @@ use std::collections::HashMap;
 use rusoto_dynamodb::AttributeValue;
 use uuid::Uuid;
 
-let mut item = HashMap.new();
+let mut item = HashMap::new();
 item.insert(
   "pk".to_string(), AttributeValue {
     s: Some(Uuid::new_v4().to_hyphenated().to_string()),
