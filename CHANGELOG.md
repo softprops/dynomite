@@ -1,3 +1,9 @@
+# 0.11.0
+
+* Introduce new `#[dynomite(skip_serializing_if = "...")]` field attribute that
+  allows for skipping the value from serializing into a map according to the
+  given condition.
+
 # 0.10.0
 
 * Bump rusoto dependencies to version from `0.44` to `0.45`

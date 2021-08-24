@@ -39,7 +39,7 @@ use proc_macro_error::{abort, ResultExt};
 use quote::{quote, ToTokens};
 use syn::{
     parse::Parse, punctuated::Punctuated, Attribute, DataStruct, DeriveInput, Field, Fields, Ident,
-    Token, Visibility,
+    Path, Token, Visibility,
 };
 
 struct Variant {
@@ -254,6 +254,13 @@ impl<'a> ItemField<'a> {
         self.attrs
             .iter()
             .any(|attr| matches!(attr.kind, FieldAttrKind::Default))
+    }
+
+    fn skip_serializing_if(&self) -> Option<&Path> {
+        self.attrs.iter().find_map(|attr| match &attr.kind {
+            FieldAttrKind::SkipSerializingIf(expr) => Some(expr),
+            _ => None,
+        })
     }
 
     fn is_flatten(&self) -> bool {
@@ -472,7 +479,7 @@ fn make_dynomite_attrs_for_struct(
     let from_attribute_map = get_from_attributes_trait(name, &item_fields);
     // impl ::dynomite::IntoAttributes for Name
     // impl From<Name> for ::dynomite::Attributes
-    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
+    let to_attribute_map = get_into_attribute_map_trait(name, &item_fields);
     // impl TryFrom<::dynomite::Attributes> for Name
     // impl From<Name> for ::dynomite::Attributes
     let std_into_attrs = get_std_convert_traits(name);
@@ -506,7 +513,7 @@ fn make_dynomite_item(
     // impl ::dynomite::FromAttributes for Name
     let from_attribute_map = get_from_attributes_trait(name, &item_fields);
     // impl ::dynomite::IntoAttributes for Name
-    let to_attribute_map = get_to_attribute_map_trait(name, &item_fields);
+    let to_attribute_map = get_into_attribute_map_trait(name, &item_fields);
     // impl TryFrom<::dynomite::Attributes> for Name
     // impl From<Name> for ::dynomite::Attributes
     let std_into_attrs = get_std_convert_traits(name);
@@ -519,7 +526,7 @@ fn make_dynomite_item(
     })
 }
 
-fn get_to_attribute_map_trait(
+fn get_into_attribute_map_trait(
     name: &Ident,
     fields: &[ItemField],
 ) -> impl ToTokens {
@@ -557,17 +564,25 @@ fn get_into_attrs(fields: &[ItemField]) -> impl ToTokens {
         let field_deser_name = field.deser_name();
         let field_ident = &field.field.ident;
 
-        if field.is_flatten() {
+        let insert_attr = quote! {
+            attrs.insert(
+                #field_deser_name.to_string(),
+                ::dynomite::Attribute::into_attr(self.#field_ident)
+            );
+        };
+
+        if let Some(skip_serializing_if) = field.skip_serializing_if() {
+            quote! {
+                if !#skip_serializing_if(&self.#field_ident) {
+                    #insert_attr
+                }
+            }
+        } else if field.is_flatten() {
             quote! {
                 ::dynomite::IntoAttributes::into_attrs(self.#field_ident, attrs);
             }
         } else {
-            quote! {
-                attrs.insert(
-                    #field_deser_name.to_string(),
-                    ::dynomite::Attribute::into_attr(self.#field_ident)
-                );
-            }
+            insert_attr
         }
     });
 

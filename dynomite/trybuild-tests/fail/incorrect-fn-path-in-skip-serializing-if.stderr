@@ -1,0 +1,55 @@
+error: expected identifier
+ --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:5:38
+  |
+5 |     #[dynomite(skip_serializing_if = "true")]
+  |                                      ^^^^^^
+
+error: expected identifier
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:11:38
+   |
+11 |     #[dynomite(skip_serializing_if = "2 + 2")]
+   |                                      ^^^^^^^
+
+error: expected identifier
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:17:38
+   |
+17 |     #[dynomite(skip_serializing_if = "|| true")]
+   |                                      ^^^^^^^^^
+
+error[E0061]: this function takes 0 arguments but 1 argument was supplied
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:23:38
+   |
+21 | #[derive(Attributes)]
+   |          ---------- supplied 1 argument
+22 | struct Test4 {
+23 |     #[dynomite(skip_serializing_if = "invalid_fn")]
+   |                                      ^^^^^^^^^^^^ expected 0 arguments
+   |
+note: function defined here
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:27:4
+   |
+27 | fn invalid_fn() -> bool {
+   |    ^^^^^^^^^^
+
+error[E0061]: this function takes 0 arguments but 1 argument was supplied
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:33:38
+   |
+31 | #[derive(Attributes)]
+   |          ---------- supplied 1 argument
+32 | struct Test5 {
+33 |     #[dynomite(skip_serializing_if = "module::invalid_fn_in_module")]
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected 0 arguments
+   |
+note: function defined here
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:38:19
+   |
+38 |     pub(super) fn invalid_fn_in_module() {}
+   |                   ^^^^^^^^^^^^^^^^^^^^
+
+error[E0600]: cannot apply unary operator `!` to type `()`
+  --> $DIR/incorrect-fn-path-in-skip-serializing-if.rs:31:10
+   |
+31 | #[derive(Attributes)]
+   |          ^^^^^^^^^^ cannot apply unary operator `!`
+   |
+   = note: this error originates in the derive macro `Attributes` (in Nightly builds, run with -Z macro-backtrace for more info)
