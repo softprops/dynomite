@@ -2,7 +2,8 @@
 
 * Introduce new `#[dynomite(skip_serializing_if = "...")]` field attribute that
   allows for skipping the value from serializing into a map according to the
-  given condition.
+  given condition. [#4](https://github.com/rust-serverless/dynomite/pull/4)
+* Fix manual impl of `Into` trait to `From` for retry policy [#4](https://github.com/rust-serverless/dynomite/pull/4)
 
 # 0.10.0
 
