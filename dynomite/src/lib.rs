@@ -277,6 +277,24 @@
 //!
 //! `role` field here may be any of `Admin`, `Moderator`, or `Regular` strings.
 //!
+//! #### Newtype Structs
+//!
+//! Types that implement the [dynomite::Attribute](trait.Attribute.html) trait can be wrapped in
+//! single-field tuple (newtype) structs. For example, a `String` newtype can be used as follows:
+//! ```rust
+//! use dynomite::{Attribute, Item};
+//!
+//! #[derive(Attribute)]
+//! struct Author(String);
+//!
+//! #[derive(Item)]
+//! struct Book {
+//!     #[dynomite(partition_key)]
+//!     id: String,
+//!     author: Author,
+//! }
+//! ```
+//!
 //! ## Rusoto extensions
 //!
 //! By importing the [dynomite::DynamoDbExt](trait.DynamoDbExt.html) trait, dynomite
