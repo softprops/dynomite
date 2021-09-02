@@ -3,7 +3,7 @@
 use proc_macro_error::abort;
 use syn::{
     parse::{Parse, ParseStream},
-    Ident, LitStr, Token,
+    Ident, LitStr, Path, Token,
 };
 
 /// Represents a parsed attribute that appears in `#[dynomite(...)]`.
@@ -26,18 +26,31 @@ pub(crate) type VariantAttr = Attr<VariantAttrKind>;
 pub(crate) enum FieldAttrKind {
     /// Denotes field should be replaced with Default impl when absent in ddb
     Default,
+
     /// Denotes field should be renamed to value of ListStr
     Rename(LitStr),
+
     /// Denotes Item partition (primary) key
     PartitionKey,
+
     /// Denotes Item sort key
     SortKey,
+
     /// Denotes a field that should be replaced with all of its subfields
     Flatten,
+
+    /// Denotes a field that should not be present in the resulting `Attributes` map
+    /// if the given function returns `true` for its value
+    SkipSerializingIf(Path),
 }
 
 impl DynomiteAttr for FieldAttrKind {
-    const KVS: Kvs<Self> = &[("rename", FieldAttrKind::Rename)];
+    const KVS: Kvs<Self> = &[
+        ("rename", |lit| Ok(FieldAttrKind::Rename(lit))),
+        ("skip_serializing_if", |lit| {
+            lit.parse().map(FieldAttrKind::SkipSerializingIf)
+        }),
+    ];
     const KEYS: Keys<Self> = &[
         ("default", FieldAttrKind::Default),
         ("partition_key", FieldAttrKind::PartitionKey),
@@ -56,8 +69,9 @@ pub(crate) enum EnumAttrKind {
 }
 
 impl DynomiteAttr for EnumAttrKind {
-    const KVS: Kvs<Self> = &[("tag", EnumAttrKind::Tag)];
+    const KVS: Kvs<Self> = &[("tag", |lit| Ok(EnumAttrKind::Tag(lit)))];
 }
+
 #[derive(Clone)]
 pub(crate) enum VariantAttrKind {
     // TODO: add default for enum variants?
@@ -65,10 +79,10 @@ pub(crate) enum VariantAttrKind {
 }
 
 impl DynomiteAttr for VariantAttrKind {
-    const KVS: Kvs<Self> = &[("rename", VariantAttrKind::Rename)];
+    const KVS: Kvs<Self> = &[("rename", |lit| Ok(VariantAttrKind::Rename(lit)))];
 }
 
-type Kvs<T> = &'static [(&'static str, fn(syn::LitStr) -> T)];
+type Kvs<T> = &'static [(&'static str, fn(syn::LitStr) -> syn::Result<T>)];
 type Keys<T> = &'static [(&'static str, T)];
 
 /// Helper to ease defining `#[dynomite(key)` and `#[dynomite(key = "val")` attributes
@@ -85,7 +99,7 @@ impl<A: DynomiteAttr> Parse for Attr<A> {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let entry: MetadataEntry = input.parse()?;
         let kind = entry
-            .try_attr_with_val(A::KVS)
+            .try_attr_with_val(A::KVS)?
             .or_else(|| entry.try_attr_without_val(A::KEYS))
             .unwrap_or_else(|| abort!(entry.key, "unexpected dynomite attribute: {}", entry.key));
         Ok(Attr {
@@ -121,7 +135,7 @@ impl MetadataEntry {
     fn try_attr_with_val<T>(
         &self,
         mappings: Kvs<T>,
-    ) -> Option<T> {
+    ) -> syn::Result<Option<T>> {
         let Self { key, val } = self;
         let key_str = key.to_string();
         mappings
@@ -135,6 +149,7 @@ impl MetadataEntry {
                     key
                 ),
             })
+            .transpose()
     }
 }
 

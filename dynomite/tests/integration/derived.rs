@@ -147,7 +147,7 @@ mod tests {
         #[derive(Attribute, Debug, PartialEq)]
         enum Foo {
             Bar,
-        };
+        }
         assert_eq!(Foo::Bar, Foo::from_attr(Foo::Bar.into_attr()).unwrap());
     }
 
