@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["dynomite"] = [{"text":"impl Error for AttributeError","synthetic":false,"types":[]}];
+implementors["dynomite"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.54.0/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"dynomite/error/enum.AttributeError.html\" title=\"enum dynomite::error::AttributeError\">AttributeError</a>","synthetic":false,"types":["dynomite::error::AttributeError"]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

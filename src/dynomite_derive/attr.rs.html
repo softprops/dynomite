@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `dynomite-derive/src/attr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>attr.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `dynomite-derive/src/attr.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>attr.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../dynomite_derive/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../dynomite_derive/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -158,13 +157,28 @@
 <span id="155">155</span>
 <span id="156">156</span>
 <span id="157">157</span>
-</pre><div class="example-wrap"><pre class="rust ">
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+</pre><pre class="rust">
 <span class="doccomment">//! dynomite field attributes</span>
 
-<span class="kw">use</span> <span class="ident">proc_macro_error</span>::<span class="ident">abort</span>;
+<span class="kw">use</span> <span class="ident">proc_macro_error::abort</span>;
 <span class="kw">use</span> <span class="ident">syn</span>::{
     <span class="ident">parse</span>::{<span class="ident">Parse</span>, <span class="ident">ParseStream</span>},
-    <span class="ident">Ident</span>, <span class="ident">LitStr</span>, <span class="ident">Token</span>,
+    <span class="ident">Ident</span>, <span class="ident">LitStr</span>, <span class="ident">Path</span>, <span class="ident">Token</span>,
 };
 
 <span class="doccomment">/// Represents a parsed attribute that appears in `#[dynomite(...)]`.</span>
@@ -187,23 +201,36 @@
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">FieldAttrKind</span> {
     <span class="doccomment">/// Denotes field should be replaced with Default impl when absent in ddb</span>
     <span class="ident">Default</span>,
+
     <span class="doccomment">/// Denotes field should be renamed to value of ListStr</span>
     <span class="ident">Rename</span>(<span class="ident">LitStr</span>),
+
     <span class="doccomment">/// Denotes Item partition (primary) key</span>
     <span class="ident">PartitionKey</span>,
+
     <span class="doccomment">/// Denotes Item sort key</span>
     <span class="ident">SortKey</span>,
+
     <span class="doccomment">/// Denotes a field that should be replaced with all of its subfields</span>
     <span class="ident">Flatten</span>,
+
+    <span class="doccomment">/// Denotes a field that should not be present in the resulting `Attributes` map</span>
+    <span class="doccomment">/// if the given function returns `true` for its value</span>
+    <span class="ident">SkipSerializingIf</span>(<span class="ident">Path</span>),
 }
 
 <span class="kw">impl</span> <span class="ident">DynomiteAttr</span> <span class="kw">for</span> <span class="ident">FieldAttrKind</span> {
-    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[(<span class="string">&quot;rename&quot;</span>, <span class="ident">FieldAttrKind</span>::<span class="ident">Rename</span>)];
+    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
+        (<span class="string">&quot;rename&quot;</span>, <span class="op">|</span><span class="ident">lit</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">FieldAttrKind::Rename</span>(<span class="ident">lit</span>))),
+        (<span class="string">&quot;skip_serializing_if&quot;</span>, <span class="op">|</span><span class="ident">lit</span><span class="op">|</span> {
+            <span class="ident">lit</span>.<span class="ident">parse</span>().<span class="ident">map</span>(<span class="ident">FieldAttrKind::SkipSerializingIf</span>)
+        }),
+    ];
     <span class="kw">const</span> <span class="ident">KEYS</span>: <span class="ident">Keys</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[
-        (<span class="string">&quot;default&quot;</span>, <span class="ident">FieldAttrKind</span>::<span class="ident">Default</span>),
-        (<span class="string">&quot;partition_key&quot;</span>, <span class="ident">FieldAttrKind</span>::<span class="ident">PartitionKey</span>),
-        (<span class="string">&quot;sort_key&quot;</span>, <span class="ident">FieldAttrKind</span>::<span class="ident">SortKey</span>),
-        (<span class="string">&quot;flatten&quot;</span>, <span class="ident">FieldAttrKind</span>::<span class="ident">Flatten</span>),
+        (<span class="string">&quot;default&quot;</span>, <span class="ident">FieldAttrKind::Default</span>),
+        (<span class="string">&quot;partition_key&quot;</span>, <span class="ident">FieldAttrKind::PartitionKey</span>),
+        (<span class="string">&quot;sort_key&quot;</span>, <span class="ident">FieldAttrKind::SortKey</span>),
+        (<span class="string">&quot;flatten&quot;</span>, <span class="ident">FieldAttrKind::Flatten</span>),
     ];
 }
 
@@ -217,8 +244,9 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DynomiteAttr</span> <span class="kw">for</span> <span class="ident">EnumAttrKind</span> {
-    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[(<span class="string">&quot;tag&quot;</span>, <span class="ident">EnumAttrKind</span>::<span class="ident">Tag</span>)];
+    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[(<span class="string">&quot;tag&quot;</span>, <span class="op">|</span><span class="ident">lit</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">EnumAttrKind::Tag</span>(<span class="ident">lit</span>)))];
 }
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum</span> <span class="ident">VariantAttrKind</span> {
     <span class="comment">// TODO: add default for enum variants?</span>
@@ -226,10 +254,10 @@
 }
 
 <span class="kw">impl</span> <span class="ident">DynomiteAttr</span> <span class="kw">for</span> <span class="ident">VariantAttrKind</span> {
-    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[(<span class="string">&quot;rename&quot;</span>, <span class="ident">VariantAttrKind</span>::<span class="ident">Rename</span>)];
+    <span class="kw">const</span> <span class="ident">KVS</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[(<span class="string">&quot;rename&quot;</span>, <span class="op">|</span><span class="ident">lit</span><span class="op">|</span> <span class="prelude-val">Ok</span>(<span class="ident">VariantAttrKind::Rename</span>(<span class="ident">lit</span>)))];
 }
 
-<span class="kw">type</span> <span class="ident">Kvs</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="kw">fn</span>(<span class="ident">syn</span>::<span class="ident">LitStr</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">T</span>)];
+<span class="kw">type</span> <span class="ident">Kvs</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="kw">fn</span>(<span class="ident">syn::LitStr</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn::Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>)];
 <span class="kw">type</span> <span class="ident">Keys</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> [(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">str</span>, <span class="ident">T</span>)];
 
 <span class="doccomment">/// Helper to ease defining `#[dynomite(key)` and `#[dynomite(key = &quot;val&quot;)` attributes</span>
@@ -243,12 +271,12 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">DynomiteAttr</span><span class="op">&gt;</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">Attr</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">entry</span>: <span class="ident">MetadataEntry</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">kind</span> <span class="op">=</span> <span class="ident">entry</span>
-            .<span class="ident">try_attr_with_val</span>(<span class="ident">A</span>::<span class="ident">KVS</span>)
-            .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">entry</span>.<span class="ident">try_attr_without_val</span>(<span class="ident">A</span>::<span class="ident">KEYS</span>))
-            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">entry</span>.<span class="ident">key</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">entry</span>.<span class="ident">key</span>));
+            .<span class="ident">try_attr_with_val</span>(<span class="ident">A::KVS</span>)<span class="question-mark">?</span>
+            .<span class="ident">or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">entry</span>.<span class="ident">try_attr_without_val</span>(<span class="ident">A::KEYS</span>))
+            .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="macro">abort!</span>(<span class="ident">entry</span>.<span class="ident">key</span>, <span class="string">&quot;unexpected dynomite attribute: {}&quot;</span>, <span class="ident">entry</span>.<span class="ident">key</span>));
         <span class="prelude-val">Ok</span>(<span class="ident">Attr</span> {
             <span class="ident">ident</span>: <span class="ident">entry</span>.<span class="ident">key</span>,
             <span class="ident">kind</span>,
@@ -273,7 +301,7 @@
             .<span class="ident">iter</span>()
             .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">key_pat</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">key_pat</span> <span class="op">=</span><span class="op">=</span> <span class="ident">key_str</span>)
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">enum_val</span>)<span class="op">|</span> <span class="kw">match</span> <span class="ident">val</span> {
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">key</span>, <span class="string">&quot;expected no value for dynomite attribute `{}`&quot;</span>, <span class="ident">key</span>),
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort!</span>(<span class="ident">key</span>, <span class="string">&quot;expected no value for dynomite attribute `{}`&quot;</span>, <span class="ident">key</span>),
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">enum_val</span>.<span class="ident">clone</span>(),
             })
     }
@@ -282,7 +310,7 @@
     <span class="kw">fn</span> <span class="ident">try_attr_with_val</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">mappings</span>: <span class="ident">Kvs</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn::Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="self">Self</span> { <span class="ident">key</span>, <span class="ident">val</span> } <span class="op">=</span> <span class="self">self</span>;
         <span class="kw">let</span> <span class="ident">key_str</span> <span class="op">=</span> <span class="ident">key</span>.<span class="ident">to_string</span>();
         <span class="ident">mappings</span>
@@ -290,26 +318,27 @@
             .<span class="ident">find</span>(<span class="op">|</span>(<span class="ident">key_pat</span>, <span class="kw">_</span>)<span class="op">|</span> <span class="kw-2">*</span><span class="ident">key_pat</span> <span class="op">=</span><span class="op">=</span> <span class="ident">key_str</span>)
             .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">to_enum</span>)<span class="op">|</span> <span class="kw">match</span> <span class="ident">val</span> {
                 <span class="prelude-val">Some</span>(<span class="ident">it</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">to_enum</span>(<span class="ident">it</span>.<span class="ident">clone</span>()),
-                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort</span><span class="macro">!</span>(
+                <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="macro">abort!</span>(
                     <span class="ident">key</span>,
                     <span class="string">&quot;expected a value for dynomite attribute: `{} = \&quot;foo\&quot;`&quot;</span>,
                     <span class="ident">key</span>
                 ),
             })
+            .<span class="ident">transpose</span>()
     }
 }
 
 <span class="kw">impl</span> <span class="ident">Parse</span> <span class="kw">for</span> <span class="ident">MetadataEntry</span> {
-    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">parse</span>(<span class="ident">input</span>: <span class="ident">ParseStream</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">syn::Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">key</span>: <span class="ident">Ident</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">parse</span>()<span class="question-mark">?</span>;
-        <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">syn</span>::<span class="ident">token</span>::<span class="ident">Paren</span>) {
+        <span class="kw">if</span> <span class="ident">input</span>.<span class="ident">peek</span>(<span class="ident">syn::token::Paren</span>) {
             <span class="comment">// `name(...)` attributes.</span>
-            <span class="macro">abort</span><span class="macro">!</span>(<span class="ident">key</span>, <span class="string">&quot;unexpected paren in dynomite attribute: {}&quot;</span>, <span class="ident">key</span>);
+            <span class="macro">abort!</span>(<span class="ident">key</span>, <span class="string">&quot;unexpected paren in dynomite attribute: {}&quot;</span>, <span class="ident">key</span>);
         }
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">key</span>,
             <span class="ident">val</span>: <span class="ident">input</span>
-                .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="macro">Token</span><span class="macro">!</span>[<span class="op">=</span>]<span class="op">&gt;</span>()
+                .<span class="ident">parse</span>::<span class="op">&lt;</span><span class="macro">Token!</span>[<span class="op">=</span>]<span class="op">&gt;</span>()
                 .<span class="ident">ok</span>()
                 .<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="ident">input</span>.<span class="ident">parse</span>())
                 .<span class="ident">transpose</span>()<span class="question-mark">?</span>,
@@ -317,4 +346,4 @@
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "dynomite_derive";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="dynomite_derive" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>

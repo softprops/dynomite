@@ -1,19 +1,18 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `Item` trait in crate `dynomite`."><meta name="keywords" content="rust, rustlang, rust-lang, Item"><title>dynomite::Item - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A type which can be converted to and from a set of String keys and `AttributeValues`."><meta name="keywords" content="rust, rustlang, rust-lang, Item"><title>Item in dynomite - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../dynomite/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Trait Item</p><div class="sidebar-elems"><div class="block items"><a class="sidebar-title" href="#required-methods">Required Methods</a><div class="sidebar-links"><a href="#tymethod.key">key</a></div><a class="sidebar-title" href="#implementors">Implementors</a></div><p class="location"><a href="index.html">dynomite</a></p><script>window.sidebarCurrent = {name: "Item", ty: "trait", relpath: ""};</script><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/dynomite/lib.rs.html#516-521" title="goto source code">[src]</a></span><span class="in-band">Trait <a href="index.html">dynomite</a>::<wbr><a class="trait" href="">Item</a></span></h1><div class="docblock type-decl hidden-by-usual-hider"><pre class="rust trait">pub trait Item: <a class="trait" href="../dynomite/trait.IntoAttributes.html" title="trait dynomite::IntoAttributes">IntoAttributes</a> + <a class="trait" href="../dynomite/trait.FromAttributes.html" title="trait dynomite::FromAttributes">FromAttributes</a> {
-    fn <a href="#tymethod.key" class="fnname">key</a>(&amp;self) -&gt; <a class="type" href="../dynomite/type.Attributes.html" title="type dynomite::Attributes">Attributes</a>;
-}</pre></div><div class="docblock"><p>A type which can be converted to and from a set of String keys and
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../dynomite/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><h2 class="location">Trait Item</h2><div class="sidebar-elems"><div class="block items"><h3 class="sidebar-title"><a href="#required-methods">Required Methods</a></h3><div class="sidebar-links"><a href="#tymethod.key">key</a></div><h3 class="sidebar-title"><a href="#implementors">Implementors</a></h3></div><h2 class="location">Other items in<br><a href="index.html">dynomite</a></h2><div id="sidebar-vars" data-name="Item" data-ty="trait" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img src="../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Trait <a href="index.html">dynomite</a>::<wbr><a class="trait" href="#">Item</a><button id="copy-path" onclick="copy_path(this)" title="copy path"><img src="../clipboard.svg" width="19" height="18" alt="Copy item import" title="Copy item import to clipboard"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/dynomite/lib.rs.html#546-551" title="goto source code">[src]</a></span></h1><div class="docblock type-decl"><pre class="rust trait">pub trait Item: <a class="trait" href="trait.IntoAttributes.html" title="trait dynomite::IntoAttributes">IntoAttributes</a> + <a class="trait" href="trait.FromAttributes.html" title="trait dynomite::FromAttributes">FromAttributes</a> {
+    fn <a href="#tymethod.key" class="fnname">key</a>(&amp;self) -&gt; <a class="type" href="type.Attributes.html" title="type dynomite::Attributes">Attributes</a>;
+}</pre></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A type which can be converted to and from a set of String keys and
 <code>AttributeValues</code>.</p>
 <h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
 <p>Below is an example of doing this manually for demonstration.</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
 <span class="kw">use</span> <span class="ident">dynomite</span>::{
-    <span class="ident">dynamodb</span>::<span class="ident">AttributeValue</span>, <span class="ident">Attribute</span>, <span class="ident">AttributeError</span>, <span class="ident">Attributes</span>, <span class="ident">FromAttributes</span>,
+    <span class="ident">dynamodb::AttributeValue</span>, <span class="ident">Attribute</span>, <span class="ident">AttributeError</span>, <span class="ident">Attributes</span>, <span class="ident">FromAttributes</span>,
     <span class="ident">IntoAttributes</span>, <span class="ident">Item</span>,
 };
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections</span>::<span class="ident">HashMap</span>, <span class="ident">convert</span>::<span class="ident">TryFrom</span>};
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections::HashMap</span>, <span class="ident">convert::TryFrom</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">PartialEq</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Person</span> {
@@ -22,7 +21,7 @@
 
 <span class="kw">impl</span> <span class="ident">Item</span> <span class="kw">for</span> <span class="ident">Person</span> {
     <span class="kw">fn</span> <span class="ident">key</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Attributes</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attrs</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">attrs</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="ident">attrs</span>.<span class="ident">insert</span>(<span class="string">&quot;id&quot;</span>.<span class="ident">into</span>(), <span class="string">&quot;123&quot;</span>.<span class="ident">to_string</span>().<span class="ident">into_attr</span>());
         <span class="ident">attrs</span>
     }
@@ -34,7 +33,7 @@
             <span class="ident">id</span>: <span class="ident">attrs</span>
                 .<span class="ident">remove</span>(<span class="string">&quot;id&quot;</span>)
                 .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">val</span><span class="op">|</span> <span class="ident">val</span>.<span class="ident">s</span>)
-                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">AttributeError</span>::<span class="ident">MissingField</span> { <span class="ident">name</span>: <span class="string">&quot;id&quot;</span>.<span class="ident">into</span>() })<span class="question-mark">?</span>,
+                .<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">AttributeError::MissingField</span> { <span class="ident">name</span>: <span class="string">&quot;id&quot;</span>.<span class="ident">into</span>() })<span class="question-mark">?</span>,
         })
     }
 }
@@ -55,13 +54,13 @@
     <span class="kw">type</span> <span class="ident">Error</span> <span class="op">=</span> <span class="ident">AttributeError</span>;
 
     <span class="kw">fn</span> <span class="ident">try_from</span>(<span class="kw-2">mut</span> <span class="ident">attrs</span>: <span class="ident">Attributes</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Person</span>, <span class="ident">AttributeError</span><span class="op">&gt;</span> {
-        <span class="ident">Person</span>::<span class="ident">from_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">attrs</span>)
+        <span class="ident">Person::from_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">attrs</span>)
     }
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Person</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Attributes</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">person</span>: <span class="ident">Person</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Attributes</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">map</span> <span class="op">=</span> <span class="ident">HashMap::new</span>();
         <span class="ident">person</span>.<span class="ident">into_attrs</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">map</span>);
         <span class="ident">map</span>
     }
@@ -69,11 +68,11 @@
 
 <span class="kw">let</span> <span class="ident">person</span> <span class="op">=</span> <span class="ident">Person</span> { <span class="ident">id</span>: <span class="string">&quot;123&quot;</span>.<span class="ident">into</span>() };
 <span class="kw">let</span> <span class="ident">attrs</span>: <span class="ident">Attributes</span> <span class="op">=</span> <span class="ident">person</span>.<span class="ident">clone</span>().<span class="ident">into</span>();
-<span class="macro">assert_eq</span><span class="macro">!</span>(<span class="prelude-val">Ok</span>(<span class="ident">person</span>), <span class="ident">Person</span>::<span class="ident">try_from</span>(<span class="ident">attrs</span>))</pre></div>
+<span class="macro">assert_eq!</span>(<span class="prelude-val">Ok</span>(<span class="ident">person</span>), <span class="ident">Person::try_from</span>(<span class="ident">attrs</span>))</pre></div>
 <p>You can get this all for free automatically using <code>#[derive(Item)]</code> on your structs. This is the recommended approach.</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">dynomite</span>::<span class="ident">Item</span>;
+<span class="kw">use</span> <span class="ident">dynomite::Item</span>;
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Item</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Book</span> {
     <span class="attribute">#[<span class="ident">dynomite</span>(<span class="ident">partition_key</span>)]</span>
@@ -81,12 +80,12 @@
 }</pre></div>
 <h2 id="renaming-fields" class="section-header"><a href="#renaming-fields">Renaming fields</a></h2>
 <p>In some cases you may be dealing with a DynamoDB table whose
-fields are named using conventions that do not align with Rust's conventions.
-You can leverage the <code>rename</code> attribute to map Rust's fields back to its source name
+fields are named using conventions that do not align with Rust’s conventions.
+You can leverage the <code>rename</code> attribute to map Rust’s fields back to its source name
 explicitly</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">dynomite</span>::<span class="ident">Item</span>;
+<span class="kw">use</span> <span class="ident">dynomite::Item</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Item</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Book</span> {
@@ -103,7 +102,7 @@ attribute to communicate that the <code>std::default::Default::default()</code> 
 type will be used in the absence of data.</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">dynomite</span>::<span class="ident">Item</span>;
+<span class="kw">use</span> <span class="ident">dynomite::Item</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Item</span>)]</span>
 <span class="kw">struct</span> <span class="ident">Book</span> {
@@ -116,10 +115,10 @@ type will be used in the absence of data.</p>
 <p>DynamoDB <code>Item</code>s are a set of attributes with a uniquely identifying
 partition key. At times, you may wish to project over these attributes into a type
 that does not include a partition_key. For that specific purpose, instead of
-deriving an <code>Item</code> type you'll want to derive <code>Attributes</code></p>
+deriving an <code>Item</code> type you’ll want to derive <code>Attributes</code></p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered">
-<span class="kw">use</span> <span class="ident">dynomite</span>::<span class="ident">Attributes</span>;
+<span class="kw">use</span> <span class="ident">dynomite::Attributes</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Attributes</span>)]</span>
 <span class="kw">struct</span> <span class="ident">BookProjection</span> {
@@ -127,6 +126,6 @@ deriving an <code>Item</code> type you'll want to derive <code>Attributes</code>
   <span class="attribute">#[<span class="ident">dynomite</span>(<span class="ident">default</span>)]</span>
   <span class="ident">summary</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>
 }</pre></div>
-</div><h2 id="required-methods" class="small-section-header">Required methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><h3 id="tymethod.key" class="method"><code>fn <a href="#tymethod.key" class="fnname">key</a>(&amp;self) -&gt; <a class="type" href="../dynomite/type.Attributes.html" title="type dynomite::Attributes">Attributes</a></code></h3><div class="docblock"><p>Returns the set of attributes which make up this item's primary key</p>
+</div></details><h2 id="required-methods" class="small-section-header">Required methods<a href="#required-methods" class="anchor"></a></h2><div class="methods"><details class="rustdoc-toggle" open><summary><div id="tymethod.key" class="method has-srclink"><h4 class="code-header">fn <a href="#tymethod.key" class="fnname">key</a>(&amp;self) -&gt; <a class="type" href="type.Attributes.html" title="type dynomite::Attributes">Attributes</a></h4><a class="srclink" href="../src/dynomite/lib.rs.html#550" title="goto source code">[src]</a></div></summary><div class="docblock"><p>Returns the set of attributes which make up this item’s primary key</p>
 <p>This is often used in item look ups</p>
-</div></div><span class="loading-content">Loading content...</span><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor"></a></h2><div class="item-list" id="implementors-list"></div><span class="loading-content">Loading content...</span><script type="text/javascript" src="../implementors/dynomite/trait.Item.js" async></script></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../";window.currentCrate = "dynomite";</script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
+</div></details></div><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor"></a></h2><div class="item-list" id="implementors-list"></div><script type="text/javascript" src="../implementors/dynomite/trait.Item.js" async></script></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="dynomite" data-search-index-js="../search-index.js" data-search-js="../search.js"></div><script src="../main.js"></script></body></html>

@@ -1,7 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `dynomite/src/retry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>retry.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `dynomite/src/retry.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>retry.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
 <link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
-<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../dynomite/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><span class="help-button">?</span>
-                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../dynomite/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img src="../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img src="../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -1091,7 +1090,7 @@
 <span id="1088">1088</span>
 <span id="1089">1089</span>
 <span id="1090">1090</span>
-</pre><div class="example-wrap"><pre class="rust ">
+</pre><pre class="rust">
 <span class="doccomment">//! Retry functionality</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Specifically this implementation focuses on honoring [these documented DynamoDB retryable errors](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.MessagesAndCodes)</span>
@@ -1111,11 +1110,11 @@
 <span class="doccomment">//!  let tables = client.list_tables(Default::default());</span>
 <span class="doccomment">//! ```</span>
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">dynamodb</span>::<span class="kw-2">*</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::dynamodb</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">again</span>::{<span class="ident">Condition</span>, <span class="ident">RetryPolicy</span>};
-<span class="kw">use</span> <span class="ident">log</span>::<span class="ident">debug</span>;
-<span class="kw">use</span> <span class="ident">rusoto_core</span>::<span class="ident">RusotoError</span>;
-<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">sync</span>::<span class="ident">Arc</span>, <span class="ident">time</span>::<span class="ident">Duration</span>};
+<span class="kw">use</span> <span class="ident">log::debug</span>;
+<span class="kw">use</span> <span class="ident">rusoto_core::RusotoError</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">sync::Arc</span>, <span class="ident">time::Duration</span>};
 
 <span class="doccomment">/// Pre-configured retry policies for fallible operations</span>
 <span class="doccomment">///</span>
@@ -1132,20 +1131,20 @@
 
 <span class="kw">impl</span> <span class="ident">Default</span> <span class="kw">for</span> <span class="ident">Policy</span> {
     <span class="kw">fn</span> <span class="ident">default</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="ident">Policy</span>::<span class="ident">Exponential</span>(<span class="number">5</span>, <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">100</span>))
+        <span class="ident">Policy::Exponential</span>(<span class="number">5</span>, <span class="ident">Duration::from_millis</span>(<span class="number">100</span>))
     }
 }
 
-<span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">RetryPolicy</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Policy</span> {
-    <span class="kw">fn</span> <span class="ident">into</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RetryPolicy</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">Policy</span>::<span class="ident">Limit</span>(<span class="ident">times</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy</span>::<span class="ident">default</span>()
+<span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="ident">Policy</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">RetryPolicy</span> {
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">policy</span>: <span class="ident">Policy</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RetryPolicy</span> {
+        <span class="kw">match</span> <span class="ident">policy</span> {
+            <span class="ident">Policy::Limit</span>(<span class="ident">times</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy::default</span>()
                 .<span class="ident">with_max_retries</span>(<span class="ident">times</span>)
                 .<span class="ident">with_jitter</span>(<span class="bool-val">true</span>),
-            <span class="ident">Policy</span>::<span class="ident">Pause</span>(<span class="ident">times</span>, <span class="ident">duration</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy</span>::<span class="ident">fixed</span>(<span class="ident">duration</span>)
+            <span class="ident">Policy::Pause</span>(<span class="ident">times</span>, <span class="ident">duration</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy::fixed</span>(<span class="ident">duration</span>)
                 .<span class="ident">with_max_retries</span>(<span class="ident">times</span>)
                 .<span class="ident">with_jitter</span>(<span class="bool-val">true</span>),
-            <span class="ident">Policy</span>::<span class="ident">Exponential</span>(<span class="ident">times</span>, <span class="ident">duration</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy</span>::<span class="ident">exponential</span>(<span class="ident">duration</span>)
+            <span class="ident">Policy::Exponential</span>(<span class="ident">times</span>, <span class="ident">duration</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">RetryPolicy::exponential</span>(<span class="ident">duration</span>)
                 .<span class="ident">with_max_retries</span>(<span class="ident">times</span>)
                 .<span class="ident">with_jitter</span>(<span class="bool-val">true</span>),
         }
@@ -1169,12 +1168,12 @@
         <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>,
         <span class="ident">error</span>: <span class="kw-2">&amp;</span><span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
-        <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;retrying operation {}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>);
+        <span class="macro">debug!</span>(<span class="string">&quot;retrying operation {}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>);
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">value</span>) <span class="op">=</span> <span class="self">self</span>.<span class="number">0</span>.<span class="ident">checked_add</span>(<span class="number">1</span>) {
             <span class="self">self</span>.<span class="number">0</span> <span class="op">=</span> <span class="ident">value</span>;
         }
         <span class="kw">match</span> <span class="ident">error</span> {
-            <span class="ident">RusotoError</span>::<span class="ident">Service</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>.<span class="ident">retryable</span>(),
+            <span class="ident">RusotoError::Service</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">e</span>.<span class="ident">retryable</span>(),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="bool-val">false</span>,
         }
     }
@@ -1215,7 +1214,7 @@
         <span class="self">self</span>,
         <span class="ident">policy</span>: <span class="ident">Policy</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RetryingDynamoDb</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> {
-        <span class="ident">RetryingDynamoDb</span>::<span class="ident">new</span>(<span class="self">self</span>, <span class="ident">policy</span>)
+        <span class="ident">RetryingDynamoDb::new</span>(<span class="self">self</span>, <span class="ident">policy</span>)
     }
 }
 
@@ -1229,7 +1228,7 @@
         <span class="ident">policy</span>: <span class="ident">Policy</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
-            <span class="ident">inner</span>: <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Inner</span> {
+            <span class="ident">inner</span>: <span class="ident">Arc::new</span>(<span class="ident">Inner</span> {
                 <span class="ident">client</span>,
                 <span class="ident">policy</span>: <span class="ident">policy</span>.<span class="ident">into</span>(),
             }),
@@ -1237,12 +1236,12 @@
     }
 }
 
-<span class="attribute">#[<span class="ident">async_trait</span>::<span class="ident">async_trait</span>]</span>
+<span class="attribute">#[<span class="ident">async_trait::async_trait</span>]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span> <span class="ident">DynamoDb</span> <span class="kw">for</span> <span class="ident">RetryingDynamoDb</span><span class="op">&lt;</span><span class="ident">D</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">D</span>: <span class="ident">DynamoDb</span> <span class="op">+</span> <span class="ident">Sync</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Clone</span> <span class="op">+</span> <span class="lifetime">&#39;static</span>,
 {
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">batch_get_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">batch_get_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">BatchGetItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BatchGetItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">BatchGetItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1252,14 +1251,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">batch_get_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">batch_get_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">batch_write_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">batch_write_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">BatchWriteItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BatchWriteItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">BatchWriteItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1269,14 +1268,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">batch_write_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">batch_write_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">create_backup</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_backup</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">CreateBackupInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CreateBackupOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">CreateBackupError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1286,14 +1285,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_backup</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_backup</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">create_global_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_global_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">CreateGlobalTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CreateGlobalTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">CreateGlobalTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1303,14 +1302,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_global_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_global_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">create_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">create_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">CreateTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">CreateTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">CreateTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1320,14 +1319,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">create_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">delete_backup</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete_backup</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DeleteBackupInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DeleteBackupOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DeleteBackupError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1337,14 +1336,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_backup</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_backup</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">delete_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DeleteItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DeleteItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DeleteItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1354,14 +1353,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">delete_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">delete_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DeleteTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DeleteTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DeleteTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1371,14 +1370,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">delete_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_backup</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_backup</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeBackupInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeBackupOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeBackupError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1388,21 +1387,21 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_backup</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_backup</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_export</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_export</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeExportInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeExportOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeExportError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_export</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_export</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_continuous_backups</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_continuous_backups</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeContinuousBackupsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeContinuousBackupsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeContinuousBackupsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1412,22 +1411,22 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_continuous_backups</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_continuous_backups</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_contributor_insights</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_contributor_insights</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeContributorInsightsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeContributorInsightsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeContributorInsightsError</span><span class="op">&gt;</span><span class="op">&gt;</span>
     {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_contributor_insights</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_contributor_insights</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_global_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_global_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeGlobalTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeGlobalTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeGlobalTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1437,14 +1436,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_global_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_global_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_global_table_settings</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_global_table_settings</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeGlobalTableSettingsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeGlobalTableSettingsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeGlobalTableSettingsError</span><span class="op">&gt;</span><span class="op">&gt;</span>
@@ -1455,14 +1454,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_global_table_settings</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_global_table_settings</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_limits</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_limits</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeLimitsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeLimitsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>
@@ -1470,14 +1469,14 @@
             .<span class="ident">retry_if</span>(
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_limits</span>().<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_limits</span>().<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1487,14 +1486,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_table_replica_auto_scaling</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_table_replica_auto_scaling</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeTableReplicaAutoScalingInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>
@@ -1504,10 +1503,10 @@
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">client</span>
             .<span class="ident">describe_table_replica_auto_scaling</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_time_to_live</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_time_to_live</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeTimeToLiveInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeTimeToLiveOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeTimeToLiveError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1517,14 +1516,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_time_to_live</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">describe_time_to_live</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">get_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">get_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">GetItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">GetItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">GetItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1534,14 +1533,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">get_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">get_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_backups</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_backups</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListBackupsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListBackupsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListBackupsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1551,28 +1550,28 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_backups</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_backups</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_exports</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_exports</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListExportsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListExportsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListExportsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">list_exports</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">list_exports</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_contributor_insights</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_contributor_insights</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListContributorInsightsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListContributorInsightsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListContributorInsightsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">list_contributor_insights</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">list_contributor_insights</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_global_tables</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_global_tables</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListGlobalTablesInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListGlobalTablesOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListGlobalTablesError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1582,14 +1581,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_global_tables</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_global_tables</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_tables</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_tables</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListTablesInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListTablesOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListTablesError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1599,14 +1598,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_tables</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_tables</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">list_tags_of_resource</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">list_tags_of_resource</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ListTagsOfResourceInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ListTagsOfResourceOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ListTagsOfResourceError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1616,14 +1615,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_tags_of_resource</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">list_tags_of_resource</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">put_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">put_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">PutItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">PutItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">PutItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1633,14 +1632,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">put_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">put_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">query</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">query</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">QueryInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">QueryOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">QueryError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1650,14 +1649,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">query</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">query</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">restore_table_from_backup</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">restore_table_from_backup</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">RestoreTableFromBackupInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RestoreTableFromBackupOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">RestoreTableFromBackupError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1667,14 +1666,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">restore_table_from_backup</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">restore_table_from_backup</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">restore_table_to_point_in_time</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">restore_table_to_point_in_time</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">RestoreTableToPointInTimeInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">RestoreTableToPointInTimeOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">RestoreTableToPointInTimeError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1684,14 +1683,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">restore_table_to_point_in_time</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">restore_table_to_point_in_time</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">scan</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">scan</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ScanInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ScanOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ScanError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1701,14 +1700,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">scan</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">scan</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">tag_resource</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">tag_resource</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">TagResourceInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">TagResourceError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1718,14 +1717,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">tag_resource</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">tag_resource</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">untag_resource</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">untag_resource</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UntagResourceInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UntagResourceError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1735,14 +1734,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">untag_resource</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">untag_resource</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_continuous_backups</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_continuous_backups</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateContinuousBackupsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateContinuousBackupsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateContinuousBackupsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1752,14 +1751,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_continuous_backups</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_continuous_backups</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_contributor_insights</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_contributor_insights</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateContributorInsightsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateContributorInsightsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateContributorInsightsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1768,10 +1767,10 @@
             .<span class="ident">clone</span>()
             .<span class="ident">client</span>
             .<span class="ident">update_contributor_insights</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_global_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_global_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateGlobalTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateGlobalTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateGlobalTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1781,14 +1780,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_global_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_global_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_global_table_settings</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_global_table_settings</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateGlobalTableSettingsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateGlobalTableSettingsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateGlobalTableSettingsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1798,14 +1797,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_global_table_settings</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_global_table_settings</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_item</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_item</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateItemInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateItemOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateItemError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1815,14 +1814,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_item</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_item</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_table</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_table</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateTableInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateTableOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateTableError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1832,14 +1831,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_table</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_table</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_table_replica_auto_scaling</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_table_replica_auto_scaling</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateTableReplicaAutoScalingInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateTableReplicaAutoScalingOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateTableReplicaAutoScalingError</span><span class="op">&gt;</span><span class="op">&gt;</span>
@@ -1847,10 +1846,10 @@
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">client</span>
             .<span class="ident">update_table_replica_auto_scaling</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">update_time_to_live</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">update_time_to_live</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">UpdateTimeToLiveInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">UpdateTimeToLiveOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">UpdateTimeToLiveError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1860,21 +1859,21 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_time_to_live</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">update_time_to_live</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_endpoints</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_endpoints</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">DescribeEndpointsResponse</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">DescribeEndpointsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="comment">// no apparent retryable errors</span>
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_endpoints</span>().<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">describe_endpoints</span>().<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">transact_get_items</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">transact_get_items</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">TransactGetItemsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TransactGetItemsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">TransactGetItemsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1884,14 +1883,14 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">transact_get_items</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">transact_get_items</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">transact_write_items</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">transact_write_items</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">TransactWriteItemsInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">TransactWriteItemsOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">TransactWriteItemsError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -1901,35 +1900,35 @@
                 <span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clone</span>().<span class="ident">client</span>.<span class="ident">clone</span>();
                     <span class="kw">let</span> <span class="ident">input</span> <span class="op">=</span> <span class="ident">input</span>.<span class="ident">clone</span>();
-                    <span class="ident">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">transact_write_items</span>(<span class="ident">input</span>).<span class="ident">await</span> }
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">client</span>.<span class="ident">transact_write_items</span>(<span class="ident">input</span>).<span class="kw">await</span> }
                 },
                 <span class="ident">Counter</span>(<span class="number">0</span>),
             )
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">batch_execute_statement</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">batch_execute_statement</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">BatchExecuteStatementInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">BatchExecuteStatementOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">BatchExecuteStatementError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">batch_execute_statement</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">batch_execute_statement</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">execute_statement</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">execute_statement</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ExecuteStatementInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExecuteStatementOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ExecuteStatementError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">execute_statement</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">execute_statement</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">execute_transaction</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">execute_transaction</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ExecuteTransactionInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExecuteTransactionOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ExecuteTransactionError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">execute_transaction</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">execute_transaction</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">describe_kinesis_streaming_destination</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">describe_kinesis_streaming_destination</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">DescribeKinesisStreamingDestinationInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>
@@ -1939,10 +1938,10 @@
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">client</span>
             .<span class="ident">describe_kinesis_streaming_destination</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">enable_kinesis_streaming_destination</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">enable_kinesis_streaming_destination</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">KinesisStreamingDestinationInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>
@@ -1952,10 +1951,10 @@
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">client</span>
             .<span class="ident">enable_kinesis_streaming_destination</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">disable_kinesis_streaming_destination</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">disable_kinesis_streaming_destination</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">KinesisStreamingDestinationInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>
@@ -1965,19 +1964,19 @@
         <span class="self">self</span>.<span class="ident">inner</span>
             .<span class="ident">client</span>
             .<span class="ident">disable_kinesis_streaming_destination</span>(<span class="ident">input</span>)
-            .<span class="ident">await</span>
+            .<span class="kw">await</span>
     }
 
-    <span class="ident">async</span> <span class="kw">fn</span> <span class="ident">export_table_to_point_in_time</span>(
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">export_table_to_point_in_time</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">input</span>: <span class="ident">ExportTableToPointInTimeInput</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ExportTableToPointInTimeOutput</span>, <span class="ident">RusotoError</span><span class="op">&lt;</span><span class="ident">ExportTableToPointInTimeError</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">export_table_to_point_in_time</span>(<span class="ident">input</span>).<span class="ident">await</span>
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">client</span>.<span class="ident">export_table_to_point_in_time</span>(<span class="ident">input</span>).<span class="kw">await</span>
     }
 }
 
 <span class="doccomment">/// retry impl for Service error types</span>
-<span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">retry</span> {
+<span class="macro">macro_rules!</span> <span class="ident">retry</span> {
     (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">e</span>:<span class="ident">ty</span>, $(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">p</span>: <span class="ident">pat</span>)<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> {
         <span class="kw">impl</span> <span class="ident">Retry</span> <span class="kw">for</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">e</span> {
             <span class="kw">fn</span> <span class="ident">retryable</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
@@ -1996,173 +1995,173 @@
     }
 }
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">BatchGetItemError</span>,
-    <span class="ident">BatchGetItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">BatchGetItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">BatchGetItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">BatchGetItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">BatchWriteItemError</span>,
-    <span class="ident">BatchWriteItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">BatchWriteItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">BatchWriteItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">BatchWriteItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">CreateBackupError</span>,
-    <span class="ident">CreateBackupError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateBackupError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">CreateBackupError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateBackupError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">CreateGlobalTableError</span>,
-    <span class="ident">CreateGlobalTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateGlobalTableError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">CreateGlobalTableError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateGlobalTableError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">CreateTableError</span>,
-    <span class="ident">CreateTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateTableError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">CreateTableError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">CreateTableError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DeleteBackupError</span>,
-    <span class="ident">DeleteBackupError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteBackupError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">DeleteBackupError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteBackupError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DeleteItemError</span>,
-    <span class="ident">DeleteItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">DeleteItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DeleteTableError</span>,
-    <span class="ident">DeleteTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteTableError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">DeleteTableError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">DeleteTableError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeBackupError</span>,
-    <span class="ident">DescribeBackupError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeBackupError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeContinuousBackupsError</span>,
-    <span class="ident">DescribeContinuousBackupsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeContinuousBackupsError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeGlobalTableError</span>,
-    <span class="ident">DescribeGlobalTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeGlobalTableError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeGlobalTableSettingsError</span>,
-    <span class="ident">DescribeGlobalTableSettingsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeGlobalTableSettingsError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeLimitsError</span>,
-    <span class="ident">DescribeLimitsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeLimitsError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeTableError</span>,
-    <span class="ident">DescribeTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeTableError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">GetItemError</span>,
-    <span class="ident">GetItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">GetItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">GetItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">GetItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(<span class="ident">ListBackupsError</span>, <span class="ident">ListBackupsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>));
+<span class="macro">retry!</span>(<span class="ident">ListBackupsError</span>, <span class="ident">ListBackupsError::InternalServerError</span>(<span class="kw">_</span>));
 
-<span class="macro">retry</span><span class="macro">!</span>(<span class="ident">ListTablesError</span>, <span class="ident">ListTablesError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>));
+<span class="macro">retry!</span>(<span class="ident">ListTablesError</span>, <span class="ident">ListTablesError::InternalServerError</span>(<span class="kw">_</span>));
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">ListTagsOfResourceError</span>,
-    <span class="ident">ListTagsOfResourceError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">ListTagsOfResourceError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">PutItemError</span>,
-    <span class="ident">PutItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">PutItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">PutItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">PutItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">QueryError</span>,
-    <span class="ident">QueryError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">QueryError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">QueryError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">QueryError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">RestoreTableFromBackupError</span>,
-    <span class="ident">RestoreTableFromBackupError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">RestoreTableFromBackupError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">RestoreTableToPointInTimeError</span>,
-    <span class="ident">RestoreTableToPointInTimeError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">RestoreTableToPointInTimeError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">ScanError</span>,
-    <span class="ident">ScanError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">ScanError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">ScanError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">ScanError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">TagResourceError</span>,
-    <span class="ident">TagResourceError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TagResourceError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">TagResourceError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TagResourceError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UntagResourceError</span>,
-    <span class="ident">UntagResourceError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UntagResourceError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">UntagResourceError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UntagResourceError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateContinuousBackupsError</span>,
-    <span class="ident">UpdateContinuousBackupsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateContinuousBackupsError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateGlobalTableError</span>,
-    <span class="ident">UpdateGlobalTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateGlobalTableError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateGlobalTableSettingsError</span>,
-    <span class="ident">UpdateGlobalTableSettingsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateGlobalTableSettingsError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateItemError</span>,
-    <span class="ident">UpdateItemError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateItemError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateItemError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateItemError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateTableError</span>,
-    <span class="ident">UpdateTableError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateTableError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateTableError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateTableError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">UpdateTimeToLiveError</span>,
-    <span class="ident">UpdateTimeToLiveError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateTimeToLiveError</span>::<span class="ident">LimitExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">UpdateTimeToLiveError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">UpdateTimeToLiveError::LimitExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">ListGlobalTablesError</span>,
-    <span class="ident">ListGlobalTablesError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">ListGlobalTablesError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">DescribeTimeToLiveError</span>,
-    <span class="ident">DescribeTimeToLiveError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>)
+    <span class="ident">DescribeTimeToLiveError::InternalServerError</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">TransactGetItemsError</span>,
-    <span class="ident">TransactGetItemsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TransactGetItemsError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">TransactGetItemsError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TransactGetItemsError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
-<span class="macro">retry</span><span class="macro">!</span>(
+<span class="macro">retry!</span>(
     <span class="ident">TransactWriteItemsError</span>,
-    <span class="ident">TransactWriteItemsError</span>::<span class="ident">InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TransactWriteItemsError</span>::<span class="ident">ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
+    <span class="ident">TransactWriteItemsError::InternalServerError</span>(<span class="kw">_</span>) <span class="ident">TransactWriteItemsError::ProvisionedThroughputExceeded</span>(<span class="kw">_</span>)
 );
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
@@ -2170,17 +2169,17 @@
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">policy_has_default</span>() {
-        <span class="macro">assert_eq</span><span class="macro">!</span>(
-            <span class="ident">Policy</span>::<span class="ident">default</span>(),
-            <span class="ident">Policy</span>::<span class="ident">Exponential</span>(<span class="number">5</span>, <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">100</span>))
+        <span class="macro">assert_eq!</span>(
+            <span class="ident">Policy::default</span>(),
+            <span class="ident">Policy::Exponential</span>(<span class="number">5</span>, <span class="ident">Duration::from_millis</span>(<span class="number">100</span>))
         );
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">policy_impl_into_for_retry_policy</span>() {
         <span class="kw">fn</span> <span class="ident">test</span>(<span class="kw">_</span>: <span class="kw">impl</span> <span class="ident">Into</span><span class="op">&lt;</span><span class="ident">RetryPolicy</span><span class="op">&gt;</span>) {}
-        <span class="ident">test</span>(<span class="ident">Policy</span>::<span class="ident">default</span>())
+        <span class="ident">test</span>(<span class="ident">Policy::default</span>())
     }
 }
 </pre></div>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../";window.currentCrate = "dynomite";</script><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script><script defer src="../../search-index.js"></script></body></html>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="dynomite" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div><script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script></body></html>
