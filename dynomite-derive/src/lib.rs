@@ -71,7 +71,7 @@ impl DataEnum {
         attrs: &[Attribute],
     ) -> Self {
         let me = Self {
-            attrs: parse_attrs(&attrs),
+            attrs: parse_attrs(attrs),
             ident,
             variants: inner
                 .variants
@@ -118,9 +118,9 @@ impl DataEnum {
         let match_arms = self.variants.iter().map(|variant| {
             let variant_ident = &variant.inner.ident;
             let expr = match &variant.inner.fields {
-                Fields::Named(_record) => Self::unimplemented_record_variants(&variant),
+                Fields::Named(_record) => Self::unimplemented_record_variants(variant),
                 Fields::Unnamed(tuple) => {
-                    Self::expect_single_item_tuple(&tuple, variant_ident);
+                    Self::expect_single_item_tuple(tuple, variant_ident);
                     quote! { Self::#variant_ident(::dynomite::FromAttributes::from_attrs(attrs)?) }
                 }
                 Fields::Unit => quote! { Self::#variant_ident },
@@ -159,9 +159,9 @@ impl DataEnum {
             let variant_ident = &variant.inner.ident;
             let variant_deser_name = variant.deser_name();
             match &variant.inner.fields {
-                Fields::Named(_record) => Self::unimplemented_record_variants(&variant),
+                Fields::Named(_record) => Self::unimplemented_record_variants(variant),
                 Fields::Unnamed(tuple) => {
-                    Self::expect_single_item_tuple(&tuple, variant_ident);
+                    Self::expect_single_item_tuple(tuple, variant_ident);
 
                     quote! {
                         Self::#variant_ident(variant) => {
