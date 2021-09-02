@@ -21,7 +21,8 @@ async fn main() -> Result<(), Error> {
                 .unwrap_or_default();
             Ok::<_, Error>(tables.join("\n"))
         }
-    })).await?;
+    }))
+    .await?;
 
     Ok(())
 }
