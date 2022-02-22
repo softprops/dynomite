@@ -121,7 +121,7 @@ mod tests {
     use std::convert::TryFrom;
 
     use super::*;
-    use dynomite::{Attribute, Attributes, Item};
+    use dynomite::{Attribute, Attributes, FromAttributes, Item};
 
     #[test]
     fn derived_key() {
@@ -239,5 +239,58 @@ mod tests {
 
         assert!(attrs.contains_key("kind"));
         assert!(attrs.contains_key("a"));
+    }
+
+    #[test]
+    fn item_with_raw_field_name_identifier() {
+        #[derive(Attributes, Clone, Debug, PartialEq)]
+        struct ItemWithRawFieldNameIdentifier {
+            r#type: String
+        }
+
+        let item = ItemWithRawFieldNameIdentifier {
+            r#type: "value".to_owned(),
+        };
+
+        let mut attrs: Attributes = item.clone().into();
+        assert_eq!(attrs.len(), 1);
+        assert_eq!(attrs["type"].s, Some("value".to_owned()));
+
+        // Round trip.
+        assert_eq!(item, ItemWithRawFieldNameIdentifier::from_attrs(&mut attrs).unwrap());
+    }
+
+    #[test]
+    fn enum_attribute_with_raw_variant_name_identifier() {
+        #[derive(Attribute, Clone, Copy, Debug, PartialEq)]
+        pub enum EnumWithRawFieldNameIdentifier {
+            r#VariantName,
+        }
+
+        let value = EnumWithRawFieldNameIdentifier::VariantName;
+
+        let attr = value.into_attr();
+        assert_eq!(attr.s, Some("VariantName".to_owned()));
+
+        // Round trip.
+        assert_eq!(value, EnumWithRawFieldNameIdentifier::from_attr(attr).unwrap());
+    }
+
+    #[test]
+    fn enum_item_with_raw_variant_name_identifier() {
+        #[derive(Attributes, Clone, Copy, Debug, PartialEq)]
+        #[dynomite(tag = "enum")]
+        pub enum EnumWithRawFieldNameIdentifier {
+            r#VariantName,
+        }
+
+        let item = EnumWithRawFieldNameIdentifier::VariantName;
+
+        let mut attrs: Attributes = item.into();
+        assert_eq!(attrs.len(), 1);
+        assert_eq!(attrs["enum"].s, Some("VariantName".to_owned()));
+
+        // Round trip.
+        assert_eq!(item, EnumWithRawFieldNameIdentifier::from_attrs(&mut attrs).unwrap());
     }
 }
