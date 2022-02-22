@@ -49,12 +49,13 @@ struct Variant {
 
 impl Variant {
     fn deser_name(&self) -> String {
+        use syn::ext::IdentExt;
         self.attrs
             .iter()
             .find_map(|it| match &it.kind {
                 attr::VariantAttrKind::Rename(it) => Some(it.value()),
             })
-            .unwrap_or_else(|| self.inner.ident.to_string())
+            .unwrap_or_else(|| self.inner.ident.unraw().to_string())
     }
 }
 
@@ -270,6 +271,7 @@ impl<'a> ItemField<'a> {
     }
 
     fn deser_name(&self) -> String {
+        use syn::ext::IdentExt;
         let ItemField { field, attrs } = self;
         attrs
             .iter()
@@ -282,6 +284,7 @@ impl<'a> ItemField<'a> {
                     .ident
                     .as_ref()
                     .expect("should have an identifier")
+                    .unraw()
                     .to_string()
             })
     }
@@ -378,18 +381,22 @@ fn make_dynomite_attr(
     name: &Ident,
     variants: &[syn::Variant],
 ) -> impl ToTokens {
+    use syn::ext::IdentExt;
+
     let attr = quote!(::dynomite::Attribute);
     let err = quote!(::dynomite::AttributeError);
     let into_match_arms = variants.iter().map(|var| {
         let vname = &var.ident;
+        let deser_name = vname.unraw();
         quote! {
-            #name::#vname => stringify!(#vname).to_string(),
+            #name::#vname => stringify!(#deser_name).to_string(),
         }
     });
     let from_match_arms = variants.iter().map(|var| {
         let vname = &var.ident;
+        let deser_name = vname.unraw();
         quote! {
-            stringify!(#vname) => ::std::result::Result::Ok(#name::#vname),
+            stringify!(#deser_name) => ::std::result::Result::Ok(#name::#vname),
         }
     });
 
