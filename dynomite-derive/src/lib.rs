@@ -503,7 +503,7 @@ fn make_dynomite_item(
         return Err(syn::Error::new(
             name.span(),
             format!(
-                "All Item's must declare one and only one partition_key. The `{}` Item declared {}",
+                "All items must declare one and only one partition_key. The `{}` Item declared {}",
                 name, partition_key_count
             ),
         ));
