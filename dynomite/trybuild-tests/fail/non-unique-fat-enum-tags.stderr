@@ -1,6 +1,6 @@
 error: Duplicate tag name detected: `Bar`
 
-  = help: Please ensure that no `rename = "tag_value"` clauses conflict with each other and remaining enum variants' names
+         = help: Please ensure that no `rename = "tag_value"` clauses conflict with each other and remaining enum variants' names
 
  --> $DIR/non-unique-fat-enum-tags.rs:8:5
   |
