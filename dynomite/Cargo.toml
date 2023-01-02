@@ -37,6 +37,7 @@ serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "1", features = ["macros"] }
 lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/" }
+lambda_runtime = "0.7"
 trybuild = "1.0"
 rustversion = "1.0"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive" } # required by trybuild
