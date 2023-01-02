@@ -3,7 +3,8 @@ use dynomite::{
     retry::Policy,
     Retries,
 };
-use lambda_http::{handler, lambda_runtime};
+use lambda_http::service_fn;
+use lambda_runtime::{self, LambdaEvent};
 
 type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 
@@ -11,7 +12,7 @@ type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 async fn main() -> Result<(), Error> {
     let client = DynamoDbClient::new(Default::default()).with_retries(Policy::default());
 
-    lambda_runtime::run(handler(move |_, _| {
+    lambda_runtime::run(service_fn(move |_: LambdaEvent<()>| {
         let client = client.clone();
         async move {
             let tables = client
