@@ -31,16 +31,16 @@ uuid = { version = "1", features = ["v4"], optional = true }
 chrono = { version = "0.4", optional = true }
 
 [dev-dependencies]
-env_logger = "0.8"
+env_logger = "0.10"
 maplit = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "1", features = ["macros"] }
-lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
+lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/" }
 trybuild = "1.0"
 rustversion = "1.0"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive" } # required by trybuild
-pretty_assertions = "0.7"
+pretty_assertions = "1"
 
 [features]
 default = [
