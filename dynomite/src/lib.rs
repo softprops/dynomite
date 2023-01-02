@@ -683,7 +683,7 @@ impl<T: IntoAttributes + FromAttributes> Attribute for T {
 impl Attribute for Uuid {
     fn into_attr(self) -> AttributeValue {
         AttributeValue {
-            s: Some(self.to_hyphenated().to_string()),
+            s: Some(self.hyphenated().to_string()),
             ..AttributeValue::default()
         }
     }
