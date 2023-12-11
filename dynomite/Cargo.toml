@@ -25,9 +25,9 @@ futures = "0.3"
 log = "0.4"
 # Disable default features since the `rustls` variant requires it. We re-enable `default` in our
 # `default` build configuration - see the [features] below.
-rusoto_core = { version = "0.47", optional = true, default_features = false }
-rusoto_dynamodb = { version = "0.47", optional = true, default_features = false }
-uuid = { version = "0.8", features = ["v4"], optional = true }
+rusoto_core = { git = "https://github.com/sameer/rusoto.git", rev = "0346b41b414d036eb54cdf64781a17ba4b1a8ba4", optional = true, default_features = false }
+rusoto_dynamodb = { git = "https://github.com/sameer/rusoto.git", rev = "0346b41b414d036eb54cdf64781a17ba4b1a8ba4", version = "0.48", optional = true, default_features = false }
+uuid = { version = "1.1.2", features = ["v4"], optional = true }
 chrono = { version = "0.4", optional = true }
 
 [dev-dependencies]
@@ -36,7 +36,7 @@ maplit = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 tokio = { version = "1", features = ["macros"] }
-lambda_http = { git = "https://github.com/awslabs/aws-lambda-rust-runtime/", branch = "master"}
+lambda_http = "0.5.2"
 trybuild = "1.0"
 rustversion = "1.0"
 dynomite-derive = { version = "0.10.0", path = "../dynomite-derive" } # required by trybuild

@@ -1,5 +1,9 @@
-error[E0774]: `derive` may only be applied to structs, enums and unions
- --> $DIR/item-not-on-struct-fail.rs:7:1
-  |
-7 | #[derive(dynomite_derive::Item)]
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+error[E0774]: `derive` may only be applied to `struct`s, `enum`s and `union`s
+  --> $DIR/item-not-on-struct-fail.rs:7:1
+   |
+7  |   #[derive(dynomite_derive::Item)]
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not applicable here
+8  | / fn fail() {
+9  | |   println!("This should fail");
+10 | | }
+   | |_- not a `struct`, `enum` or `union`
